@@ -143,7 +143,7 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 | ID | Item | Status | Note |
 | -- | ---- | ------ | ---- |
 | TF-CoreDNS | Apply CoreDNS split-horizon inlineManifest | ⚠️ Committed (`8b3af1f`), apply unverified | `terraform/dev/.../talos.tf`. Live runs the manual edit; a rebuild without applying reverts the DNS fix. `/terraform-plan` → `/terraform-apply`. |
-| TF-wallabag | Destroy dead wallabag S3 stack | 🟡 IaC removed (`eb3faf0`) | Terraform deleted. **Verify the AWS S3 bucket + IAM were destroyed BEFORE the `.tf` was removed** — otherwise orphaned and now unmanaged. |
+| ~~TF-wallabag~~ | ~~Destroy dead wallabag S3 stack~~ | ✅ Done — IaC removed (`eb3faf0`); S3 bucket + IAM destroyed (confirmed 2026-05-22) | — |
 | R1 | Collapse `pve.tf` cp/worker duplication | 🟡 Partially | Talos module extracted to `terraform/modules/talos-pve-v3.1.0/` (`eb3faf0`) — reduces dev/prod dup. Verify cp/worker duplication *within* `pve.tf` is also collapsed. |
 | R2 | Extract shared Talos machine config | 🟡 Partially | Same module extraction. Verify worker still lacks CP-only PSA exemptions (drift risk). |
 | R5 | Worker memory typo `8092` | ⚠️ | `terraform/dev/variables.tf` + `terraform.tfvars` — tidy next tfvars edit. |
