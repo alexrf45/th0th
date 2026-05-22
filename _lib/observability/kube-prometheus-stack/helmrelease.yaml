@@ -188,9 +188,13 @@ spec:
         server:
           root_url: "https://${GRAFANA_SUBDOMAIN}.home-0ps.com/"
         auth:
-          # Keep the local-admin login form enabled for break-glass
-          # access when the IdP is degraded.
-          disable_login_form: false
+          # SSO-only: the local username/password login form is hidden so
+          # Authentik (auth.generic_oauth below) is the only interactive path.
+          # Break-glass for the local admin (grafana-admin-credentials secret):
+          # temporarily flip this back to false via GitOps, OR port-forward the
+          # grafana svc and POST the admin creds to /login (the API honors them
+          # even when the form is hidden).
+          disable_login_form: true
           oauth_auto_login: false
         auth.generic_oauth:
           enabled: true
@@ -238,18 +242,6 @@ spec:
           isDefault: false
           jsonData:
             maxLines: 1000
-        - name: Tempo
-          type: tempo
-          access: proxy
-          url: http://tempo.monitoring.svc.cluster.local:3200
-          isDefault: false
-          jsonData:
-            nodeGraph:
-              enabled: true
-            serviceMap:
-              datasourceUid: prometheus
-            tracesToLogsV2:
-              datasourceUid: loki
       resources:
         requests:
           cpu: 50m

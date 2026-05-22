@@ -107,3 +107,20 @@ data:
         url = "http://loki-egress.tailscale.svc.cluster.local:3100/loki/api/v1/push"
       }
     }
+
+    // Kubernetes events -> Loki (O-4). Ships all namespaces' events; the
+    // alloy ClusterRole must grant events {get,list,watch} (chart default).
+    loki.source.kubernetes_events "k8s_events" {
+      log_format = "logfmt"
+      forward_to = [loki.process.events.receiver]
+    }
+
+    loki.process "events" {
+      stage.static_labels {
+        values = {
+          job = "k8s-events",
+        }
+      }
+
+      forward_to = [loki.write.default.receiver]
+    }
