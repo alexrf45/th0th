@@ -26,6 +26,8 @@ spec:
         app.kubernetes.io/instance: freshrss-${ENVIRONMENT}
         app.kubernetes.io/version: "${FRESHRSS_VERSION}"
     spec:
+      # Give PHP-FPM / Apache time to finish in-flight requests before SIGKILL.
+      terminationGracePeriodSeconds: 45
       securityContext:
         # apache user (100) is a member of www-data (82); fsGroup ensures
         # emptyDirs and the data PVC are group-accessible on mount.
