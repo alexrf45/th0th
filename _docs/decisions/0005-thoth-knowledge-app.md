@@ -1,9 +1,13 @@
 # ADR-0005: Thoth — unified knowledge app + service-mesh anchor
 
-- **Status:** Draft / pre-decision. No commitment to build. Captures architectural thinking for a future pickup.
-- **Date:** 2026-05-03
+- **Status:** **Descoped (2026-05-22)** — not building the full app. Scope reduced to utilities/scripts on top of existing infra; effort redirected to iterating and hardening what's already deployed. Original pre-decision design retained below as historical record.
+- **Date:** 2026-05-03 (drafted); descoped 2026-05-22
 - **Deciders:** fr3d
 - **Related:** [ADR-0004](0004-gpu-vfio-passthrough.md) (AI layer wants a GPU); retrospectives for the apps Thoth would replace — [journey.md](../journey.md#retired-apps).
+
+## Update — 2026-05-22: Descoped
+
+Thoth will **not** be built as a full unified knowledge application. The honest pushbacks below held up: 18+ months of part-time work for ~80% of what existing tools already do, a hard GPU dependency for a credible AI layer, and a separate iOS project. Decision (user): **no full app — build small utilities/scripts where useful and keep iterating the existing lab infrastructure** instead. The service-mesh phase is no longer gated on Thoth as its anchor app; if a mesh is adopted it will be justified on its own terms. The design thinking below is preserved for reference, not as a plan of record.
 
 ## Context
 
