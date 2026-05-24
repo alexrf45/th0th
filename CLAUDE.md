@@ -1,126 +1,20 @@
 # CLAUDE.md
 
-You are a DevOps Engineer with 20 years of Linux and cloud experience.
+## What this repo is
 
-You are building a home lab to demonstrate various cloud native technologies, principles and best practices. GitOps is the prevalent philosophy driving operations and application deployment.
+A GitOps-managed Kubernetes home lab to demonstrate various cloud native technologies, principles and best practices. Flux CD watches the `dev` branch of this repo and reconciles the cluster state. Talos Linux runs on Proxmox VMs provisioned by Terraform. Secrets are encrypted with SOPS (Age) and synced via 1Password Connect through the External Secrets Operator.
 
-## Debugging Discipline
-
-- When a fix fails, re-diagnose the root cause before attempting another fix; avoid stacking speculative changes
-- For permission/init-container issues, enumerate ALL writable paths the app needs (run dirs, log dirs, cache dirs) in one pass
-
-## Code Fixes
-
-Before suggesting any fix, do this: (1) state the exact error/symptom, (2) identify the failing component and read its actual config/logs, (3) form a hypothesis and tell me how you'll verify it, (4) THEN propose a fix. Do not iterate on speculative fixes.
-
-## CI/CD
-
-When working with CI/CD pipelines, always run linting and tests locally before committing. Use the project's existing lint/test commands to verify changes pass before pushing
-
-## Git SSH Agent
-
-Git commits may require SSH signing via 1Password agent. If a commit fails with signing errors, inform the user rather than retrying — they need to authenticate manually.
-
-## Hardware
-
-Unfi Cloud Gateway
-Unfi 16 Port switch
-(6) Beelink mini PCs S13
-Zimaboard DIY NAS with 2TB of storage (IP: 192.168.20.106)
-HP Slim Desktop S01-pF1xxx (anubis host: 192.168.20.87)
-
-## Software
-
-Hypervisor:
-Proxmox Cluster (6 Nodes)
-
-### NAS
-
-TrueNAS Scale
-
-### Application infrastructure
-
-Kubernetes
-Talos Linux
-Terraform
-Helm
-Cilium
-External Secrets
-OnePassword Connect
-External DNS
-
-### Security Application Infrastructure
-
-Kyverno
-Trivy
-Falco
-
-### Observability & Monitoring
-
-Prometheus
-Grafana
-Loki
-FluentBit
-
-### Applications/Services
-
-Wallabag
-Adminer
-Silverbullet
-FreshRSS
+Once the dev branch has reached a user-defined state of maturity, it will be promoted to the main branch for the production cluster.
 
 ## Lab Goals & Requirements
 
 The aim is to preside over a lab environment that is as close to production ready as possible with robust monitoring, observability, resilience, disaster recovery, alerting, best practices for cloud native security and network architecture. Services are exposed externally either via Tailscale, Cloudflare Tunnels or Ngrok. Services are exposed internally with the home-0ps.com domain.
 
-Applications hosted in this environment should have a iOS mobile app equivalent to extend and get the most out of the services. Users spend frequent time writing poetry, taking notes, saving links/articles and curating knowledge & media.
-
-The only limitation to a truly cloud native set up is the requirement to self host persistent data on the TrueNAS instance to meet privacy & risk requirements for users.
-
-## What this repo is
-
-A GitOps-managed Kubernetes home lab. Flux CD watches the `dev` branch of this repo and reconciles the cluster state. Talos Linux runs on Proxmox VMs provisioned by Terraform. Secrets are encrypted with SOPS (Age) and synced via 1Password Connect through the External Secrets Operator.
-
-Once the dev branch has reached a user-defined state of maturity, it will be promoted to the main branch for the production cluster.
+Applications hosted in this environment should have a iOS mobile app equivalent or method to consume/interact with data from the cluster to extend and get the most out of the services. Users spend frequent time writing poetry, taking notes, saving links/articles and curating knowledge & media.
 
 ## Cluster access — REQUIRED
 
-The kubeconfig is **not on disk**. It lives in 1Password and is fetched on demand
-by `~/.zsh/kubeop.sh`, which is sourced from `~/.zshrc`. Every command that
-talks to a live cluster MUST go through one of these wrappers:
-
-| Wrapper                     | Use for                                                                                      |
-| --------------------------- | -------------------------------------------------------------------------------------------- |
-| `kube [env] <args>`         | kubectl (env defaults to `dev`)                                                              |
-| `k9s-op [env] <args>`       | k9s                                                                                          |
-| `k8sop <env> <tool> <args>` | any other kubeconfig-aware tool: flux, helm, kustomize, kubectl-cnpg, stern, kubecolor, etc. |
-| `kube-flush`                | drop the cached kubeconfig (re-fetch on next call)                                           |
-
-Examples:
-
-- `kube dev get pods -A`
-- `kube dev -n freshrss rollout restart deploy/freshrss`
-- `k8sop dev flux reconcile kustomization security --with-source`
-- `k8sop dev helm list -A`
-- `k8sop dev kustomize build _lib/applications/wallabag/overlays/dev`
-
-**Never** invoke raw `kubectl …`, `flux …`, `helm …`, or `kustomize build …`
-against the cluster — those have no kubeconfig and will fail or target the
-wrong context. This applies to slash commands, verification steps, runbooks,
-and follow-up suggestions.
-
-**Exception — talosctl:** the wrapper injects `--kubeconfig`, which talosctl
-does not accept. `talosctl …` calls use a separate `--talosconfig` flow that
-the user manages outside this wrapper, so leave them un-wrapped.
-
-**Common mistake:** `kube dev kubectl get nodes` — `kube` already implies
-`kubectl`. The duplicated tool name turns into a kubectl plugin lookup. Use
-`kube dev get nodes` or the explicit `k8sop dev kubectl get nodes`.
-
-Env → cluster mapping (from `_kubeop_cluster_for_env` in the wrapper):
-`dev → memphis`, `staging → staging`, `prod → prod`. The 1Password Secure
-Note is titled `<cluster-name>-kubeconfig` and is exported by the terraform
-module at `terraform/dev/talos-pve-v3.1.0/config-export.tf`.
+Always reference ./.claude/rules/kube-wrapper.md for proper interaction with the cluster
 
 ## Key commands
 
@@ -135,14 +29,6 @@ Runnable slash commands live in `.claude/commands/`:
 | `/terraform-plan`        | Init + plan the dev cluster                  |
 | `/terraform-apply`       | Init + plan + apply the dev cluster          |
 
-**Secrets (SOPS):** Never modify or re-encrypt `.env` files, SOPS-encrypted files, or secrets without explicit user confirmation. The user manages secrets themselves. SOPS config is at `_clusters/dev/.sops.yaml` — files matching `*values.yaml` are fully encrypted; other YAML files encrypt only `data` and `stringData` fields.
-
-**CRDs:** Any operator whose Custom Resources are reconciled by Flux must opt out of installing its own CRDs (set `crds.enabled: false` / `crds.create: false` / `installCRDs: false` on the HelmRelease, depending on the chart's flag). CRDs live in `global/crds/<operator>/` and are reconciled in the `crds` Flux Kustomization (Layer 2 of `_clusters/dev/cluster.yaml`, before `controllers`). Pin the CRD version to the operator chart version in `_lib/controllers/<operator>/`. Prefer upstream CRD-only Helm subcharts (e.g. `prometheus-operator-crds`) over raw YAML when available — they get Renovate updates for free. This pattern eliminates the kustomize-controller dry-run race that hits when a CR and its CRD-installing chart share a Flux Kustomization.
-
-**Talos upgrades:** See `_hack/scripts/upgrade.sh` for the system-upgrade-controller approach.
-
-## Architecture
-
 ### Directory layout
 
 | Directory     | Purpose                                                                                                                       |
@@ -155,55 +41,6 @@ Runnable slash commands live in `.claude/commands/`:
 | `_hack/`      | One-off scripts and example YAML                                                                                              |
 | `_docs/`      | Reviews, runbooks, migration notes                                                                                            |
 
-### Flux reconciliation layers (dependency order)
+# Business Rules & Documentation
 
-Defined in `_clusters/dev/cluster.yaml`. Each layer depends on the one above it:
-
-1. **cluster-config** — ConfigMap with environment variables (`ENVIRONMENT`, `CLUSTER_NAME`, hostnames, etc.) used by `postBuild.substituteFrom` in downstream Kustomizations
-2. **crds** — Global CRDs from `global/crds/`
-3. **controllers** — All operators: cert-manager, CloudNativePG, external-secrets, Falco, Kyverno, mariadb-operator, redis-operator, Renovate
-4. **pki** — Internal CA keypair, trust-manager, trust bundle
-5. **external-secrets-operator** — ESO deployment (depends on controllers + pki for mTLS)
-6. **secrets** — 1Password Connect deployment + ClusterSecretStore
-7. **networking** — Cilium Gateway, Tailscale operator, ClusterIssuers (Let's Encrypt via Cloudflare DNS-01)
-8. **dns** — ExternalDNS (depends on secrets for Cloudflare API key)
-9. **storage** — freenas-iscsi CSI, local-path provisioner, Barman Cloud
-10. **security** — Cilium NetworkPolicies, Falco rules, Kyverno policies
-11. **applications** — App workloads (currently only wallabag, using `_lib/applications/wallabag/overlays/dev`)
-
-### Secrets flow
-
-1Password secrets → 1Password Connect → External Secrets Operator → Kubernetes secrets
-
-SOPS-encrypted secrets are decrypted by Flux using the `sops-age` secret in `flux-system`. The Age key comes from 1Password during bootstrap (see `terraform/dev/main.tf`).
-
-### Application pattern
-
-Apps in `_lib/applications/<app>/` follow kustomize base/overlay structure:
-
-- `base/` — Deployment, Service, HTTPRoute/Ingress, Namespace, ExternalSecret definitions
-- `overlays/<env>/` — Environment-specific patches (database config, object backup/recovery)
-
-### Cluster config substitution
-
-The `cluster-config` ConfigMap (at `_clusters/dev/config/cluster-configs.yaml`) provides variables like `${GATEWAY_NAME}`, `${WALLABAG_SUBDOMAIN}`, `${ENVIRONMENT}` that Flux substitutes into manifests at reconcile time via `postBuild.substituteFrom`.
-
-## YAML conventions
-
-- 2-space indentation
-- Max line length 300 (Kubernetes manifests with long annotations/URLs)
-- Multiple documents per file allowed (`---` separator)
-- `document-start: disable` (leading `---` optional)
-- `comments-indentation: disable` (Flux-generated files have inconsistent comment indentation)
-
-## Kubernetes Operations
-
-- Always use the `k8sop` (or `kube`) wrapper for kubectl commands, not raw `kubectl`
-- Verify operator/wrapper conventions before executing cluster commands
-  Add under a ## Terraform / IaC section, or create one if it doesn't exist
-
-  ## Provider/Library Versions
-
-- Always fetch live, current docs for Terraform providers (especially Cloudflare) before generating config; do not rely on cached/training-data syntax
-- Verify the major version pinned in the repo before writing resource blocks
-  Add as a ## Debugging Discipline section near the top of CLAUDE.md so it informs every session
+Rules for conducting specific actions or design choices are located in the `./claude/rules` directory. Any new insights or requirements should be placed here as discovered.
