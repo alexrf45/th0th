@@ -39,7 +39,7 @@ Authentik runs as its own top-level Flux Kustomization (chart `2026.2.3`), CNPG-
 
 **Negative / trade-offs**
 - Authentik is now a hard dependency for any externally-exposed app's login path — its availability matters.
-- The per-app OIDC client-secret loop is manual (Authentik generates → copy to 1Password → ESO into the app namespace). Automating via the Authentik Terraform provider is a deferred follow-up.
+- ~~The per-app OIDC client-secret loop is manual (Authentik generates → copy to 1Password → ESO into the app namespace). Automating via the Authentik Terraform provider is a deferred follow-up.~~ **Resolved (2026-05-25):** OIDC consumers are now provisioned declaratively via [Authentik blueprints](../apps/authentik.md#wiring-an-oidc-consumer-grafana-blueprint). The client creds are user-owned in a shared 1Password item (no longer Authentik-generated), set on the provider via the blueprint's `!Env`; chosen over the Terraform provider to stay in the Flux reconcile loop. Trade-off: rotating an OIDC secret requires bouncing the Authentik server+worker (env read at pod start).
 
 **Non-obvious facts learned**
 - **Authentik 2026.x is Redis-less** — Postgres serves as DB *and* Celery broker/cache. Older docs mentioning Redis are stale.

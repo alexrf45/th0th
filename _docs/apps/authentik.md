@@ -22,8 +22,10 @@
 
 | Path | What |
 | --- | --- |
-| `_lib/controllers/authentik/` | Helm chart (server+worker), `helmrelease.yaml` pins `2026.2.3`, `existingSecret: authentik-env`, `postgresql.enabled: false`, `geoip/ingress/serviceMonitor: false`, `nodeSelector: {node: worker}` |
+| `_lib/controllers/authentik/` | Helm chart (server+worker), `helmrelease.yaml` pins `2026.2.3`, `existingSecret: authentik-env`, `postgresql.enabled: false`, `geoip/ingress/serviceMonitor: false`, `nodeSelector: {node: worker}`, `blueprints.configMaps` + `global.envFrom` for the Grafana OIDC blueprint |
 | `_lib/applications/authentik/base/external-secret.yaml` | ESO refs producing `authentik-env` (chart + CNPG) and `authentik-r2-creds` (Barman) |
+| `_lib/applications/authentik/base/external-secret-grafana-oidc.yaml` | ESO ref producing `authentik-grafana-oidc` (`GRAFANA_OIDC_CLIENT_ID`/`_SECRET`) from 1P `grafana_oidc_${ENVIRONMENT}` — the **same** item Grafana reads |
+| `_lib/applications/authentik/base/blueprint-grafana.yaml` | ConfigMap `authentik-grafana-blueprint`: the Grafana OIDC blueprint (provider + application + entitlements + admin binding) |
 | `_lib/applications/authentik/base/httproute.yaml` | `${AUTHENTIK_SUBDOMAIN}.home-0ps.com` → server :9000 |
 | `_lib/applications/authentik/overlays/dev/database.yaml` | CNPG `Cluster` + `ScheduledBackup` |
 | `_lib/applications/authentik/overlays/dev/ob-archiver.enc.yaml` | SOPS-encrypted Barman `ObjectStore` (R2). **No `ob-recovery` in dev** — deferred to prod (see Recovery §3) |
@@ -34,7 +36,7 @@
 
 The chart is installed by the `controllers` Flux Kustomization; the app (DB, ESO, HTTPRoute, Barman) by the top-level `authentik` Kustomization, which `dependsOn` controllers, dns, storage, networking, external-secrets-operator, secrets, security.
 
-**Bootstrap ordering gotcha:** the chart consumes `authentik.existingSecret.secretName: authentik-env`. Until the `ExternalSecret` that produces `authentik-env` syncs, server+worker pods CrashLoop with `secret not found` — expected, self-heals once the 1Password item exists. The `controllers` Kustomization has `wait: true` but waits for HelmRelease `Released`, not pod readiness — CrashLooping Authentik does **not** block downstream layers.
+**Bootstrap ordering gotcha:** the chart consumes `authentik.existingSecret.secretName: authentik-env` and (via `global.envFrom`) `authentik-grafana-oidc`. Both secrets are produced by ExternalSecrets in the **applications** layer, one layer *after* the chart installs — so on a fresh bootstrap server+worker pods `CreateContainerConfigError`/CrashLoop with `secret not found` until ESO syncs them, then self-heal. The `controllers` Kustomization has `wait: true` but waits for HelmRelease `Released`, not pod readiness, so this does **not** block downstream layers. (Worker boots with the OIDC env vars present, so the Grafana blueprint applies with the correct client creds on first start — see [OIDC consumers](#wiring-an-oidc-consumer-grafana-blueprint).)
 
 ## Secrets
 
@@ -50,18 +52,36 @@ One 1Password item `authentik_${ENVIRONMENT}` (HomeLab vault) feeds a single `Ex
 
 `authentik-r2-creds` (created by Terraform) carries `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_ENDPOINT_URL`/`AWS_REGION`/`BUCKET_NAME`/`EXPIRES_ON` for Barman.
 
+A second ExternalSecret, `authentik-grafana-oidc`, pulls the Grafana OIDC client credentials from the **shared** 1Password item `grafana_oidc_${ENVIRONMENT}` (the same item Grafana's own `grafana-oidc` ExternalSecret reads) and exposes them to the pods as env vars (`GRAFANA_OIDC_CLIENT_ID`/`_SECRET`) for the blueprint to consume. See [OIDC consumers](#wiring-an-oidc-consumer-grafana-blueprint) for the item format.
+
 > Per the project rule, ObjectStore manifests are written plaintext and **you** SOPS-encrypt them (`--encrypted-regex '^(data|destinationPath|endpointURL)$'`). Never re-encrypt secrets without confirmation.
 
-## Wiring an OIDC consumer (Grafana pattern)
+## Wiring an OIDC consumer (Grafana blueprint)
 
-The repeatable per-app integration (verified end-to-end for Grafana 2026-05-20). Roles map via **per-app entitlements**, not groups (the `groups` property mapping isn't shipped in 2026.x; `profile` already carries group membership; entitlements are per-app and more granular).
+The Grafana integration is **config-as-code** via an [Authentik blueprint](https://docs.goauthentik.io/docs/customize/blueprints/) — a fresh cluster comes up with the provider, application, entitlements, and admin role binding already created, no UI clicks. Roles map via **per-app entitlements**, not groups (the `groups` property mapping isn't shipped in 2026.x; `profile` already carries group membership; entitlements are per-app and more granular).
 
-1. **Provider** (Applications → Providers → OAuth2/OpenID): Confidential client; Redirect URI (Strict) `https://<app-host>/login/generic_oauth`; record Client ID/Secret. In **Advanced → Selected Scopes** explicitly add `entitlements` (emits the claim the app reads for roles) and `offline_access` (if the app uses refresh tokens).
-2. **Application** (Applications → Applications): bind the provider, set Launch URL.
-3. **Entitlements** (Application → Application entitlements): one per role, named to match the consumer's `role_attribute_path` JMESPath *exactly* (e.g. `Grafana Admins`/`Editors`/`Viewers`). Bind yourself to the admin one to test.
-4. **Credentials → 1Password** item `<app>_oidc_${ENVIRONMENT}` (`client_id`, `client_secret`); ESO syncs to the app namespace.
+**How it works**
 
-Full step-by-step (Grafana): archived `archive/source-docs/grafana-oidc-setup.md`.
+- `blueprint-grafana.yaml` defines a ConfigMap (`authentik-grafana-blueprint`) the chart mounts under `/blueprints` via `blueprints.configMaps`; the **worker** auto-discovers and applies any `*.yaml` there on an interval.
+- The blueprint declares: an `oauth2provider` (confidential, strict redirect `https://${GRAFANA_SUBDOMAIN}.home-0ps.com/login/generic_oauth`, scopes `openid email profile entitlements offline_access`, signed by the default self-signed cert), an `application` (slug `grafana`) bound to it, three `applicationentitlement`s (`Grafana Admins`/`Editors`/`Viewers` — names must match Grafana's `role_attribute_path` JMESPath *exactly*), and a `policybinding` granting the built-in `authentik Admins` group the `Grafana Admins` entitlement so superusers get Admin on first login. Everyone else falls through to Viewer.
+- `client_id`/`client_secret` are **set** by the blueprint via `!Env` (`GRAFANA_OIDC_CLIENT_ID`/`_SECRET`), loaded from the `authentik-grafana-oidc` secret. Because that secret and Grafana's `grafana-oidc` secret read the **same** 1Password item, both ends of the handshake stay in lockstep with one source of truth.
+
+> **Adoption vs. duplicate:** the blueprint matches existing objects by their `identifiers` (provider `name: grafana`, app `slug: grafana`, entitlement `name` + app). If a provider/app with those exact identifiers already exists it is **updated in place**; differently-named manual objects would produce a parallel set. On a fresh-DB cluster (dev does `initdb`, not recovery) there are none, so it always creates clean.
+
+### 1Password item format (`grafana_oidc_${ENVIRONMENT}`)
+
+One item in the **HomeLab** vault, titled `grafana_oidc_dev` (pattern `grafana_oidc_<env>`), with two fields. Authentik no longer *generates* these — you own them, and the blueprint applies them to the provider:
+
+| 1P field | K8s key (both ES) | Format / how to generate |
+| --- | --- | --- |
+| `client_id` | `client_id` | URL-safe public identifier. `openssl rand -hex 20` (40 chars) |
+| `client_secret` | `client_secret` | High-entropy, treat as a password. `openssl rand -hex 64` (128 chars) |
+
+Both Authentik (`authentik-grafana-oidc`, authentik ns) and Grafana (`grafana-oidc`, monitoring ns) ExternalSecrets reference this one item, so set it **before** bootstrap. Values are arbitrary strings — any matching pair works; they only need to be identical on both sides.
+
+**Rotation:** change the field(s) in 1Password → ESO resyncs both secrets. Authentik reads them via `!Env` at pod start, so **bounce the Authentik server+worker** (`kube dev -n authentik rollout restart deploy/authentik-server deploy/authentik-worker`) and restart Grafana to complete the rotation.
+
+**Adding another OIDC consumer:** copy `blueprint-grafana.yaml` + `external-secret-grafana-oidc.yaml`, swap names/scopes/redirect, add the new ConfigMap to `blueprints.configMaps` and a `global.envFrom` entry for the new secret. The legacy UI walkthrough is archived at `archive/source-docs/grafana-oidc-setup.md`.
 
 ## Recovery and day-2
 

@@ -36,6 +36,19 @@ spec:
     global:
       nodeSelector:
         node: "worker"
+      # Surface the Grafana OIDC client creds to server+worker as env vars so
+      # the Grafana blueprint can read them via !Env. Secret produced by the
+      # authentik-grafana-oidc ExternalSecret (applications layer); like
+      # authentik-env it lands one layer later, so pods CreateContainerConfigError
+      # until it syncs, then self-heal (disableWait keeps this non-blocking).
+      envFrom:
+        - secretRef:
+            name: authentik-grafana-oidc
+    # Auto-discovered + applied by the worker from /blueprints. Provisions the
+    # Grafana OIDC provider/application/entitlements with no UI clicks.
+    blueprints:
+      configMaps:
+        - authentik-grafana-blueprint
     authentik:
       enabled: true
       log_level: info
