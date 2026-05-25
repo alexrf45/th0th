@@ -19,6 +19,10 @@ data:
   RECLAIM_POLICY: "Delete"
   ALLOW_INSECURE: "true"
   GATEWAY_NAME: "dev-app-gateway"
+  # LAN resolver CoreDNS forwards *.home-0ps.com to (split-horizon). Must match
+  # terraform var.nameservers.secondary (the UniFi gateway). Consumed by
+  # _lib/coredns/configmap.yaml.
+  INTERNAL_DNS_RESOLVER: "10.3.3.1"
   #applications
   FRESHRSS_VERSION: "1.27.0-alpine"
   FRESHRSS_SUBDOMAIN: "dev.int.freshrss"

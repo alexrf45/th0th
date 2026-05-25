@@ -17,6 +17,30 @@ spec:
     secretRef:
       name: sops-age
 ---
+# CoreDNS Corefile with the split-horizon home-0ps.com forward. Owned by Flux
+# because Talos only creates manifests and never edits them — see _lib/coredns/.
+# prune:false so Flux never deletes the live coredns ConfigMap (DNS outage).
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: coredns
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: cluster-config
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m0s
+  path: ./_lib/coredns
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  postBuild:
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-config
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
