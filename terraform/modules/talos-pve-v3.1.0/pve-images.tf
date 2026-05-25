@@ -1,6 +1,6 @@
 # pve-images.tf - Talos image download to Proxmox hosts
 
-resource "proxmox_virtual_environment_download_file" "talos_control_plane_image" {
+resource "proxmox_download_file" "talos_control_plane_image" {
   count                   = length(var.pve.hosts)
   content_type            = "iso"
   datastore_id            = var.pve.iso_datastore
@@ -12,7 +12,7 @@ resource "proxmox_virtual_environment_download_file" "talos_control_plane_image"
   upload_timeout          = 1800
 }
 
-resource "proxmox_virtual_environment_download_file" "talos_worker_image" {
+resource "proxmox_download_file" "talos_worker_image" {
   count                   = length(var.pve.hosts)
   content_type            = "iso"
   datastore_id            = var.pve.iso_datastore

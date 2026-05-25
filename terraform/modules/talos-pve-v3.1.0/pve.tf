@@ -2,7 +2,7 @@
 
 resource "proxmox_virtual_environment_vm" "controlplane" {
   depends_on = [
-    proxmox_virtual_environment_download_file.talos_control_plane_image
+    proxmox_download_file.talos_control_plane_image
   ]
   for_each        = var.controlplane_nodes
   name            = format("${var.env}-${var.talos.name}-controlplane-${random_id.this[each.key].hex}")
@@ -38,7 +38,7 @@ resource "proxmox_virtual_environment_vm" "controlplane" {
   disk {
     datastore_id = each.value.datastore_id
     interface    = "virtio0"
-    file_id      = proxmox_virtual_environment_download_file.talos_control_plane_image[0].id
+    file_id      = proxmox_download_file.talos_control_plane_image[0].id
     file_format  = "raw"
     ssd          = true
     iothread     = true
@@ -66,7 +66,7 @@ resource "proxmox_virtual_environment_vm" "controlplane" {
     }
     ip_config {
       ipv4 {
-        address = "${each.value.ip}/24"
+        address = "${each.value.ip}/${split("/", var.cilium_config.node_network)[1]}"
         gateway = var.pve.gateway
       }
     }
@@ -95,7 +95,7 @@ resource "proxmox_virtual_environment_vm" "controlplane" {
 
 resource "proxmox_virtual_environment_vm" "worker" {
   depends_on = [
-    proxmox_virtual_environment_download_file.talos_worker_image
+    proxmox_download_file.talos_worker_image
   ]
   for_each        = var.worker_nodes
   name            = format("${var.env}-${var.talos.name}-node-${random_id.this[each.key].hex}")
@@ -131,7 +131,7 @@ resource "proxmox_virtual_environment_vm" "worker" {
   disk {
     datastore_id = each.value.datastore_id
     interface    = "virtio0"
-    file_id      = proxmox_virtual_environment_download_file.talos_worker_image[0].id
+    file_id      = proxmox_download_file.talos_worker_image[0].id
     file_format  = "raw"
     ssd          = true
     iothread     = true
@@ -159,7 +159,7 @@ resource "proxmox_virtual_environment_vm" "worker" {
     }
     ip_config {
       ipv4 {
-        address = "${each.value.ip}/24"
+        address = "${each.value.ip}/${split("/", var.cilium_config.node_network)[1]}"
         gateway = var.pve.gateway
       }
     }

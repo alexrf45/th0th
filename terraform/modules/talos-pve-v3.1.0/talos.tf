@@ -24,55 +24,7 @@ data "talos_machine_configuration" "controlplane" {
     <<-EOT
     version: v1alpha1
     machine:
-      systemDiskEncryption:
-        ephemeral:
-          provider: luks2
-          keys:
-            - nodeID: {}
-              slot: 0
-              tpm: {}
-        state:
-          provider: luks2
-          keys:
-            - nodeID: {}
-              slot: 0
-              tpm: {}
-      sysctls:
-        vm.nr_hugepages: "1024"
-      kernel:
-        modules:
-          - name: nvme_tcp
-          - name: vfio_pci
-      files:
-        - path: /etc/cri/conf.d/20-customization.part
-          op: create
-          content: |
-            [plugins."io.containerd.cri.v1.images"]
-              discard_unpacked_layers = false
-            [plugins."io.containerd.cri.v1.runtime"]
-              device_ownership_from_security_context = true
-      time:
-        servers:
-%{for s in var.talos.ntp_servers~}
-          - ${s}
-%{endfor~}
-      kubelet:
-        extraArgs:
-          rotate-server-certificates: true
-        clusterDNS:
-          - ${var.talos.cluster_dns_ip}
-        extraMounts:
-          - destination: ${var.talos.storage_disk}
-            type: bind
-            source: ${var.talos.storage_disk}
-            options:
-              - rbind
-              - rshared
-              - rw
-      disks:
-        - device: /dev/vdb
-          partitions:
-            - mountpoint: ${var.talos.storage_disk}
+${chomp(local.machine_common)}
       install:
         disk: ${var.talos.install_disk}
         image: ${data.talos_image_factory_urls.controlplane.urls.installer}
@@ -148,7 +100,8 @@ data "talos_machine_configuration" "controlplane" {
                 app: "storage"
         # Overrides the Talos-generated kube-system/coredns ConfigMap to add a
         # split-horizon server block: internal *.home-0ps.com names are forwarded
-        # to the UniFi resolver (var.nameservers.secondary). Without this, in-cluster
+        # to the internal resolver (var.nameservers.internal, falling back to
+        # var.nameservers.secondary when unset). Without this, in-cluster
         # back-channels (e.g. Grafana OIDC token exchange to Authentik) hit the public
         # upstream first, which NXDOMAINs internal-only records. Re-sync the .:53 block
         # with the upstream default on Talos version bumps.
@@ -190,7 +143,7 @@ data "talos_machine_configuration" "controlplane" {
                 home-0ps.com:53 {
                     errors
                     cache 30
-                    forward . ${var.nameservers.secondary}
+                    forward . ${coalesce(var.nameservers.internal, var.nameservers.secondary)}
                 }
     EOT
     ,
@@ -228,55 +181,7 @@ data "talos_machine_configuration" "worker" {
         serviceSubnets:
           - ${var.talos.service_subnet}
     machine:
-      systemDiskEncryption:
-        ephemeral:
-          provider: luks2
-          keys:
-            - nodeID: {}
-              slot: 0
-              tpm: {}
-        state:
-          provider: luks2
-          keys:
-            - nodeID: {}
-              slot: 0
-              tpm: {}
-      sysctls:
-        vm.nr_hugepages: "1024"
-      kernel:
-        modules:
-          - name: nvme_tcp
-          - name: vfio_pci
-      files:
-        - path: /etc/cri/conf.d/20-customization.part
-          op: create
-          content: |
-            [plugins."io.containerd.cri.v1.images"]
-              discard_unpacked_layers = false
-            [plugins."io.containerd.cri.v1.runtime"]
-              device_ownership_from_security_context = true
-      time:
-        servers:
-%{for s in var.talos.ntp_servers~}
-          - ${s}
-%{endfor~}
-      kubelet:
-        extraArgs:
-          rotate-server-certificates: true
-        clusterDNS:
-          - ${var.talos.cluster_dns_ip}
-        extraMounts:
-          - destination: ${var.talos.storage_disk}
-            type: bind
-            source: ${var.talos.storage_disk}
-            options:
-              - rbind
-              - rshared
-              - rw
-      disks:
-        - device: /dev/vdb
-          partitions:
-            - mountpoint: ${var.talos.storage_disk}
+${chomp(local.machine_common)}
       install:
         disk: ${var.talos.install_disk}
         image: ${data.talos_image_factory_urls.worker.urls.installer}

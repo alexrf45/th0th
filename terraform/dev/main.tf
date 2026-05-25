@@ -1,5 +1,5 @@
 module "dev" {
-  source = "./talos-pve-v3.1.0"
+  source = "../modules/talos-pve-v3.1.0"
   #source        = "git@github.com:alexrf45/lab.git//talos-pve-v3.1.0"
   env                = var.env
   bootstrap_cluster  = var.bootstrap_cluster
@@ -19,7 +19,7 @@ data "onepassword_item" "sops_age_key" {
   title      = "staging_flux_age_key"
 }
 
-resource "kubernetes_secret" "sops_age" {
+resource "kubernetes_secret_v1" "sops_age" {
   count = var.flux_config.enabled ? 1 : 0
   depends_on = [
     module.dev,
@@ -48,7 +48,7 @@ resource "flux_bootstrap_git" "this" {
 
   depends_on = [
     module.dev,
-    kubernetes_secret.sops_age,
+    kubernetes_secret_v1.sops_age,
   ]
 
   cluster_domain     = var.flux_config.cluster_domain

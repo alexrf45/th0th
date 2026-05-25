@@ -31,12 +31,13 @@ variable "pve" {
 variable "talos" {
   description = "Cluster configuration"
   type = object({
-    name                     = optional(string, "k8s-cluster")
+    name                     = optional(string, "cluster")
     endpoint                 = string
     vip_ip                   = string
     version                  = string
     install_disk             = optional(string, "/dev/vda")
     storage_disk             = optional(string, "/var/data")
+    storage_device           = optional(string, "/dev/vdb")
     control_plane_extensions = list(string)
     worker_extensions        = list(string)
     platform                 = optional(string, "nocloud")
@@ -53,6 +54,28 @@ variable "talos" {
   validation {
     condition     = can(regex("^[a-zA-Z0-9]+$", var.talos.name)) && length(var.talos.name) >= 4
     error_message = "Cluster name must contain only alphanumeric characters and be at least 4 characters long."
+  }
+  validation {
+    condition     = can(cidrnetmask(var.talos.pod_subnet))
+    error_message = "talos.pod_subnet must be a valid CIDR (e.g. 10.42.0.0/16)."
+  }
+  validation {
+    condition     = can(cidrnetmask(var.talos.service_subnet))
+    error_message = "talos.service_subnet must be a valid CIDR (e.g. 10.43.0.0/16)."
+  }
+  validation {
+    condition = cidrhost(
+      "${var.talos.cluster_dns_ip}/${split("/", var.talos.service_subnet)[1]}",
+      0,
+    ) == cidrhost(var.talos.service_subnet, 0)
+    error_message = "talos.cluster_dns_ip must be inside talos.service_subnet."
+  }
+  validation {
+    condition = cidrhost(
+      "${var.talos.vip_ip}/${split("/", var.cilium_config.node_network)[1]}",
+      0,
+    ) == cidrhost(var.cilium_config.node_network, 0)
+    error_message = "talos.vip_ip must be inside cilium_config.node_network."
   }
 }
 
@@ -74,6 +97,13 @@ variable "controlplane_nodes" {
     condition     = length(var.controlplane_nodes) >= 1 && length(var.controlplane_nodes) % 2 == 1
     error_message = "Control plane requires an odd number of nodes (1, 3, or 5) for etcd quorum"
   }
+  validation {
+    condition = alltrue([
+      for v in var.controlplane_nodes :
+      cidrhost("${v.ip}/${split("/", var.cilium_config.node_network)[1]}", 0) == cidrhost(var.cilium_config.node_network, 0)
+    ])
+    error_message = "All controlplane_nodes IPs must be inside cilium_config.node_network."
+  }
 }
 
 variable "worker_nodes" {
@@ -82,13 +112,20 @@ variable "worker_nodes" {
     node         = string
     ip           = string
     cores        = optional(number, 2)
-    memory       = optional(number, 8092)
+    memory       = optional(number, 8192)
     datastore_id = optional(string, "local-lvm")
     storage_id   = string
     disk_size    = optional(number, 50)
     storage_size = optional(number, 200)
   }))
   default = {}
+  validation {
+    condition = alltrue([
+      for v in var.worker_nodes :
+      cidrhost("${v.ip}/${split("/", var.cilium_config.node_network)[1]}", 0) == cidrhost(var.cilium_config.node_network, 0)
+    ])
+    error_message = "All worker_nodes IPs must be inside cilium_config.node_network."
+  }
 }
 
 
@@ -102,10 +139,11 @@ variable "bootstrap_cluster" {
 }
 
 variable "nameservers" {
-  description = "DNS servers for the nodes"
+  description = "DNS servers for the nodes. `internal` is the resolver CoreDNS forwards *.home-0ps.com to (split-horizon); falls back to `secondary` when unset."
   type = object({
     primary   = string
     secondary = string
+    internal  = optional(string)
   })
   default = {
     primary   = "1.1.1.1"
@@ -134,8 +172,8 @@ variable "cilium_config" {
   default = {
     namespace                  = "networking"
     node_network               = "192.168.20.0/24"
-    kube_version               = "1.33.0"
-    cilium_version             = "1.18.0"
+    kube_version               = "1.35.0"
+    cilium_version             = "1.19.4"
     hubble_enabled             = false
     hubble_ui_enabled          = false
     relay_enabled              = false

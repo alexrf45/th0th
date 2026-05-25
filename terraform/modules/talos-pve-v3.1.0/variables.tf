@@ -33,6 +33,7 @@ variable "talos" {
     version                  = string
     install_disk             = optional(string, "/dev/vda")
     storage_disk             = optional(string, "/var/data")
+    storage_device           = optional(string, "/dev/vdb")
     control_plane_extensions = list(string)
     worker_extensions        = list(string)
     platform                 = optional(string, "nocloud")
@@ -138,10 +139,11 @@ variable "bootstrap_cluster" {
 # DNS
 
 variable "nameservers" {
-  description = "DNS servers for the nodes"
+  description = "DNS servers for the nodes. `internal` is the resolver CoreDNS forwards *.home-0ps.com to (split-horizon); falls back to `secondary` when unset."
   type = object({
     primary   = string
     secondary = string
+    internal  = optional(string)
   })
   default = {
     primary   = "1.1.1.1"
@@ -175,7 +177,7 @@ variable "cilium_config" {
     namespace                  = "networking"
     node_network               = "192.168.20.0/24"
     kube_version               = "1.35.0"
-    cilium_version             = "1.18.0"
+    cilium_version             = "1.19.4"
     hubble_enabled             = false
     hubble_ui_enabled          = false
     relay_enabled              = false

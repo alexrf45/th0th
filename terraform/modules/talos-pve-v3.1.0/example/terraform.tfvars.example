@@ -2,12 +2,13 @@
 
 env               = "test"
 bootstrap_cluster = true
+op_vault_id       = "" # UUID of the 1Password vault holding infra secrets (kubeconfig/talosconfig/age key)
 
 talos = {
   name     = "abydos"
   endpoint = "10.3.3.120"
   vip_ip   = "10.3.3.119"
-  version  = "v1.10.6"
+  version  = "v1.12.8"
   platform = "nocloud"
   control_plane_extensions = [
     "intel-ucode",
@@ -38,6 +39,7 @@ pve = {
 nameservers = {
   primary   = "1.1.1.1"
   secondary = "8.8.8.8"
+  internal  = "10.3.3.1" # resolver for *.home-0ps.com (split-horizon); must serve internal records
 }
 
 controlplane_nodes = {
@@ -79,7 +81,7 @@ worker_nodes = {
     ip           = "10.3.3.123"
     storage_id   = "data"
     cores        = 2
-    memory       = 8092
+    memory       = 8192
     disk_size    = 50
     storage_size = 100
   }
@@ -88,7 +90,7 @@ worker_nodes = {
     ip           = "10.3.3.124"
     storage_id   = "data"
     cores        = 2
-    memory       = 8092
+    memory       = 8192
     disk_size    = 50
     storage_size = 100
   }
@@ -97,7 +99,7 @@ worker_nodes = {
     ip           = "10.3.3.125"
     storage_id   = "data"
     cores        = 2
-    memory       = 8092
+    memory       = 8192
     disk_size    = 50
     storage_size = 200
   }
@@ -105,8 +107,8 @@ worker_nodes = {
 
 cilium_config = {
   node_network               = "10.3.3.0/24"
-  kube_version               = "1.33.0"
-  cilium_version             = "1.18.0"
+  kube_version               = "1.35.0"
+  cilium_version             = "1.19.4"
   hubble_enabled             = false
   hubble_ui_enabled          = false
   relay_enabled              = false
@@ -120,11 +122,9 @@ cilium_config = {
   load_balancer_stop         = 215
 }
 
-# v3.1.0 - Config export
+# Export kubeconfig + talosconfig to 1Password (items: <cluster>-kubeconfig / <cluster>-talosconfig)
 config_export = {
-  enabled          = true
-  kubeconfig_path  = "~/.kube/environments/test"
-  talosconfig_path = "~/.talos/test"
+  enabled = true
 }
 
 # v3.1.0 - Worker labels (defaults are usually fine)
@@ -138,13 +138,11 @@ worker_labels = {
 
 # v3.1.0 - Flux GitOps bootstrap
 flux_config = {
-  enabled              = true
-  git_url              = "ssh://git@github.com/alexrf45/home-ops.git"
-  cluster_path         = "clusters/abydos"
-  branch               = "main"
-  ssh_private_key_path = "~/.ssh/fr3d"
-  cluster_domain       = "cluster.local"
-  sops_age_key_path    = "~/.local/flux-staging.agekey"
-  sops_secret_name     = "sops-age"
-  sops_age_key_name    = "flux-staging.agekey"
+  enabled           = true
+  git_url           = "ssh://git@github.com/alexrf45/home-ops.git"
+  cluster_path      = "clusters/abydos"
+  branch            = "main"
+  cluster_domain    = "cluster.local"
+  sops_secret_name  = "sops-age"
+  sops_age_key_name = "flux-staging.agekey"
 }

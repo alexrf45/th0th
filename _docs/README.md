@@ -34,6 +34,7 @@ Documentation for the home-0ps GitOps Kubernetes lab. Four kinds of doc, plus th
 - [ADR-0003](decisions/0003-cnpg-local-snapshots.md) Single-instance CNPG on static iSCSI + CSI snapshots — *Accepted (partly built)*
 - [ADR-0004](decisions/0004-gpu-vfio-passthrough.md) GPU via single-node VFIO passthrough — *Proposed*
 - [ADR-0005](decisions/0005-thoth-knowledge-app.md) Thoth unified knowledge app + mesh anchor — *Draft*
+- [ADR-0006](decisions/0006-talos-pve-module-refactor.md) talos-pve module refactor + provider upgrades — *Proposed*
 
 ## Conventions
 

@@ -1,5 +1,5 @@
 module "cluster" {
-  source = "./talos-pve-v3.1.0"
+  source = "../"
 
   env                = var.env
   bootstrap_cluster  = var.bootstrap_cluster
@@ -9,15 +9,23 @@ module "cluster" {
   controlplane_nodes = var.controlplane_nodes
   worker_nodes       = var.worker_nodes
   cilium_config      = var.cilium_config
-  config_export      = var.config_export
-  worker_labels      = var.worker_labels
+  op_vault_id        = var.op_vault_id
 }
 
-resource "kubernetes_secret" "sops_age" {
+# SOPS age key pulled from 1Password (same pattern as terraform/dev) — keep the
+# bootstrap secret rotatable rather than reading it from a file on disk.
+data "onepassword_item" "sops_age_key" {
+  depends_on = [module.cluster]
+  vault      = var.op_vault_id
+  title      = "flux_age_key"
+}
+
+resource "kubernetes_secret_v1" "sops_age" {
   count = var.flux_config.enabled ? 1 : 0
 
   depends_on = [
     module.cluster,
+    data.onepassword_item.sops_age_key,
   ]
 
   metadata {
@@ -26,13 +34,10 @@ resource "kubernetes_secret" "sops_age" {
   }
 
   data = {
-    "${var.flux_config.sops_age_key_name}" = file(pathexpand(var.flux_config.sops_age_key_path))
+    "${var.flux_config.sops_age_key_name}" = data.onepassword_item.sops_age_key.note_value
   }
 
-  type = "Opaque"
-
   lifecycle {
-    # Prevent replacement if the secret already exists from a prior bootstrap
     ignore_changes = [
       metadata[0].annotations,
       metadata[0].labels,
@@ -48,7 +53,7 @@ resource "flux_bootstrap_git" "this" {
 
   depends_on = [
     module.cluster,
-    kubernetes_secret.sops_age,
+    kubernetes_secret_v1.sops_age,
   ]
 
   cluster_domain     = var.flux_config.cluster_domain
