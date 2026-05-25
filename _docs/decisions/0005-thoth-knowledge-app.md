@@ -3,7 +3,7 @@
 - **Status:** **Descoped (2026-05-22)** — not building the full app. Scope reduced to utilities/scripts on top of existing infra; effort redirected to iterating and hardening what's already deployed. Original pre-decision design retained below as historical record.
 - **Date:** 2026-05-03 (drafted); descoped 2026-05-22
 - **Deciders:** fr3d
-- **Related:** [ADR-0004](0004-gpu-vfio-passthrough.md) (AI layer wants a GPU); retrospectives for the apps Thoth would replace — [journey.md](../journey.md#retired-apps).
+- **Related:** [ADR-0004](0004-gpu-vfio-passthrough.md) (AI layer wants a GPU); retrospectives for the apps Thoth would replace — [journey.md](../archive/journey.md#retired-apps).
 
 ## Update — 2026-05-22: Descoped
 

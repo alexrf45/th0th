@@ -76,4 +76,4 @@ These are the standing gaps — the lab targets prod-ready posture but hasn't cl
 
 ---
 
-For the live punch list of what's open right now, see the newest [review](../reviews/home-0ps-review-2026-05-20.md) and the [journey](../journey.md).
+For the live punch list of what's open right now, see the newest [review](../reviews/home-0ps-review-2026-05-25.md) and the [journey](../archive/journey.md).

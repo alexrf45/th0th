@@ -42,7 +42,13 @@ markdown_extensions:
   - toc:
       permalink: true
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        # Renders ```mermaid blocks as diagrams. Material auto-bundles
+        # mermaid.js when this fence is configured — no extra_javascript needed.
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
@@ -82,29 +88,41 @@ validation:
     not_found: warn
     anchors: warn
 
+# Reference-first taxonomy (wiki, not narrative). The Architecture section and
+# the expanded Network pages (topology, addressing, ingress, service catalog,
+# policy matrix) are added in sprints D2–D3 as their pages are created — nav
+# entries are only added once the target file exists (mkdocs --strict fails on
+# missing nav targets).
 nav:
   - Home: README.md
-  - Journey: journey.md
-  - Apps:
-      - Authentik (SSO): apps/authentik.md
-      - FreshRSS: apps/freshrss.md
-      - Homer: apps/homer.md
+  - Network:
+      - Networking: infra/networking.md
+      - DNS: infra/dns.md
   - Infrastructure:
       - Storage: infra/storage.md
       - Observability: infra/observability.md
-      - Networking: infra/networking.md
-      - DNS: infra/dns.md
       - Secrets & PKI: infra/secrets-pki.md
-  - Best Practices: guides/best-practices.md
+  - Applications:
+      - Authentik (SSO): apps/authentik.md
+      - FreshRSS: apps/freshrss.md
+      - Homer: apps/homer.md
   - Decisions:
       - "ADR-0001 · SSO with Authentik": decisions/0001-sso-authentik.md
       - "ADR-0002 · Object storage (R2)": decisions/0002-object-storage-r2.md
       - "ADR-0003 · CNPG local snapshots": decisions/0003-cnpg-local-snapshots.md
       - "ADR-0004 · GPU VFIO passthrough": decisions/0004-gpu-vfio-passthrough.md
       - "ADR-0005 · Thoth knowledge app": decisions/0005-thoth-knowledge-app.md
-  - Roadmap: roadmap.md
-  - Status: status.md
-  - Reviews:
-      - "2026-05-20": reviews/home-0ps-review-2026-05-20.md
-      - "2026-05-11": reviews/home-0ps-review-2026-05-11.md
-      - "2026-04-27": reviews/home-0ps-review-2026-04-27.md
+      - "ADR-0006 · Talos PVE module refactor": decisions/0006-talos-pve-module-refactor.md
+  - Operations:
+      - Best Practices: guides/best-practices.md
+      - Status: status.md
+      - Roadmap: roadmap.md
+      - Sprints:
+          - "Talos PVE module": talos-pve-module-sprints.md
+          - "docs-site wiki revamp": docs-site-wiki-revamp-sprint.md
+      - Reviews:
+          - "2026-05-25": reviews/home-0ps-review-2026-05-25.md
+          - "2026-05-22": reviews/home-0ps-review-2026-05-22.md
+          - "2026-05-20": reviews/home-0ps-review-2026-05-20.md
+          - "2026-05-11": reviews/home-0ps-review-2026-05-11.md
+          - "2026-04-27": reviews/home-0ps-review-2026-04-27.md
