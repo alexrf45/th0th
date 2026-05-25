@@ -95,7 +95,7 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 | -- | ---- | ------ | -------- | ----------- |
 | H-2 | Cilium NetworkPolicies | ✅ Live (authentik, freshrss, homer, docs-site; default-deny + app/CNPG allow) | `_lib/security/cilium-network-policies/` | Follow-up: tighten `world:443` egress to `toFQDNs` once L7 DNS policy is on. |
 | H-3 | Falco | ❌ Disabled — **top security item** | `_lib/controllers/kustomization.yaml` (`#  - ./falco`) + `_lib/security/kustomization.yaml` (`#- ./falco-rules`) | HR is wired (`_lib/controllers/falco/` has helmrelease/repo/namespace/kustomization); `falco-rules/` is still an empty stub. Decide CRD-ownership (Q1) — note `crds` layer + tailscale precedent now exists (`703e2a9`). Uncomment both, allow falcoctl egress past default-deny, verify `modern_ebpf` loads on Talos + ServiceMonitor scrapes. |
-| H-4 | ResourceQuotas + LimitRanges | 🟡 Partial — **freshrss live** | `_lib/applications/freshrss/base/{limitrange,resourcequota}.yaml` | Backfill **authentik** (no RQ/limits; CNPG pods unbounded), **homer**/**docs-site** (per-container limits but no ns RQ/LimitRange). Seed from `kube dev top pod -n <ns>`. |
+| ~~H-4~~ | ~~ResourceQuotas + LimitRanges~~ | ✅ **Done** 2026-05-25 (`f9bef38`) | `_lib/applications/{authentik,homer,docs-site}/base/{limitrange,resourcequota}.yaml` | RQ + LimitRange now on authentik, homer, docs-site (+ freshrss). authentik CNPG pods bounded via LimitRange defaults; server/worker via P-2. |
 | H-5 | Trivy operator | ❌ **Empty dir** | `_lib/security/trivy/` (no files) + `_lib/security/kustomization.yaml` (`#- ./trivy`) | Populate trivy-operator HR, wire reports → Prometheus/Grafana. Deprioritized below Falco. |
 
 ### Performance / capacity
@@ -103,8 +103,8 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 | ID | Item | Status | Next action |
 | -- | ---- | ------ | ----------- |
 | ~~P-1~~ | ~~apiserver scrape cardinality~~ | ✅ **Done** (`be19e56`) | `metricRelabelings` drop apiserver request/response buckets — `_lib/observability/kube-prometheus-stack/helmrelease.yaml:271`. |
-| P-2 | App resource requests/limits missing | 🟡 freshrss covered by LimitRange | Authentik server+worker still set none. Set explicit requests/limits or rely on a ns LimitRange once H-4 backfilled. |
-| P-3 | Kyverno mutation webhook on every pod CREATE | ⚠️ | `add-safe-to-evict`/`disable-service-links` match all Pods, single-replica admission. Scope to app namespaces and/or 2 admission replicas. `_lib/security/kyverno-policies/app-clusterpolicy.yaml`. |
+| ~~P-2~~ | ~~App resource requests/limits missing~~ | ✅ **Done** 2026-05-25 (`f9bef38`) | Authentik server (req 640Mi/lim 1Gi) + worker (req 512Mi/lim 1Gi) set explicitly in the HelmRelease, sized above observed 543Mi/463Mi. |
+| ~~P-3~~ | ~~Kyverno mutation webhook on every pod CREATE~~ | ✅ **Done** 2026-05-25 (`f9bef38`) | admissionController replicas 1→2 (HA) in `_lib/controllers/kyverno/helmrelease.yaml`. Policy breadth was already bounded by `resourceFiltersExcludeNamespaces`; `disable-service-links` already app-scoped; no autoscaler consumes `add-safe-to-evict` (left as-is). |
 | ~~P-4~~ | ~~Cilium agents OOMKilled (250Mi limit too low)~~ | ✅ **Done** 2026-05-25 (`04ca94c`) | 5/6 agents OOMKilled mid-rollout ~02:06 (Slack alert); steady state already hit 212Mi/250Mi with WireGuard + Hubble L7 + Envoy + Gateway API. Bumped to req 384Mi / limit 768Mi. Live DaemonSet patched + terraform parity at `terraform/modules/talos-pve-v3.1.0/cilium_config.tf`. Note: Cilium is a Talos inlineManifest (bootstrap-only) — the live patch is the running-cluster fix; terraform covers the next rebuild. |
 
 ### MEDIUM — resilience
