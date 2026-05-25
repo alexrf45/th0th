@@ -208,6 +208,8 @@ ephemeral **deferred**.
 > to k8s 1.35; pinned 1.18.0 only reached k8s 1.33). Since the module bootstraps cilium as the
 > CNI, the k8s version is gated by cilium support → 1.35 is the newest fully-supported target.
 
+> **Apply fix (2026-05-24):** `talos_machine_configuration` never pinned `kubernetes_version`, so the talos 0.11 provider defaulted it to 1.36.0 (rejected by Talos 1.12.8). Pinned both data sources to `var.cilium_config.kube_version` (talos.tf:21,173) — single source of truth for the k8s version.
+
 **Required follow-ups before apply (user):**
 - Update the live encrypted `terraform/dev/terraform.tfvars`: `talos.version = "v1.12.8"`,
   `cilium_config.kube_version = "1.35.0"`, `cilium_config.cilium_version = "1.19.4"` (SOPS
