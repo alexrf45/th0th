@@ -15,11 +15,11 @@ data "helm_template" "this" {
       resources = {
         limits = {
           cpu    = "1000m"
-          memory = "250Mi"
+          memory = "768Mi"
         }
         requests = {
           cpu    = "100m"
-          memory = "100Mi"
+          memory = "384Mi"
         }
       }
 
