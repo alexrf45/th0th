@@ -65,10 +65,29 @@ spec:
       metrics:
         serviceMonitor:
           enabled: false
+      # Sized above observed steady-state (~543Mi / 16m). Request reserves real
+      # usage so the pod isn't a node-pressure eviction target; limit gives
+      # headroom for blueprint/migration spikes. (P-2 / H-4)
+      resources:
+        requests:
+          cpu: 100m
+          memory: 640Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
     worker:
       replicas: 1
       autoscaling:
         enabled: false
+      # Sized above observed steady-state (~463Mi / 47m). The worker spikes
+      # during blueprint application and DB migrations. (P-2 / H-4)
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
     geoip:
       enabled: false
     postgresql:

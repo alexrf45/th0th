@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: docs-site
+  namespace: docs-site
+spec:
+  # Guardrail for a single tiny static nginx pod. Sized to allow a RollingUpdate
+  # surge to 2 pods (container request 5m/16Mi, limit 100m/64Mi) with headroom.
+  hard:
+    requests.cpu: 100m
+    requests.memory: 64Mi
+    limits.cpu: 500m
+    limits.memory: 256Mi

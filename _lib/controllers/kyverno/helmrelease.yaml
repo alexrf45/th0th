@@ -44,6 +44,11 @@ spec:
         - mariadb
         - redis
     admissionController:
+      # HA: 2 replicas so a single admission-controller pod failure (or its node
+      # draining) doesn't stall pod admission in the non-excluded (application)
+      # namespaces. Chart default is 1 (a SPOF on the mutating webhook path).
+      # The chart's soft podAntiAffinity spreads them across nodes. (P-3)
+      replicas: 2
       container:
         image:
           pullPolicy: Always

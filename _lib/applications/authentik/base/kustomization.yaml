@@ -6,3 +6,5 @@ resources:
   - external-secret-grafana-oidc.yaml
   - blueprint-grafana.yaml
   - httproute.yaml
+  - limitrange.yaml
+  - resourcequota.yaml
