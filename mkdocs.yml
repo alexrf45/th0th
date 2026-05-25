@@ -113,6 +113,7 @@ nav:
       - "ADR-0004 · GPU VFIO passthrough": decisions/0004-gpu-vfio-passthrough.md
       - "ADR-0005 · Thoth knowledge app": decisions/0005-thoth-knowledge-app.md
       - "ADR-0006 · Talos PVE module refactor": decisions/0006-talos-pve-module-refactor.md
+      - "ADR-0007 · Service status engine (Gatus)": decisions/0007-service-status-engine.md
   - Operations:
       - Best Practices: guides/best-practices.md
       - Status: status.md
@@ -120,6 +121,7 @@ nav:
       - Sprints:
           - "Talos PVE module": talos-pve-module-sprints.md
           - "docs-site wiki revamp": docs-site-wiki-revamp-sprint.md
+          - "Service status (Gatus)": service-status-sprint.md
       - Reviews:
           - "2026-05-25": reviews/home-0ps-review-2026-05-25.md
           - "2026-05-22": reviews/home-0ps-review-2026-05-22.md
