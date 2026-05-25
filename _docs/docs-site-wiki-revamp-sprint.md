@@ -110,6 +110,7 @@ Effort is rough; cut at natural stopping points. Each sprint ends with a green
 | D4-2 | `platform/security.md` — Kyverno ClusterPolicies + mutations, PSA per namespace; Falco/Trivy placeholders | `_lib/security/kyverno-policies/`, ns labels | Reflects live policy set |
 | D4-3 | Cross-linking + `--strict` link audit; ADRs ↔ reference pages "related" links | all | No broken links/anchors |
 | D4-4 | Visual polish — grid cards on Home, consistent admonitions, optional glossary | `_docs/`, `mkdocs.yml` | Cohesive look |
+| ~~D4-5~~ | ~~Revamp the Home system-context diagram~~ | ✅ **Done** 2026-05-25 | TB layout + grouped subgraphs (Source / Secrets / Cluster) + `classDef` layer colors aligned to the Material palette; `--strict` green. |
 
 ---
 

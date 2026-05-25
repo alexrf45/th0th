@@ -10,22 +10,46 @@ and where each component lives. For the rolling open-items list, see the newest
 ## System context
 
 ```mermaid
-flowchart LR
-    dev["Operator"] -->|git push| repo[("Git repo (dev branch)")]
-    repo -->|watches & reconciles| flux["Flux CD"]
-    flux -->|applies layered Kustomizations| cluster
+flowchart TB
+    operator["Operator"]
+    user["User"]
 
-    op["1Password"] --> connect["1P Connect"]
-    connect --> eso["External Secrets Operator"]
-    eso -->|injects Secrets| cluster
+    subgraph src["Source of truth"]
+        repo[("Git repo · dev branch")]
+    end
+
+    subgraph secrets["Secrets pipeline"]
+        op["1Password"]
+        connect["1P Connect"]
+        eso["External Secrets Operator"]
+    end
 
     subgraph cluster["Talos Kubernetes on Proxmox"]
         direction TB
-        controllers["Controllers"] --> networking["Networking / Cilium Gateway"]
-        networking --> applications["Applications"]
+        flux["Flux CD"]
+        controllers["Controllers"]
+        networking["Networking · Cilium Gateway"]
+        applications["Applications"]
+        flux -->|"applies layered Kustomizations"| controllers
+        controllers --> networking
+        networking --> applications
     end
 
-    user["User"] -->|"*.home-0ps.com"| networking
+    operator -->|"git push"| repo
+    repo -->|"watches & reconciles"| flux
+    op --> connect
+    connect --> eso
+    eso -->|"injects Secrets"| applications
+    user -->|"*.home-0ps.com"| networking
+
+    classDef actor fill:#fb8c00,stroke:#e65100,color:#fff
+    classDef source fill:#5e35b1,stroke:#311b92,color:#fff
+    classDef sec fill:#00897b,stroke:#004d40,color:#fff
+    classDef k8s fill:#3949ab,stroke:#1a237e,color:#fff
+    class operator,user actor
+    class repo source
+    class op,connect,eso sec
+    class flux,controllers,networking,applications k8s
 ```
 
 ## Reference map
