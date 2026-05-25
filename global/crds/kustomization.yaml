@@ -3,4 +3,5 @@ kind: Kustomization
 resources:
   - ./prometheus-operator-crds
   - ./trust-manager
+  - ./tailscale
   - crds-cnpg.yaml

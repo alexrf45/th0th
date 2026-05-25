@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: tailscale-operator
-      version: '1.x.x'
+      version: 1.98.3
       interval: 5m
       sourceRef:
         kind: HelmRepository
@@ -21,7 +21,9 @@ spec:
      # clientId: ""
      # clientSecret: ""
 
-    installCRDs: true
+    # CRDs are reconciled in the `crds` Flux Kustomization (global/crds/tailscale/),
+    # pinned to this chart version. See .claude/rules/crds.md.
+    installCRDs: false
 
     operatorConfig:
       defaultTags:
