@@ -12,9 +12,7 @@ spec:
     Allow rules for the CNPG-managed Postgres cluster backing authentik.
     Covers authentik app → primary on 5432, intra-cluster replication,
     Prometheus metrics scrape, DNS, and kube-apiserver egress (the
-    instance manager talks to it for leader election + status). Egress
-    to world:443 added so the Barman plugin can reach R2 for WAL archive
-    and backups.
+    instance manager talks to it for leader election + status).
   endpointSelector:
     matchLabels:
       k8s:io.kubernetes.pod.namespace: authentik
@@ -105,12 +103,5 @@ spec:
         - ports:
             - port: "6443"
               protocol: TCP
-            - port: "443"
-              protocol: TCP
-    # Barman plugin → Cloudflare R2 for WAL archive + base backups
-    - toEntities:
-        - world
-      toPorts:
-        - ports:
             - port: "443"
               protocol: TCP
