@@ -145,6 +145,8 @@ because it changes that choice; keep exact pins if strict reproducibility is pre
 
 ## Sprint plan (Option B)
 
+_Live status is tracked in [talos-pve-module-sprints.md](../talos-pve-module-sprints.md); this section holds the plan + rationale._
+
 _Progress: Sprints 1–4 done (2026-05-24). Sprint 4 decisions: Talos OS → **v1.12.8** (k8s
 1.35) + **cilium 1.19.4** (1.13/k8s-1.36 dropped — no stable cilium supports k8s 1.36),
 `config_patches` DRY'd via `local.machine_common`, UserVolumeConfig + ephemeral resources
