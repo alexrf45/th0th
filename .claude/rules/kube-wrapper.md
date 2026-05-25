@@ -20,7 +20,7 @@ Examples:
 - `kube dev -n freshrss rollout restart deploy/freshrss`
 - `k8sop dev flux reconcile source git flux-system` then `k8sop dev flux reconcile kustomization security` (see `--with-source` gotcha below)
 - `k8sop dev helm list -A`
-- `k8sop dev kustomize build _lib/applications/wallabag/overlays/dev`
+- `kube dev kustomize _lib/applications/freshrss/overlays/dev` (kubectl's built-in kustomize; standalone `kustomize` is not installed — see `kustomize.md`)
 
 **Never** invoke raw `kubectl …`, `flux …`, `helm …`, or `kustomize build …`
 against the cluster — those have no kubeconfig and will fail or target the
