@@ -70,6 +70,9 @@ spec:
               mountPath: /www/assets/config.yml
               subPath: config.yml
               readOnly: true
+            - name: theme
+              mountPath: /www/assets/themes
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /
@@ -90,3 +93,6 @@ spec:
             items:
               - key: config.yml
                 path: config.yml
+        - name: theme
+          configMap:
+            name: homer-theme

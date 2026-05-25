@@ -20,6 +20,11 @@ data:
     footer: false
     columns: "auto"
     connectivityCheck: true
+    # GitHub theme — variant file must precede the base. gh-auto follows the
+    # system light/dark setting (see homer-theme ConfigMap / kustomization).
+    stylesheet:
+      - "assets/themes/gh-auto.min.css"
+      - "assets/themes/gh-base.min.css"
     defaults:
       layout: columns
       colorTheme: auto
