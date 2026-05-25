@@ -105,6 +105,7 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 | ~~P-1~~ | ~~apiserver scrape cardinality~~ | ✅ **Done** (`be19e56`) | `metricRelabelings` drop apiserver request/response buckets — `_lib/observability/kube-prometheus-stack/helmrelease.yaml:271`. |
 | P-2 | App resource requests/limits missing | 🟡 freshrss covered by LimitRange | Authentik server+worker still set none. Set explicit requests/limits or rely on a ns LimitRange once H-4 backfilled. |
 | P-3 | Kyverno mutation webhook on every pod CREATE | ⚠️ | `add-safe-to-evict`/`disable-service-links` match all Pods, single-replica admission. Scope to app namespaces and/or 2 admission replicas. `_lib/security/kyverno-policies/app-clusterpolicy.yaml`. |
+| ~~P-4~~ | ~~Cilium agents OOMKilled (250Mi limit too low)~~ | ✅ **Done** 2026-05-25 (`04ca94c`) | 5/6 agents OOMKilled mid-rollout ~02:06 (Slack alert); steady state already hit 212Mi/250Mi with WireGuard + Hubble L7 + Envoy + Gateway API. Bumped to req 384Mi / limit 768Mi. Live DaemonSet patched + terraform parity at `terraform/modules/talos-pve-v3.1.0/cilium_config.tf`. Note: Cilium is a Talos inlineManifest (bootstrap-only) — the live patch is the running-cluster fix; terraform covers the next rebuild. |
 
 ### MEDIUM — resilience
 
