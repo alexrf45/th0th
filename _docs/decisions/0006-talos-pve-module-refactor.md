@@ -167,6 +167,13 @@ deferred. Sprint 5 deferred. **Re-validate with `terraform plan` before apply.**
   the caveat above; evaluate OS bump 1.10.6 → 1.11/1.13 (tfvars-level, recommend not force).
 - **Sprint 5 — GPU passthrough (future module version, deferred).** Optional per-node
   `hostpci`/VFIO; verify proxmox 0.107 `hostpci`/`pcie` support; gated by a variable.
+- **Sprint 6 — Node-label apply-ordering (deferred, investigate).** `kubernetes_labels.worker_role`
+  errors on the **initial** apply (kubeconfig/node not ready when labels run) but succeeds on
+  re-apply — and the failure blocks the rest of the deployment. This is finding #15 (provider
+  configured from `module.dev.*` outputs, in-module `kubernetes_labels`) materializing. Investigate
+  a real ordering fix: stronger `depends_on`/readiness wait, set node labels via the Talos
+  machine config (`machine.nodeLabels`) instead of a post-bootstrap `kubernetes_labels` resource,
+  or the two-stage apply from #15. Goal: clean first-apply, no manual retry.
 
 Structural items #14 (drop version-in-dirname), #15 (two-stage apply), #16 (staging/prod
 scaffolds) stay out of scope (Option C) — revisit in a follow-up ADR once B is proven.
