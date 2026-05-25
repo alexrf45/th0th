@@ -18,7 +18,7 @@ Examples:
 
 - `kube dev get pods -A`
 - `kube dev -n freshrss rollout restart deploy/freshrss`
-- `k8sop dev flux reconcile kustomization security --with-source`
+- `k8sop dev flux reconcile source git flux-system` then `k8sop dev flux reconcile kustomization security` (see `--with-source` gotcha below)
 - `k8sop dev helm list -A`
 - `k8sop dev kustomize build _lib/applications/wallabag/overlays/dev`
 
@@ -34,6 +34,22 @@ the user manages outside this wrapper, so leave them un-wrapped.
 **Common mistake:** `kube dev kubectl get nodes` — `kube` already implies
 `kubectl`. The duplicated tool name turns into a kubectl plugin lookup. Use
 `kube dev get nodes` or the explicit `k8sop dev kubectl get nodes`.
+
+**Gotcha — `flux ... --with-source` fails through the wrapper.** The wrapper
+feeds the kubeconfig via process substitution (`<(printenv KUBECONFIG_DATA)`),
+which is a single-use pipe. `--with-source` makes flux open the kubeconfig
+twice — once to reconcile the source, once for the kustomization. The first
+read drains the pipe, so the second falls back to the default `localhost:8080`
+and dies with `failed to get server groups: ... connect: connection refused`.
+Reconcile in two separate calls instead, each getting a fresh pipe:
+
+```
+k8sop dev flux reconcile source git flux-system
+k8sop dev flux reconcile kustomization <name>
+```
+
+The same single-use-pipe limit applies to any wrapped command that opens the
+kubeconfig more than once in a single invocation.
 
 Env → cluster mapping (from `_kubeop_cluster_for_env` in the wrapper):
 `dev → memphis`, `staging → staging`, `prod → prod`. The 1Password Secure
