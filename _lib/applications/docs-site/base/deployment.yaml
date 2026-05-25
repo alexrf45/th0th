@@ -33,7 +33,7 @@ spec:
         - name: docs-site
           # Digest-pinned (immutable). Renovate's kubernetes manager tracks the
           # dev-latest tag and opens a PR to bump this digest when CI rebuilds.
-          image: ghcr.io/alexrf45/home-0ps-docs:dev-latest@sha256:1b1a57c016d6ea94cdc32b83f5424ae6fb336624a6073fbaa042476ed5e4389b
+          image: ghcr.io/alexrf45/home-0ps-docs:dev-latest@sha256:f4d380c4fff142a0e2c8262fc217fa8d813b9fbb360fc0fddfc622d728bec64b
           imagePullPolicy: IfNotPresent
           securityContext:
             # runAsUser set explicitly: the Kyverno add-default-securitycontext
