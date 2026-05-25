@@ -65,5 +65,5 @@ DB + admin credentials come from one 1Password item `freshrss_dev` → `freshrss
 - **CNPG DB has no backup** (S-5) — resolved naturally by the [ADR-0003](../decisions/0003-cnpg-local-snapshots.md) migration to single-instance iSCSI + CSI VolumeSnapshots. Until then the feed DB is unprotected (largely reconstructable RSS state).
 - **No PodDisruptionBudget (R-1)** and **no `terminationGracePeriodSeconds` (R-7)** — add a PDB (`maxUnavailable: 1`) and 30–60s grace so the request finishes before SIGKILL. This is the first target of the resilience sprint.
 - **No namespace ResourceQuota/LimitRange (H-4).**
-- **Native OIDC not wired** — form-login today; the Authentik provider/application/entitlement pattern from [apps/authentik.md](authentik.md#wiring-an-oidc-consumer-grafana-pattern) applies (FreshRSS OIDC via `OIDC_*` env vars).
+- **Native OIDC not wired** — form-login today; the Authentik provider/application/entitlement pattern from [apps/authentik.md](authentik.md#wiring-an-oidc-consumer-grafana-blueprint) applies (FreshRSS OIDC via `OIDC_*` env vars).
 - `base/pvc.yaml` (`freshrss-data`, local-path 5Gi) is superseded by the overlay's iSCSI volume — candidate for cleanup.

@@ -2,7 +2,7 @@
 
 **Role:** Cluster-wide identity provider. Fronts apps with OIDC (native) or forward-auth (outposts).
 **Status:** Live on dev (`memphis`) since 2026-05-20. Internal-only at `dev.int.auth.home-0ps.com`.
-**Design rationale:** [ADR-0001](../decisions/0001-sso-authentik.md). Recovery: §[Recovery](#recovery-and-day-2). Consumer example: [Grafana OIDC](#wiring-an-oidc-consumer-grafana-pattern).
+**Design rationale:** [ADR-0001](../decisions/0001-sso-authentik.md). Recovery: §[Recovery](#recovery-and-day-2). Consumer example: [Grafana OIDC](#wiring-an-oidc-consumer-grafana-blueprint).
 
 ---
 

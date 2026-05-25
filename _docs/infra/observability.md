@@ -36,7 +36,7 @@ Loki runs on a dedicated Debian host (`192.168.20.87`) so log retention is decou
 
 ## Auth & alerting
 
-- **Grafana OIDC** via Authentik (`auth.generic_oauth`), roles from entitlements (Admins/Editors/Viewers), `grafana-oidc` ESO secret, local admin retained for break-glass. Setup: [apps/authentik.md](../apps/authentik.md#wiring-an-oidc-consumer-grafana-pattern).
+- **Grafana OIDC** via Authentik (`auth.generic_oauth`), roles from entitlements (Admins/Editors/Viewers), `grafana-oidc` ESO secret, local admin retained for break-glass. Setup: [apps/authentik.md](../apps/authentik.md#wiring-an-oidc-consumer-grafana-blueprint).
 - **Alertmanager → Slack** (`slack-critical`/`slack-warning` receivers, route tree, inhibit rules) + the chart's `defaultRules`.
 
 ## Scrape targets
