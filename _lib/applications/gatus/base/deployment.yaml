@@ -55,6 +55,15 @@ spec:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
+          env:
+            # Gatus's config.yaml references this as $${SLACK_WEBHOOK_URL}
+            # (the $$ escapes Flux's envsubst so the literal ${...} survives
+            # to Gatus's own env-var interpolation at runtime).
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: gatus-slack-webhook
+                  key: url
           ports:
             - name: http
               containerPort: 8080

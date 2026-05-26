@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: gatus
 resources:
   - namespace.yaml
+  - externalsecret.yaml
   - configmap.yaml
   - deployment.yaml
   - service.yaml

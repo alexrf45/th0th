@@ -20,10 +20,21 @@ data:
       title: "home-0ps · ${ENVIRONMENT} status"
       description: "Live status for home-0ps.com services."
       header: "home-0ps · ${ENVIRONMENT}"
+    alerting:
+      # $${SLACK_WEBHOOK_URL} escapes Flux envsubst so Gatus expands it from
+      # the SLACK_WEBHOOK_URL env (sourced from the gatus-slack-webhook
+      # Secret / 1Password item `metrics_webhook_dev`).
+      slack:
+        webhook-url: "$${SLACK_WEBHOOK_URL}"
+        default-alert:
+          failure-threshold: 3
+          success-threshold: 2
+          send-on-resolved: true
     endpoints:
       # Applications — probe the user-facing hostname (DNS + Cilium Gateway +
       # cert + backend). SSO-gated apps redirect to /authorize → 302; we accept
-      # anything < 400 as "service is up".
+      # anything < 400 as "service is up". `alerts: [- type: slack]` opts each
+      # endpoint into the alerting.slack defaults set above.
       - name: authentik
         group: applications
         url: https://${AUTHENTIK_SUBDOMAIN}.home-0ps.com
@@ -31,6 +42,8 @@ data:
         conditions:
           - "[STATUS] < 400"
           - "[RESPONSE_TIME] < 3000"
+        alerts:
+          - type: slack
       - name: grafana
         group: applications
         url: https://${GRAFANA_SUBDOMAIN}.home-0ps.com
@@ -38,6 +51,8 @@ data:
         conditions:
           - "[STATUS] < 400"
           - "[RESPONSE_TIME] < 3000"
+        alerts:
+          - type: slack
       - name: freshrss
         group: applications
         url: https://${FRESHRSS_SUBDOMAIN}.home-0ps.com
@@ -45,6 +60,8 @@ data:
         conditions:
           - "[STATUS] < 400"
           - "[RESPONSE_TIME] < 3000"
+        alerts:
+          - type: slack
       - name: homer
         group: applications
         url: https://${HOMER_SUBDOMAIN}.home-0ps.com
@@ -52,6 +69,8 @@ data:
         conditions:
           - "[STATUS] < 400"
           - "[RESPONSE_TIME] < 2000"
+        alerts:
+          - type: slack
       # Infrastructure — off-cluster, self-signed certs (insecure: true).
       - name: TrueNAS
         group: infrastructure
@@ -62,6 +81,8 @@ data:
         conditions:
           - "[STATUS] < 500"
           - "[RESPONSE_TIME] < 3000"
+        alerts:
+          - type: slack
       - name: UniFi
         group: infrastructure
         url: https://${INTERNAL_DNS_RESOLVER}
@@ -71,3 +92,5 @@ data:
         conditions:
           - "[STATUS] < 500"
           - "[RESPONSE_TIME] < 3000"
+        alerts:
+          - type: slack
