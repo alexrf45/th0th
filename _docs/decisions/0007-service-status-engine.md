@@ -50,10 +50,14 @@ service status engine.
   pattern), explicit container resources, a **ServiceMonitor**, and a **CCNP**
   (default-deny + `reserved:ingress` for the gateway + egress to probed targets
   and DNS).
-- **Public exposure needs a Cloudflare Tunnel, which does not exist in this repo
-  yet** (today: Tailscale + Cilium Gateway). Standing up `cloudflared` is a
-  prerequisite for the public board and is net-new exposure infrastructure
-  (sprint G0) — it may warrant its own ADR if it grows.
+- **Public exposure needs a Cloudflare Tunnel** (today: Tailscale + Cilium
+  Gateway). G0 stands one up: **Terraform-managed** in its own state
+  (`terraform/cloudflare-tunnel/`, remotely-managed/token-based), which also
+  writes the connector token into 1Password (`cf_tunnel_home-0ps.com`) for the
+  cluster ExternalSecret to ingest. cloudflared runs in-cluster
+  (`_lib/networking/cloudflared/`). Requires a new account-scoped Cloudflare API
+  token (Tunnel: Edit) for Terraform — separate from the DNS-01 token. Net-new
+  exposure infra; may warrant its own ADR if it grows.
 - **History persistence is a sub-decision:** start memory-only (simplest) or
   SQLite-on-PVC; add Postgres (CNPG) later if durable long-term history matters.
 - Gatus's endpoint list becomes a second description of "what services exist" —

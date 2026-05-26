@@ -34,11 +34,31 @@ cluster, don't guess.
 > Net-new exposure path — the repo has no `cloudflared` today. May deserve its
 > own ADR if it grows beyond Gatus.
 
-| ID | Task | Notes |
-| -- | ---- | ----- |
-| G0-1 | Design the tunnel: `cloudflared` Deployment in-cluster, tunnel token via 1Password → ESO, Cloudflare DNS CNAME to the tunnel | Decide namespace (`networking`?) + ingress rules |
-| G0-2 | Manifests: Deployment/HelmRelease + ExternalSecret (tunnel token) + namespace/PSA + resources + CCNP egress to Cloudflare edge | Token never inlined (rotatable) |
-| G0-3 | Verify: tunnel healthy, a test hostname routes end-to-end | `cloudflared tunnel info` / live curl |
+**Approach chosen:** **remotely-managed (token-based)** tunnel, **created and
+owned by Terraform** (`terraform/cloudflare-tunnel/`, its own S3 state so a
+cluster rebuild never destroys it). Terraform creates the tunnel
+(`config_src = "cloudflare"`), reads the connector token, and **writes it into
+the 1Password item** `cf_tunnel_home-0ps.com` (field `tunnel-token`). The cluster
+ExternalSecret ingests that item; cloudflared runs with the single `TUNNEL_TOKEN`.
+Public-hostname ingress is managed Cloudflare-side (added in G2 via
+`cloudflare_zero_trust_tunnel_cloudflared_config` + a DNS record) — no manual
+dashboard steps and no `config.yaml`.
+
+**Token needed:** a Cloudflare **API token** for Terraform — account-scoped
+**Cloudflare Tunnel: Edit** (+ **Zone: DNS: Edit** for the G2 DNS record),
+ideally an account-owned token. This is separate from the cert-manager DNS-01
+token (`cf_token_home-0ps.com`). 1Password writes use the existing service-account
+token (same one `terraform/dev` uses).
+
+| ID | Task | Status | Notes |
+| -- | ---- | ------ | ----- |
+| ~~G0-1~~ | ~~Design the tunnel~~ | ✅ Done | Token-based + Terraform-managed (own state) |
+| ~~G0-2~~ | ~~Cluster manifests: Deployment + ExternalSecret + namespace/PSA + RQ/LimitRange~~ | ✅ Done | `_lib/networking/cloudflared/`; cloudflared `2026.5.1`, 2 replicas (HA), metrics:2000, RO-rootfs/nonroot. Token via ESO from `cf_tunnel_home-0ps.com` → `tunnel-token` |
+| ~~G0-3~~ | ~~Terraform: tunnel + token data source + onepassword_item~~ | ✅ Done | `terraform/cloudflare-tunnel/` (cloudflare 5.19.1, onepassword 3.3.1); `fmt`+`validate` green |
+| G0-4 | Provide the Cloudflare API token + account ID + vault ID, then `terraform apply` (creates tunnel + 1P item) | ⏳ user | Account-scoped Tunnel:Edit token; populate tfvars (SOPS) or `op` inject |
+| G0-5 | Deploy cluster manifests + verify: ESO syncs the secret, both connectors register, tunnel "Healthy" | ⏳ | `kube dev -n cloudflared get pods`; Cloudflare shows 2 connectors |
+| G0-6 | **Hardening (deferred):** CCNP `cloudflared-default-deny` + `cloudflared-allow` — egress: DNS (kube-dns 53), Cloudflare edge `world` on **7844 UDP+TCP** and **443 TCP**; ingress on 2000 from `host`/`remote-node` (probes) + Prometheus. Deferred so the first connect isn't blocked by a wrong egress rule | ❌ | `_lib/security/cilium-network-policies/cloudflared-*` |
+| G0-7 | **Observability (deferred):** metrics `Service` + `ServiceMonitor` scraping `/metrics` on 2000 | ❌ | Confirm the kube-prometheus-stack serviceMonitor selector label |
 
 ## Sprint G1 — Deploy Gatus (internal)
 
