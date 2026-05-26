@@ -1,0 +1,80 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gatus-config
+  namespace: gatus
+  labels:
+    app.kubernetes.io/name: gatus
+    app.kubernetes.io/instance: gatus-${ENVIRONMENT}
+data:
+  # Mounted at /config/config.yaml. Gatus watches this file and reloads on
+  # change, so a Flux reconcile of an edit propagates to the running pod
+  # without a rollout (kubelet refresh, ~60s).
+  # Flux postBuild substitutes ${...} from cluster-config at reconcile.
+  config.yaml: |
+    metrics: true
+    storage:
+      type: memory
+    ui:
+      title: "home-0ps · ${ENVIRONMENT} status"
+      description: "Live status for home-0ps.com services."
+      header: "home-0ps · ${ENVIRONMENT}"
+    endpoints:
+      # Applications — probe the user-facing hostname (DNS + Cilium Gateway +
+      # cert + backend). SSO-gated apps redirect to /authorize → 302; we accept
+      # anything < 400 as "service is up".
+      - name: authentik
+        group: applications
+        url: https://${AUTHENTIK_SUBDOMAIN}.home-0ps.com
+        interval: 30s
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+      - name: grafana
+        group: applications
+        url: https://${GRAFANA_SUBDOMAIN}.home-0ps.com
+        interval: 30s
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+      - name: freshrss
+        group: applications
+        url: https://${FRESHRSS_SUBDOMAIN}.home-0ps.com
+        interval: 30s
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+      - name: homer
+        group: applications
+        url: https://${HOMER_SUBDOMAIN}.home-0ps.com
+        interval: 30s
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 2000"
+      - name: docs
+        group: applications
+        url: https://${DOCS_SUBDOMAIN}.home-0ps.com
+        interval: 30s
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 2000"
+      # Infrastructure — off-cluster, self-signed certs (insecure: true).
+      - name: TrueNAS
+        group: infrastructure
+        url: https://${TRUENAS_HOST}
+        interval: 60s
+        client:
+          insecure: true
+        conditions:
+          - "[STATUS] < 500"
+          - "[RESPONSE_TIME] < 3000"
+      - name: UniFi
+        group: infrastructure
+        url: https://${INTERNAL_DNS_RESOLVER}
+        interval: 60s
+        client:
+          insecure: true
+        conditions:
+          - "[STATUS] < 500"
+          - "[RESPONSE_TIME] < 3000"

@@ -31,6 +31,8 @@ data:
   HOMER_SUBDOMAIN: "dev.int.homer"
   AUTHENTIK_SUBDOMAIN: "dev.int.auth"
   DOCS_SUBDOMAIN: "dev.int.docs"
+  GATUS_VERSION: "v5.36.0"
+  GATUS_SUBDOMAIN: "dev.int.status"
   #observability
   GRAFANA_SUBDOMAIN: "dev.int.grafana"
 ---

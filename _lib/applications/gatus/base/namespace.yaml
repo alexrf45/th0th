@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gatus
+  labels:
+    app: gatus
+    env: ${ENVIRONMENT}
+    owner: ${OWNER}
+    home-0ps.com/policy-target: application
+    pod-security.kubernetes.io/enforce: restricted

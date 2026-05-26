@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: gatus
+  namespace: gatus
+spec:
+  # Single-replica status engine (Recreate strategy → no rollout surge).
+  # Sized above the gatus container's 50m/64Mi request and 200m/128Mi limit.
+  hard:
+    requests.cpu: 100m
+    requests.memory: 128Mi
+    limits.cpu: 500m
+    limits.memory: 256Mi
