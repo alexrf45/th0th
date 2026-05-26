@@ -87,10 +87,16 @@ resource "cloudflare_ruleset" "public_status_rate_limit" {
       action      = "block"
       enabled     = true
       ratelimit = {
-        characteristics     = ["ip.src"]
-        period              = 60
-        requests_per_period = 60
-        mitigation_timeout  = 60
+        # Cloudflare requires cf.colo.id (counters live per-colo, not global).
+        # In practice per-IP-per-colo ≈ per-IP for any single client; a real
+        # client's traffic almost always lands in one colo.
+        characteristics = ["ip.src", "cf.colo.id"]
+        # period is plan-restricted (free plan: only 10s windows). 20 req/10s
+        # ≈ 2 req/sec average — fine for the Gatus page (static assets + the
+        # occasional API poll), tight enough to block scrapers.
+        period              = 10
+        requests_per_period = 20
+        mitigation_timeout  = 10
       }
     },
   ]
