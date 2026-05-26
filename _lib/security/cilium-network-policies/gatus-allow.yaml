@@ -69,13 +69,13 @@ spec:
         - ports:
             - port: "443"
               protocol: TCP
-    # In-cluster HTTPS probes via the Cilium Gateway. The Gateway LB IP
-    # DNATs (via eBPF kube-proxy-replacement) to cilium-envoy pods, and
-    # Cilium evaluates egress policy POST-DNAT against the backend pod
-    # identity — *not* `world`. Without this rule, gatus probes to
-    # https://*.home-0ps.com fail with success=false, errors=0, duration
-    # ~8ms (silent drop at policy time).
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: networking
-            k8s-app: cilium-envoy
+    # In-cluster HTTPS probes via the Cilium Gateway. The Cilium L7 envoy
+    # filter (cilium.l7policy) enforces egress policy at envoy against the
+    # BACKEND service identity at the BACKEND port (not envoy itself, and
+    # not on :443). For a status engine probing N services across N ports,
+    # enumerating each is brittle — `toEntities: [cluster]` (any port)
+    # covers all current and future Gateway-routed backends.
+    # Symptom if missing: envoy returns "HTTP/1.1 403 Forbidden / Access
+    # denied" (server: envoy) and gatus logs success=false, errors=0.
+    - toEntities:
+        - cluster
