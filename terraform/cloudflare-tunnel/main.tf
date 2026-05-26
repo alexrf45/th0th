@@ -67,3 +67,31 @@ resource "cloudflare_dns_record" "gatus_public" {
   proxied = true
   comment = "Gatus public status page (managed by terraform/cloudflare-tunnel)"
 }
+
+# N-4 / G2-2 — baseline public-surface hardening. A zone-level rate-limit
+# ruleset scoped to the public Gatus hostname. The status page is read-only
+# and infrequently-accessed, so 60 req/min per IP is generous for legitimate
+# traffic while shutting down scrape/abuse loops. WAF managed rules are a
+# follow-on if needed; this gives the immediate guardrail.
+resource "cloudflare_ruleset" "public_status_rate_limit" {
+  zone_id     = var.cloudflare_zone_id
+  name        = "Public status page rate limit"
+  kind        = "zone"
+  phase       = "http_ratelimit"
+  description = "Rate-limit the public Gatus status hostname (terraform/cloudflare-tunnel)."
+
+  rules = [
+    {
+      description = "Block IPs exceeding 60 req/min on dev-status"
+      expression  = "(http.host eq \"dev-status.home-0ps.com\")"
+      action      = "block"
+      enabled     = true
+      ratelimit = {
+        characteristics     = ["ip.src"]
+        period              = 60
+        requests_per_period = 60
+        mitigation_timeout  = 60
+      }
+    },
+  ]
+}

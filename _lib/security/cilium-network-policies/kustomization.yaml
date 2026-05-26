@@ -10,3 +10,7 @@ resources:
   - authentik-cnpg-allow.yaml
   - homer-default-deny.yaml
   - homer-allow.yaml
+  - gatus-default-deny.yaml
+  - gatus-allow.yaml
+  - cloudflared-default-deny.yaml
+  - cloudflared-allow.yaml

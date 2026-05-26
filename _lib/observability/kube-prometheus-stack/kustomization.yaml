@@ -8,3 +8,5 @@ resources:
   - httproute.yaml
   - prometheusrule-custom.yaml
   - servicemonitor-flux.yaml
+  - servicemonitor-gatus.yaml
+  - servicemonitor-cloudflared.yaml
