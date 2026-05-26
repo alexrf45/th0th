@@ -166,7 +166,7 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 | ~~Sprint D1 superseded plan~~ | `_docs/archive/docs-site-wiki-revamp-sprint.md` | ✅ Archived. |
 | ~~docs-site wiki-only files~~ | `_docs/status.md`, `_docs/assets/js/status.js`, `_docs/roadmap.md` | ✅ Removed. |
 | ~~gatus-allow description block~~ | `_lib/security/cilium-network-policies/gatus-allow.yaml` | ✅ Refreshed (`e495dae`) to match actual rules post-L7-filter fix. |
-| CryptPad TrueNAS zvol | `dev-cryptpad-data-pvc` | ❓ **Still unverified — fifth review unchanged.** Confirm destroyed. |
+| ~~CryptPad TrueNAS zvol~~ | ~~`dev-cryptpad-data-pvc`~~ | ✅ Destroyed (confirmed 2026-05-26). |
 | Placeholder cluster | `_clusters/production/` | Leave until prod promotion. |
 | Stale intermediate cilium-envoy commit | `29521c8` (and its rule, since replaced) | ✅ Effectively a no-op; left as breadcrumb. |
 
