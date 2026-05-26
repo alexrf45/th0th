@@ -61,12 +61,21 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
-    # HTTPS to anywhere — the Cilium Gateway LB IP for *.home-0ps.com
-    # probes resolves outside cluster-pod identity (it's a LAN IP),
-    # and TrueNAS/UniFi are external. World on 443 covers both cleanly.
+    # External HTTPS probes — TrueNAS (192.168.20.106), UniFi (10.3.3.1).
+    # Both are unmanaged LAN IPs, so they fall under `world`.
     - toEntities:
         - world
       toPorts:
         - ports:
             - port: "443"
               protocol: TCP
+    # In-cluster HTTPS probes via the Cilium Gateway. The Gateway LB IP
+    # DNATs (via eBPF kube-proxy-replacement) to cilium-envoy pods, and
+    # Cilium evaluates egress policy POST-DNAT against the backend pod
+    # identity — *not* `world`. Without this rule, gatus probes to
+    # https://*.home-0ps.com fail with success=false, errors=0, duration
+    # ~8ms (silent drop at policy time).
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: networking
+            k8s-app: cilium-envoy
