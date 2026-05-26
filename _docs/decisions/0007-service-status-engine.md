@@ -3,22 +3,23 @@
 - **Status:** **Proposed** (2026-05-25)
 - **Date:** 2026-05-25
 - **Deciders:** fr3d
-- **Related:** [Status page](../status.md) (the page this replaces/feeds), [infra/observability.md](../infra/observability.md) (what's already scrapeable), [service-status sprint](../service-status-sprint.md) (delivery plan).
+- **Related:** [infra/observability.md](../infra/observability.md) (what's already scrapeable), [service-status sprint](../service-status-sprint.md) (delivery plan).
+- **Historical note:** Originally framed as "replace the browser-side probe in `status.md`". The docs-site (MkDocs wiki) was retired 2026-05-26 — Gatus is now the sole status surface (internal `dev.int.status.home-0ps.com`, public `dev-status.home-0ps.com`), and the rebuild-the-services-page sprint (G3) was dropped.
 
 ## Context
 
-The services page ([`status.md`](../status.md)) reports health two ways, both
-weak:
+At the time this ADR was authored, the docs-site (MkDocs wiki) carried a
+"services page" (`_docs/status.md` + `_docs/assets/js/status.js`) that reported
+health two ways, both weak:
 
-- A **browser-side `no-cors` probe** (`assets/js/status.js`) — runs in the
-  viewer's browser, so it reflects *the viewer's* reachability (only on-LAN where
-  `dev.int.*` resolves), can't read HTTP status, and has no history or uptime %.
-- A **hand-maintained Platform table** that drifts — it currently still claims
-  Talos `v1.13.0` while the live cluster is `v1.12.8`.
+- A **browser-side `no-cors` probe** — runs in the viewer's browser, so it
+  reflects *the viewer's* reachability (only on-LAN where `dev.int.*` resolves),
+  can't read HTTP status, and has no history or uptime %.
+- A **hand-maintained Platform table** that drifts (e.g., it claimed Talos
+  `v1.13.0` long after the cluster had rolled back to `v1.12.8`).
 
 We want server-side health checks of every service, uptime history / %, a real
-status page with a machine-readable API to embed in the docs, and a **public**
-status board.
+status page with a machine-readable API, and a **public** status board.
 
 ## Decision
 

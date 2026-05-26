@@ -52,13 +52,6 @@ data:
         conditions:
           - "[STATUS] < 400"
           - "[RESPONSE_TIME] < 2000"
-      - name: docs
-        group: applications
-        url: https://${DOCS_SUBDOMAIN}.home-0ps.com
-        interval: 30s
-        conditions:
-          - "[STATUS] < 400"
-          - "[RESPONSE_TIME] < 2000"
       # Infrastructure — off-cluster, self-signed certs (insecure: true).
       - name: TrueNAS
         group: infrastructure

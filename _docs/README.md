@@ -92,8 +92,7 @@ flowchart TB
     Architecture decision records, best practices, status, and reviews.
 
     [:octicons-arrow-right-24: Decisions](decisions/0001-sso-authentik.md) ·
-    [Best Practices](guides/best-practices.md) ·
-    [Status](status.md)
+    [Best Practices](guides/best-practices.md)
 
 </div>
 

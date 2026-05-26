@@ -1,25 +1,29 @@
 # Service Status (Gatus) — Sprint Plan
 
 > Created: 2026-05-25. Owner: alexrf45.
-> Goal: deploy **Gatus** as the service status engine and rebuild the services
-> page ([`status.md`](status.md)) to consume it — server-side health, uptime
-> history, and a public status board.
+> Goal: deploy **Gatus** as the service status engine — server-side health,
+> uptime history, internal + public status pages.
 > Decisions locked 2026-05-25 ([ADR-0007](decisions/0007-service-status-engine.md)):
 > Gatus; exposed **internal + public** (Cloudflare Tunnel); plan tracked here.
+> Updated 2026-05-26: docs-site (MkDocs wiki) retired; **G3 (rebuild
+> `_docs/status.md`) dropped** — Gatus is the sole status surface.
 
 ## Why
 
-Today's services page probes from the **viewer's browser** (`status.js`) — on-LAN
-only, no HTTP status, no uptime history — and a **hand-maintained Platform table**
-that drifts (still says Talos `v1.13.0` vs live `v1.12.8`). The page itself
-already proposes Gatus as the fix. This sprint builds it.
+The old services page (`_docs/status.md`, now removed with the docs-site) probed
+from the **viewer's browser** — on-LAN only, no HTTP status, no uptime history —
+plus a **hand-maintained Platform table** that drifted (claimed Talos `v1.13.0`
+vs live `v1.12.8`). It already proposed Gatus as the fix; this sprint builds it
+and ships it as a first-class app.
 
 ## Scope
 
-- **In:** Gatus app (GitOps), internal + public exposure, status.md rebuilt to
-  consume Gatus, Homer tile, alerting.
-- **Prerequisite (net-new):** a Cloudflare Tunnel — none exists yet (G0).
-- **Out:** replacing Grafana/Prometheus (Gatus complements, not replaces them).
+- **In:** Gatus app (GitOps), internal exposure (Cilium Gateway) + public
+  exposure (Cloudflare Tunnel), Homer tile, alerting (follow-up).
+- **Prerequisite (G0):** a Cloudflare Tunnel — net-new infra, stood up via
+  Terraform in `terraform/cloudflare-tunnel/`.
+- **Out:** replacing Grafana/Prometheus (Gatus complements, not replaces them);
+  rebuilding `_docs/status.md` (the docs-site is gone).
 
 **Guardrails to honor** (established patterns): RQ + LimitRange per namespace
 (H-4); explicit container resources; explicit `runAsUser` (Kyverno mutation
@@ -78,22 +82,25 @@ history is lost on restart; upgrade path noted below), Recreate rollout.
 | G1-8 | **ServiceMonitor (deferred):** scrape `/metrics` on 8080 | ❌ | Confirm kube-prometheus-stack serviceMonitor selector label |
 | G1-9 | Deploy + verify: probes show 🟢 for the 5 apps + TrueNAS + UniFi | ⏳ | `kube dev -n gatus get pods`; UI at `dev.int.status.home-0ps.com` |
 
-## Sprint G2 — Public status board (depends on G0)
+## Sprint G2 — Public status board
 
-| ID | Task | Notes |
-| -- | ---- | ----- |
-| G2-1 | Route the Gatus status page through the Cloudflare Tunnel (e.g. `status.home-0ps.com`) | Depends on G0 |
-| G2-2 | Harden the public surface — read-only page, no admin/config endpoints exposed, rate limiting + security headers | Ties to review item **O-5** (gateway hardening) |
-| G2-3 | Decide public scope — full internal view vs a public subset of endpoints | Privacy of internal topology |
+Public hostname **`dev-status.home-0ps.com`** routed through the Cloudflare
+Tunnel from G0; ingress rules + DNS record managed in
+`terraform/cloudflare-tunnel/`.
 
-## Sprint G3 — Rebuild the services page (`status.md`)
+| ID | Task | Status | Notes |
+| -- | ---- | ------ | ----- |
+| ~~G2-1~~ | ~~Route the Gatus status page through the Cloudflare Tunnel~~ | ✅ Done | Terraform: `cloudflare_zero_trust_tunnel_cloudflared_config` (ingress `dev-status.home-0ps.com` → `http://gatus.gatus.svc.cluster.local:8080`) + `cloudflare_dns_record` (CNAME, proxied). Run `terraform apply` after adding `cloudflare_zone_id` + extending the API token with `Zone:DNS:Edit` |
+| G2-2 | Harden the public surface — no admin/config endpoints exposed, rate limiting + security headers | ❌ | Ties to review item **O-5** (gateway hardening). Gatus UI is read-only; consider Cloudflare WAF rate limits on the public hostname |
+| ~~G2-3~~ | ~~Decide public scope~~ | ✅ Done | Full endpoint view (no public/internal split); revisit if topology exposure becomes a concern |
 
-| ID | Task | Files | Done when |
-| -- | ---- | ----- | --------- |
-| G3-1 | Replace the `no-cors` browser probe with a fetch of Gatus's JSON API (`/api/v1/endpoints/statuses`) rendered client-side, or iframe-embed the Gatus page | `_docs/status.md`, `_docs/assets/js/status.js` | Page shows real server-side health + uptime |
-| G3-2 | Make the Platform table accurate — embed Grafana panels (allow_embedding) or render at build time from Prometheus `up{}`/Flux; kill stale hand-maintained values | `status.md`, `main.py` (macros) | No stale data (fix Talos version) |
-| G3-3 | Cross-link — Homer tile for Gatus; keep Gatus endpoints ↔ docs service catalog (docs-site D2-4) consistent; link status ↔ Gatus ↔ Grafana | `_lib/applications/homer/base/configmap.yaml`, docs | Single source of truth for endpoints |
-| G3-4 | Alerting — Gatus → Slack (reuse the Alertmanager Slack pattern) or a Prometheus alert on Gatus metrics | gatus config / observability | Down service pages someone |
+## ~~Sprint G3 — Rebuild the services page (`status.md`)~~ — DROPPED (2026-05-26)
+
+The docs-site (MkDocs wiki) was retired in the same change that delivered G2 —
+`_docs/status.md` no longer exists. Gatus is the sole status surface now:
+internal at `dev.int.status.home-0ps.com`, public at `dev-status.home-0ps.com`.
+Cross-linking to Homer was kept; alerting (originally G3-4) remains a useful
+follow-up (Gatus → Slack, or a Prometheus alert on Gatus metrics).
 
 ---
 
@@ -104,14 +111,13 @@ history is lost on restart; upgrade path noted below), Recreate rollout.
 - **Public exposure scope + hardening** — what's shown publicly, and locking the
   surface down (no admin endpoints, headers, rate limits).
 - **Persistence** — memory vs SQLite-on-PVC vs Postgres for uptime history.
-- **Endpoint-list duplication** — Gatus config vs the docs service catalog
-  (D2-4); pick one source of truth, ideally derive from HTTPRoutes.
+- **Endpoint-list ↔ HTTPRoutes drift** — Gatus endpoints are hand-maintained;
+  consider deriving from live HTTPRoutes to avoid silent skew when apps are
+  added/renamed.
 
 ## Acceptance criteria
 
-- Gatus live (internal + public), probing all services server-side, `/metrics`
-  scraped, uptime history visible.
-- `status.md` reflects real health (no browser-only probe, no stale Platform
-  data); Homer links to it.
-- All guardrails met (RQ/LimitRange, CCNP, ServiceMonitor, PSA); `mkdocs build
-  --strict` green; Flux all-green.
+- Gatus live (internal **and** public), probing all services server-side,
+  `/metrics` scraped, uptime history visible.
+- Homer tiles the Gatus URL.
+- All guardrails met (RQ/LimitRange, CCNP, ServiceMonitor, PSA); Flux all-green.
