@@ -34,3 +34,36 @@ resource "onepassword_item" "cf_tunnel" {
     }
   }
 }
+
+# G2 — public ingress for the Gatus status page. Remotely-managed config is
+# pushed to Cloudflare; the cluster cloudflared connectors pick it up
+# automatically (no redeploy). Routes dev-status.home-0ps.com to the in-cluster
+# gatus service. Add more public hostnames by appending to the ingress list
+# (the trailing http_status:404 catch-all stays last).
+resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
+  account_id = var.cloudflare_account_id
+  tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.this.id
+
+  config = {
+    ingress = [
+      {
+        hostname = "dev-status.home-0ps.com"
+        service  = "http://gatus.gatus.svc.cluster.local:8080"
+      },
+      {
+        service = "http_status:404"
+      },
+    ]
+  }
+}
+
+# CNAME -> tunnel; orange-cloud (proxied) so the tunnel actually routes it.
+resource "cloudflare_dns_record" "gatus_public" {
+  zone_id = var.cloudflare_zone_id
+  name    = "dev-status.home-0ps.com"
+  type    = "CNAME"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.this.id}.cfargotunnel.com"
+  ttl     = 1 # 1 = automatic; required when proxied
+  proxied = true
+  comment = "Gatus public status page (managed by terraform/cloudflare-tunnel)"
+}

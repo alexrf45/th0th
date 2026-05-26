@@ -31,3 +31,8 @@ variable "tunnel_name" {
   type        = string
   default     = "home-0ps"
 }
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare zone ID for home-0ps.com (find it on the zone's Overview page in the Cloudflare dashboard)."
+  type        = string
+}
