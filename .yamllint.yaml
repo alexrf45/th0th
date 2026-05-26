@@ -33,3 +33,9 @@ ignore: |
   # SOPS-encrypted files emit 4-space indentation that trips the
   # indentation rule. They're never hand-edited; skip linting them.
   **/*.enc.yaml
+  # Upstream CRDs (descriptions exceed 300 chars) and the upstream
+  # snapshot-controller RBAC (sequence-indentation differs). Pinned to
+  # v8.2.1, not hand-edited.
+  global/crds/external-snapshotter/
+  _lib/storage/snapshot-controller/rbac-snapshot-controller.yaml
+  _lib/storage/snapshot-controller/setup-snapshot-controller.yaml

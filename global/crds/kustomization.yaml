@@ -4,4 +4,5 @@ resources:
   - ./prometheus-operator-crds
   - ./trust-manager
   - ./tailscale
+  - ./external-snapshotter
   - crds-cnpg.yaml

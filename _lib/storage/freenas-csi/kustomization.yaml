@@ -4,3 +4,4 @@ resources:
   - helmrepository.yaml
   - helmrelease.yaml
   - external-secret.yaml
+  - volumesnapshotclass.yaml

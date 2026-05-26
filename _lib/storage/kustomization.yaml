@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ./freenas-csi
   - ./local-path
+  - ./snapshot-controller
