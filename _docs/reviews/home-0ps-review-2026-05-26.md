@@ -137,6 +137,7 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 | O-9 | App-level dashboards/alerts | ❌ | Flip Authentik `serviceMonitor.enabled: true`; add freshrss/authentik/gatus/cloudflared dashboards (SMs are in place for the latter two as of `c739e8b`). |
 | ~~N-3~~ | ~~ServiceMonitors for gatus + cloudflared~~ | ✅ Done (`c739e8b`) | `_lib/observability/kube-prometheus-stack/servicemonitor-{gatus,cloudflared}.yaml` |
 | ~~N-5~~ | ~~Gatus → Slack alerting~~ | ✅ Done (`ed36234`) | Reuses 1Password `metrics_webhook_dev`; per-endpoint `alerts: [- type: slack]`, defaults 3/2 fail/recover. |
+| O-10 | **App-data dashboards in Grafana** (new) | ❌ Open | `_lib/observability/` (postgres-exporter HR or per-CNPG sidecar), Grafana dashboards | Surface app-internal stats as a "lab demonstrates value" piece: **freshrss** unread entries + favorites (from `entry` table; columns `is_read`, `is_favorite`), **authentik** login statistics (from `events_event`; filter on `action` IN login/login_failed), **Gatus** uptime history (the Gatus `/metrics` are already scraped via N-3 — just needs the dashboard). Approach: deploy `prometheus-community/postgres-exporter` against each CNPG with custom SQL queries → KPS scrape → Grafana panels. Watch the Cilium L7-filter lesson — postgres-exporter pods will need an egress allow to the target CNPG (port 5432). |
 
 ### Homer follow-ups
 
@@ -156,6 +157,7 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 | ~~S-3~~ | ~~Retire R2/S3 from CNPG path~~ | ✅ Done — barman-cloud gone | — | — |
 | S-4 | iscsi StorageClass reclaim default | ⚠️ `Delete` | `_clusters/dev/config/cluster-configs.yaml` (`RECLAIM_POLICY`) | Flip to `Retain`. |
 | S-5 | **No CNPG backups (both clusters)** | ⚠️ **Real gap — 4th review unchanged** | `_lib/applications/{authentik,freshrss}/overlays/dev/database.yaml` | Resolved by S-1 → S-2. Zero DB recovery capability today. |
+| S-6 | **"Last-resort" backup + restore tooling** (new) | ❌ Open | TBD — likely `_hack/scripts/` or a new `_lib/storage/db-rescue/` | Sits alongside the volumeSnapshot path (S-2) as a safety net for snapshot/restore failures. (1) A script that uses `pg_dump` (logical) or `pg_basebackup` (physical) against each CNPG primary, writes to off-cluster storage (TrueNAS dataset). (2) A documented restore procedure that bootstraps a fresh CNPG cluster from that dump (CNPG `bootstrap.recovery.source` against a pg_basebackup dir, or `bootstrap.initdb.import` against a logical dump). Goal: a working "rip cord" the user can run even if S-1/S-2 are unhealthy. |
 
 ### Hygiene / cleanup
 
@@ -212,9 +214,9 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 
 In order, cut at natural stopping points:
 
-1. **Storage S-tier — S-1 → S-2** (FOURTH cycle as recommended #1; the gap is now starting to feel structural). External-snapshotter + snapshot-controller + `VolumeSnapshotClass` (S-1), verify a manual snapshot, then convert one CNPG cluster to static zvol PV + `ScheduledBackup`/volumeSnapshot (S-2). Add the O-7 "no-backup / snapshot-age" alert alongside.
-2. **H-3 Falco** — long-standing top security item. CRD-ownership precedent exists; concrete and contained.
-3. **O-9 / app dashboards + Authentik SM** — light follow-on now that gatus + cloudflared SMs are in place.
+1. **Storage S-tier — S-1 → S-2 + S-6** (FOURTH cycle as recommended #1; the gap is now starting to feel structural). External-snapshotter + snapshot-controller + `VolumeSnapshotClass` (S-1), verify a manual snapshot, then convert one CNPG cluster to static zvol PV + `ScheduledBackup`/volumeSnapshot (S-2). Add the O-7 "no-backup / snapshot-age" alert alongside. **Also includes S-6 — last-resort backup/restore scripts** (`pg_dump` / `pg_basebackup` off-cluster + a documented `bootstrap.recovery` restore path) as the safety net underneath the volumeSnapshot path.
+2. **O-9 + O-10 — app dashboards** (small, ships engagement signal): flip Authentik `serviceMonitor.enabled: true`; deploy `postgres-exporter` per CNPG with custom queries; build Grafana panels for **freshrss** unread/favorites, **authentik** login stats, and **Gatus** uptime history (the metrics scrape from N-3 is already feeding Prometheus).
+3. **H-3 Falco** — long-standing top security item. CRD-ownership precedent exists; concrete and contained.
 4. **S-4 + I-1 + TF verify** — flip iscsi reclaim to `Retain`; revisit the Talos v1.12.8 pin; verify R1/R2 module collapse.
 5. **O-5/O-6 + WAF managed rules** — gateway hardening + posture scans + public-surface WAF managed rules.
 
