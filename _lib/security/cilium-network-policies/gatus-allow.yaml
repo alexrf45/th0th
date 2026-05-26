@@ -9,13 +9,15 @@ metadata:
 spec:
   description: |
     Allow rules for the Gatus status engine.
-    Ingress: Cilium Gateway (reserved:ingress) + kubelet probes (host/
-    remote-node) + Prometheus scrape (monitoring ns) on :8080.
-    Egress: DNS + HTTPS to world — Gatus probes services via their
-    *.home-0ps.com hostnames (resolved through the CoreDNS split-horizon
-    forward to UniFi, which returns the Cilium Gateway LB IP) and
-    off-cluster targets (TrueNAS 192.168.20.106, UniFi 10.3.3.1). All
-    probe targets are reached over :443.
+    Ingress: Cilium Gateway (reserved:ingress) for the internal HTTPRoute,
+    cloudflared (the public dev-status path, plain pod-to-pod), kubelet
+    probes (host/remote-node), and Prometheus scrape (monitoring ns) — all
+    on :8080.
+    Egress: DNS, world:443 for external probes (TrueNAS, UniFi), and
+    `cluster` (any port) for Gateway-routed in-cluster probes — the Cilium
+    L7 envoy filter enforces policy against the BACKEND identity at the
+    BACKEND port, so a narrower rule fails with "envoy 403 Access denied".
+    See per-rule comments below and the memory entry.
   endpointSelector:
     matchLabels:
       k8s:io.kubernetes.pod.namespace: gatus

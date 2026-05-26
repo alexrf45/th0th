@@ -4,9 +4,54 @@
 > Goal: deploy **Gatus** as the service status engine — server-side health,
 > uptime history, internal + public status pages.
 > Decisions locked 2026-05-25 ([ADR-0007](decisions/0007-service-status-engine.md)):
-> Gatus; exposed **internal + public** (Cloudflare Tunnel); plan tracked here.
-> Updated 2026-05-26: docs-site (MkDocs wiki) retired; **G3 (rebuild
-> `_docs/status.md`) dropped** — Gatus is the sole status surface.
+> Gatus; exposed **internal + public** (Cloudflare Tunnel).
+> **Status: ✅ COMPLETE (2026-05-26)** — see outcome summary below; G3 dropped
+> (docs-site retired the same session).
+
+## Sprint outcome (2026-05-26)
+
+**Shipped end-to-end in a ~30-hour window:**
+
+- **G0** — Cloudflare Tunnel stood up via Terraform (`terraform/cloudflare-tunnel/`,
+  own S3 state so it survives cluster rebuilds). Tunnel created with
+  `config_src = "cloudflare"`; connector token written to 1Password
+  (`cf_tunnel_home-0ps.com`/`tunnel-token`) directly by Terraform's
+  `onepassword_item` resource. In-cluster cloudflared 2026.5.1 (2 replicas,
+  HA, RO-rootfs nonroot 65532) reads the token via ESO. See [[cloudflare-tunnel-live]].
+- **G1** — Gatus 5.36.0 deployed at `_lib/applications/gatus/` (raw manifests,
+  matches homer/docs-site pattern). Memory storage; internal HTTPRoute at
+  `dev.int.status.home-0ps.com`. Probes 4 in-cluster apps (authentik, grafana,
+  freshrss, homer) + 2 infra (TrueNAS, UniFi `insecure: true`). Per-endpoint
+  alerts opt in via the shared Slack webhook (1Password `metrics_webhook_dev`,
+  reused with Alertmanager).
+- **G2** — Public ingress via Terraform (`cloudflare_zero_trust_tunnel_cloudflared_config`
+  + `cloudflare_dns_record`) at `dev-status.home-0ps.com`. Rate limit
+  via `cloudflare_ruleset` (free-plan-compatible: `period: 10`,
+  `requests_per_period: 20`, `["ip.src", "cf.colo.id"]`, action `block`).
+- **G3** — Dropped. The docs-site (MkDocs wiki) was retired in the same change
+  set; `_docs/status.md` no longer exists. Gatus is the sole status surface.
+- **Hardening pass** — CCNPs (`cloudflared-{default-deny,allow}`,
+  `gatus-{default-deny,allow}`), metrics Service for cloudflared,
+  ServiceMonitors for both, Slack alerting via Gatus. Homer gets a Gatus tile.
+
+**Two lessons fell out of the policy hardening** (both memorialized):
+
+1. **Cloudflared → backend is pod-to-pod, not `reserved:ingress`.** Symptom: 502
+   Bad Gateway + `dial tcp ...: i/o timeout` in cloudflared logs. Fix: backend's
+   CCNP needs `fromEndpoints` for the cloudflared ns + app, in addition to the
+   existing `reserved:ingress` rule for the Gateway path. See
+   [[cilium-cloudflared-ingress]].
+2. **Cilium Gateway egress is enforced at envoy's L7 filter against the BACKEND
+   identity at the BACKEND port** — not at envoy itself, not on `:443`. Symptom:
+   envoy 403 "Access denied" with no transport error and `~8ms` fast-failure
+   timing; external probes (LAN-IP `world`) keep working but Gateway-routed
+   probes fail. Fix for a probe-many use case: `toEntities: [cluster]` (any
+   port) on the source's egress. See [[cilium-gateway-egress-l7-filter]].
+
+**Deferred (carried into the lab review tracker, not blocking):** Gatus
+persistence upgrade (`memory` → SQLite-on-PVC or CNPG once S-tier lands);
+WAF managed rules + security headers on the public hostname; Authentik
+forward-auth outpost for SSO-fronted public services (Phase 4 — unblocked by G0).
 
 ## Why
 
