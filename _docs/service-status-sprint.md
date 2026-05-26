@@ -61,8 +61,8 @@ token (same one `terraform/dev` uses).
 | ~~G0-3~~ | ~~Terraform: tunnel + token data source + onepassword_item~~ | ✅ Done | `terraform/cloudflare-tunnel/` (cloudflare 5.19.1, onepassword 3.3.1); `fmt`+`validate` green |
 | ~~G0-4~~ | ~~`terraform apply` (creates tunnel + 1P item)~~ | ✅ Done | Tunnel + token in 1Password as `cf_tunnel_home-0ps.com` / `tunnel-token` |
 | ~~G0-5~~ | ~~Deploy cluster manifests + verify connectors register, tunnel "Healthy"~~ | ✅ Done 2026-05-25 | Both cloudflared connectors registered; tunnel Healthy in Cloudflare |
-| G0-6 | **Hardening (deferred):** CCNP `cloudflared-default-deny` + `cloudflared-allow` — egress: DNS (kube-dns 53), Cloudflare edge `world` on **7844 UDP+TCP** and **443 TCP**; ingress on 2000 from `host`/`remote-node` (probes) + Prometheus. Deferred so the first connect isn't blocked by a wrong egress rule | ❌ | `_lib/security/cilium-network-policies/cloudflared-*` |
-| G0-7 | **Observability (deferred):** metrics `Service` + `ServiceMonitor` scraping `/metrics` on 2000 | ❌ | Confirm the kube-prometheus-stack serviceMonitor selector label |
+| ~~G0-6~~ | ~~Hardening: cloudflared CCNPs~~ | ✅ Done 2026-05-26 | `_lib/security/cilium-network-policies/cloudflared-{default-deny,allow}.yaml`. Egress: kube-dns 53 + world:7844 UDP/TCP + world:443 TCP + gatus.gatus:8080 (tunnel backend). Ingress: host/remote-node + monitoring on :2000 |
+| ~~G0-7~~ | ~~Observability: metrics Service + ServiceMonitor~~ | ✅ Done 2026-05-26 | New `cloudflared-metrics` Service + `_lib/observability/kube-prometheus-stack/servicemonitor-cloudflared.yaml`. KPS Prometheus SM selectors are empty (cluster-wide), so no label required |
 
 ## Sprint G1 — Deploy Gatus (internal)
 
@@ -75,12 +75,13 @@ history is lost on restart; upgrade path noted below), Recreate rollout.
 | ~~G1-1~~ | ~~Scaffold `_lib/applications/gatus/{base,overlays/dev}`~~ | ✅ Done | namespace (PSA restricted, policy-target=application), Deployment (RO-rootfs, nonroot 1000), Service, ConfigMap, HTTPRoute, RQ + LimitRange |
 | ~~G1-2~~ | ~~Gatus config — endpoint groups~~ | ✅ Done | 5 apps (authentik, grafana, freshrss, homer, docs) probing the live `*.home-0ps.com` hostnames + 2 infra (TrueNAS, UniFi with `insecure: true`). Conditions: `[STATUS] < 400` / `[RESPONSE_TIME] < 3000`. 1P Connect deferred (easy add-on) |
 | ~~G1-3~~ | ~~Guardrails — RQ + LimitRange, explicit resources + `runAsUser`~~ | ✅ Done | `runAsUser: 1000` (Kyverno mutation gotcha) |
-| G1-4 | **CCNP (deferred):** default-deny + `reserved:ingress` (gateway) + egress to probed in-cluster services, DNS, and external targets (TrueNAS/UniFi/internet) | ❌ | Deferred so first probe-pass isn't blocked by a wrong egress rule (same pattern as cloudflared G0-6) |
+| ~~G1-4~~ | ~~Hardening: gatus CCNPs~~ | ✅ Done 2026-05-26 | `_lib/security/cilium-network-policies/gatus-{default-deny,allow}.yaml`. Egress: kube-dns 53 + world:443 (covers gateway LB IP + TrueNAS + UniFi probes). Ingress: reserved:ingress (gateway) + host/remote-node + monitoring on :8080 |
 | ~~G1-5~~ | ~~Persistence — start memory-only; document upgrade path~~ | ✅ Recorded | `storage.type: memory` for v1. Upgrade path: switch to `sqlite` on a `democratic-csi` PVC (small, cheap) or `postgres` against a new CNPG cluster once S-tier (S-1/S-2 in the lab review) lands |
 | ~~G1-6~~ | ~~Top-level Flux Kustomization + `GATUS_SUBDOMAIN` cluster-config var~~ | ✅ Done | `gatus` Kustomization (dependsOn dns/networking/security; mirrors docs-site). Added `GATUS_VERSION` + `GATUS_SUBDOMAIN: dev.int.status` to cluster-configs |
 | ~~G1-7~~ | ~~Internal HTTPRoute on the Cilium Gateway~~ | ✅ Done | `dev.int.status.home-0ps.com` → `gatus:8080` via `${GATEWAY_NAME}` (wildcard cert) |
-| G1-8 | **ServiceMonitor (deferred):** scrape `/metrics` on 8080 | ❌ | Confirm kube-prometheus-stack serviceMonitor selector label |
-| G1-9 | Deploy + verify: probes show 🟢 for the 5 apps + TrueNAS + UniFi | ⏳ | `kube dev -n gatus get pods`; UI at `dev.int.status.home-0ps.com` |
+| ~~G1-8~~ | ~~ServiceMonitor: scrape /metrics on :8080~~ | ✅ Done 2026-05-26 | `_lib/observability/kube-prometheus-stack/servicemonitor-gatus.yaml` |
+| ~~G1-9~~ | ~~Deploy + verify probes 🟢~~ | ✅ Done 2026-05-25 | 5 apps + 2 infra all green (`docs` endpoint was removed when docs-site retired 2026-05-26) |
+| ~~G1-10~~ | ~~Gatus → Slack alerting (was G3-4)~~ | ✅ Done 2026-05-26 | New `gatus-slack-webhook` ExternalSecret (reuses 1Password item `metrics_webhook_dev` → field `credential`). Configmap has `alerting.slack.webhook-url: $${SLACK_WEBHOOK_URL}` (escaped for Flux envsubst) + per-endpoint `alerts: [- type: slack]`. Defaults: 3 failures to fire, 2 successes to resolve, send-on-resolved=true |
 
 ## Sprint G2 — Public status board
 
@@ -90,8 +91,8 @@ Tunnel from G0; ingress rules + DNS record managed in
 
 | ID | Task | Status | Notes |
 | -- | ---- | ------ | ----- |
-| ~~G2-1~~ | ~~Route the Gatus status page through the Cloudflare Tunnel~~ | ✅ Done | Terraform: `cloudflare_zero_trust_tunnel_cloudflared_config` (ingress `dev-status.home-0ps.com` → `http://gatus.gatus.svc.cluster.local:8080`) + `cloudflare_dns_record` (CNAME, proxied). Run `terraform apply` after adding `cloudflare_zone_id` + extending the API token with `Zone:DNS:Edit` |
-| G2-2 | Harden the public surface — no admin/config endpoints exposed, rate limiting + security headers | ❌ | Ties to review item **O-5** (gateway hardening). Gatus UI is read-only; consider Cloudflare WAF rate limits on the public hostname |
+| ~~G2-1~~ | ~~Route the Gatus status page through the Cloudflare Tunnel~~ | ✅ Done | Terraform `cloudflare_zero_trust_tunnel_cloudflared_config` (ingress `dev-status.home-0ps.com` → `http://gatus.gatus.svc.cluster.local:8080`) + `cloudflare_dns_record` (CNAME, proxied) |
+| ~~G2-2~~ | ~~Harden the public surface — rate limit~~ | ✅ Done 2026-05-26 | `cloudflare_ruleset` (phase `http_ratelimit`, kind `zone`) — **60 req/min per IP** on `dev-status.home-0ps.com`, action `block`, 60s mitigation. WAF managed rules + security headers are a follow-on (O-5 superset). |
 | ~~G2-3~~ | ~~Decide public scope~~ | ✅ Done | Full endpoint view (no public/internal split); revisit if topology exposure becomes a concern |
 
 ## ~~Sprint G3 — Rebuild the services page (`status.md`)~~ — DROPPED (2026-05-26)
