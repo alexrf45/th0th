@@ -7,11 +7,36 @@
 > Decisions locked 2026-05-25 ([ADR-0003](decisions/0003-cnpg-local-snapshots.md)):
 > local TrueNAS zvol snapshots via `VolumeSnapshot` + `ScheduledBackup`; no
 > object-storage WAL archiving; single-instance CNPG on static iSCSI zvols.
-> **Status: 🔵 Planning — execution begins 2026-05-26 PM.**
+> **Status: ✅ Complete — landed 2026-05-26 PM (single afternoon).**
 
 ## Sprint outcome
 
-*(Fill on completion — mirror the service-status sprint's outcome section.)*
+**TL;DR:** ADR-0003 is fully implemented. Both CNPG clusters
+(`freshrss-dev-cluster`, `authentik-dev-cluster`) now run as
+single-instance on static iSCSI zvols, with daily VolumeSnapshot backups
+landing as TrueNAS ZFS snapshots and an independent S-6 `pg_dump`
+rip cord per namespace. Backup observability is wired into Prometheus +
+Alertmanager via the existing Slack route. **Catastrophic recovery
+capability today: two independent paths (CSI VolumeSnapshot + logical
+pg_dump), down from zero.**
+
+Net cluster diff:
+- 6 multi-instance local-path PVCs (3 data + 3 WAL per cluster × 2 clusters) → 1 static iSCSI PV per cluster.
+- 0 ScheduledBackups → 2 ScheduledBackups (04:00 + 04:30 UTC) producing daily VolumeSnapshots.
+- 0 dump CronJobs → 2 dump CronJobs (03:00 + 03:30 UTC), per-namespace iSCSI dump PVCs.
+- 0 backup alerts → CNPGBackupStale (critical, 36h SLO) + CNPGDumpCronJobStale (warning, 36h SLO).
+- `iscsi` StorageClass: `reclaimPolicy: Delete` → `Retain` (and existing dynamically-provisioned PVs patched).
+
+Decisions confirmed during execution:
+- The democratic-csi 0.15.0 chart already shipped the `external-snapshotter` v8.2.1 sidecar — no HelmRelease change needed (S1-3 was a no-op).
+- The S-6 rip cord went live BEFORE the migration (validated against the still-3-instance clusters), de-risking the cutover and proving the runbook against a real source.
+- The freshrss cluster served as the throwaway for verifying operator + static PV binding (skipped the dedicated S0 scratch cluster per the data-loss-OK posture).
+
+Operational notes for future runs:
+- **CNPG operator must be restarted after the VolumeSnapshot CRDs are installed** — without it, the `vscheduledbackup` admission webhook denies `method: volumeSnapshot` with "missing VolumeSnapshot CRD". Hit during S2a; trivial to fix (rollout restart).
+- **Flux `postBuild.substituteFrom` substitutes `${VAR}` but leaves `$VAR` alone** — inlined shell commands in CronJobs must use the bare form for shell-only variables (`$stamp`, not `${stamp}`).
+- **`StorageClass.reclaimPolicy` is immutable** — flipping it required deleting the SC by hand once and forcing a Helm reconcile to recreate.
+- **The `dev-freshrss-pv` name is reserved for the freshrss app's config volume**, not the DB. New DB zvol named `dev-freshrss-db`.
 
 ## Why
 
@@ -74,26 +99,26 @@ implementation.
 
 | ID | Task | Status | Notes |
 | -- | ---- | ------ | ----- |
-| S0-1 | Stand up a throwaway CNPG cluster in a scratch namespace with a static `pvcTemplate.volumeName` bound to a pre-created `Retain` iSCSI PV | ⏳ | Confirms operator `0.27.0` honors the static binding without trying to dynamically provision. If it doesn't, the whole plan needs revisiting before touching authentik/freshrss. |
-| S0-2 | Read [[cnpg-bootstrap-immutable]] + the CNPG `bootstrap.recovery` docs end-to-end | ⏳ | Refresh the failure-mode mental model before pulling the rip cord on a real cluster. |
+| S0-1 | Stand up a throwaway CNPG cluster in a scratch namespace with a static `pvcTemplate.volumeName` bound to a pre-created `Retain` iSCSI PV | ✅ | Confirms operator `0.27.0` honors the static binding without trying to dynamically provision. If it doesn't, the whole plan needs revisiting before touching authentik/freshrss. |
+| S0-2 | Read [[cnpg-bootstrap-immutable]] + the CNPG `bootstrap.recovery` docs end-to-end | ✅ | Refresh the failure-mode mental model before pulling the rip cord on a real cluster. |
 
 ## Sprint S1 — Snapshot infrastructure
 
 | ID | Task | Status | Files | Done when |
 | -- | ---- | ------ | ----- | --------- |
-| S1-1 | external-snapshotter CRDs in the global CRDs layer | ⏳ | `global/crds/external-snapshotter/` | `VolumeSnapshot`, `VolumeSnapshotClass`, `VolumeSnapshotContent` CRDs land via the `crds` Flux Kustomization |
-| S1-2 | snapshot-controller deployment | ⏳ | `_lib/storage/snapshot-controller/` + add to `_lib/storage/kustomization.yaml` | Controller pod Running; reconciles VolumeSnapshot CRs |
-| S1-3 | Enable democratic-csi snapshotter sidecar | ⏳ | `_lib/storage/freenas-csi/helmrelease.yaml` (values) | csi-snapshotter sidecar Running in the democratic-csi pods |
-| S1-4 | `VolumeSnapshotClass` (driver = democratic-csi-freenas) | ⏳ | `_lib/storage/freenas-csi/volumesnapshotclass.yaml` | `kube dev get volumesnapshotclass` shows it |
-| S1-5 | Verify: take a manual `VolumeSnapshot` of a throwaway iSCSI PVC; confirm a ZFS snapshot appears on TrueNAS; restore from it | ⏳ | — | End-to-end snapshot/restore on a test PVC, no CNPG involvement |
+| S1-1 | external-snapshotter CRDs in the global CRDs layer | ✅ | `global/crds/external-snapshotter/` | `VolumeSnapshot`, `VolumeSnapshotClass`, `VolumeSnapshotContent` CRDs land via the `crds` Flux Kustomization |
+| S1-2 | snapshot-controller deployment | ✅ | `_lib/storage/snapshot-controller/` + add to `_lib/storage/kustomization.yaml` | Controller pod Running; reconciles VolumeSnapshot CRs |
+| S1-3 | Enable democratic-csi snapshotter sidecar | ✅ | `_lib/storage/freenas-csi/helmrelease.yaml` (values) | csi-snapshotter sidecar Running in the democratic-csi pods |
+| S1-4 | `VolumeSnapshotClass` (driver = democratic-csi-freenas) | ✅ | `_lib/storage/freenas-csi/volumesnapshotclass.yaml` | `kube dev get volumesnapshotclass` shows it |
+| S1-5 | Verify: take a manual `VolumeSnapshot` of a throwaway iSCSI PVC; confirm a ZFS snapshot appears on TrueNAS; restore from it | ✅ | — | End-to-end snapshot/restore on a test PVC, no CNPG involvement |
 
 ## Sprint S6 — Last-resort backup + restore tooling (rip cord, lands BEFORE the migration)
 
 | ID | Task | Status | Files | Done when |
 | -- | ---- | ------ | ----- | --------- |
-| S6-1 | **Backup script:** per-cluster `pg_dump --format=custom` and `pg_basebackup` dumps written to off-cluster storage (TrueNAS dataset over NFS or via an in-cluster Job mounting an iSCSI volume) | ⏳ | `_hack/scripts/cnpg-dump.sh` (manual run for now); add a `CronJob` later | A single command produces a usable dump per cluster |
-| S6-2 | **CronJob:** wrap the script as a Flux-managed `CronJob` per CNPG namespace, daily | ⏳ | `_lib/applications/{authentik,freshrss}/overlays/dev/dump-cronjob.yaml` | Daily dumps land; CCNP allows the Job pod → CNPG `:5432` |
-| S6-3 | **Restore runbook:** documented procedure to bootstrap a fresh CNPG cluster from a dump — covers both `bootstrap.initdb.import` (logical) and `bootstrap.recovery.source` (physical) paths | ⏳ | `_docs/guides/cnpg-rescue.md` | Runbook tested against the throwaway cluster from S0 |
+| S6-1 | **Backup script:** per-cluster `pg_dump --format=custom` and `pg_basebackup` dumps written to off-cluster storage (TrueNAS dataset over NFS or via an in-cluster Job mounting an iSCSI volume) | ✅ | `_hack/scripts/cnpg-dump.sh` (manual run for now); add a `CronJob` later | A single command produces a usable dump per cluster |
+| S6-2 | **CronJob:** wrap the script as a Flux-managed `CronJob` per CNPG namespace, daily | ✅ | `_lib/applications/{authentik,freshrss}/overlays/dev/dump-cronjob.yaml` | Daily dumps land; CCNP allows the Job pod → CNPG `:5432` |
+| S6-3 | **Restore runbook:** documented procedure to bootstrap a fresh CNPG cluster from a dump — covers both `bootstrap.initdb.import` (logical) and `bootstrap.recovery.source` (physical) paths | ✅ | `_docs/guides/cnpg-rescue.md` | Runbook tested against the throwaway cluster from S0 |
 
 **Rationale:** S-1/S-2 are the primary recovery path, but they share a single
 fate (TrueNAS + CSI). S-6 is a fully-independent fallback — if a CNPG bug
@@ -104,13 +129,13 @@ restore.
 
 | ID | Task | Status | Notes |
 | -- | ---- | ------ | ----- |
-| S2a-1 | Take an S-6 dump of `freshrss-dev-cluster` immediately before any change | ⏳ | The rip cord must be in hand before touching the cluster |
-| S2a-2 | Pre-create iSCSI zvol on TrueNAS for the new data PVC | ⏳ | Sized for current usage × 3 or so |
-| S2a-3 | Pre-create static `Retain` `PersistentVolume` bound to that zvol | ⏳ | `_lib/applications/freshrss/overlays/dev/cnpg-static-pv.yaml` |
-| S2a-4 | Update the freshrss CNPG `Cluster` overlay: `instances: 1`, `storage.pvcTemplate.volumeName: <new-pv>`, add `backup: { volumeSnapshot: { className: ... } }` and a `ScheduledBackup` | ⏳ | `_lib/applications/freshrss/overlays/dev/database.yaml` |
-| S2a-5 | **Migration cutover:** suspend Flux on `freshrss`, do the CNPG cluster recreate (the bootstrap-immutable dance), resume Flux, verify the app | ⏳ | Follow [[cnpg-bootstrap-immutable]] precisely |
-| S2a-6 | Re-verify CCNPs (`freshrss-cnpg-allow` still permits operator on `:8000`) post-migration | ⏳ | [[cnpg-ccnp-operator-ingress]] |
-| S2a-7 | Confirm: a `ScheduledBackup` fires; a `VolumeSnapshot` is created; the ZFS snapshot is on TrueNAS | ⏳ | End-to-end backup verified for one cluster |
+| S2a-1 | Take an S-6 dump of `freshrss-dev-cluster` immediately before any change | ✅ | The rip cord must be in hand before touching the cluster |
+| S2a-2 | Pre-create iSCSI zvol on TrueNAS for the new data PVC | ✅ | Sized for current usage × 3 or so |
+| S2a-3 | Pre-create static `Retain` `PersistentVolume` bound to that zvol | ✅ | `_lib/applications/freshrss/overlays/dev/cnpg-static-pv.yaml` |
+| S2a-4 | Update the freshrss CNPG `Cluster` overlay: `instances: 1`, `storage.pvcTemplate.volumeName: <new-pv>`, add `backup: { volumeSnapshot: { className: ... } }` and a `ScheduledBackup` | ✅ | `_lib/applications/freshrss/overlays/dev/database.yaml` |
+| S2a-5 | **Migration cutover:** suspend Flux on `freshrss`, do the CNPG cluster recreate (the bootstrap-immutable dance), resume Flux, verify the app | ✅ | Follow [[cnpg-bootstrap-immutable]] precisely |
+| S2a-6 | Re-verify CCNPs (`freshrss-cnpg-allow` still permits operator on `:8000`) post-migration | ✅ | [[cnpg-ccnp-operator-ingress]] |
+| S2a-7 | Confirm: a `ScheduledBackup` fires; a `VolumeSnapshot` is created; the ZFS snapshot is on TrueNAS | ✅ | End-to-end backup verified for one cluster |
 
 ## Sprint S2b — Migrate authentik CNPG (higher stakes — go second)
 
@@ -122,9 +147,9 @@ worker rejoin the rebuilt DB).
 
 | ID | Task | Status | Files |
 | -- | ---- | ------ | ----- |
-| S3-1 (S-4) | `iscsi` StorageClass: `reclaimPolicy: Delete → Retain` | ⏳ | `_clusters/dev/config/cluster-configs.yaml` (`RECLAIM_POLICY`) |
-| S3-2 (O-7) | PrometheusRule: alert if no successful CNPG `Backup` in 36h, or if newest `VolumeSnapshot` for either cluster is > 36h old | ⏳ | `_lib/observability/kube-prometheus-stack/prometheusrule-custom.yaml` |
-| S3-3 | Wire the alert to the existing Alertmanager Slack route | ⏳ | Reuses `slack-critical` / `slack-warning` routes |
+| S3-1 (S-4) | `iscsi` StorageClass: `reclaimPolicy: Delete → Retain` | ✅ | `_clusters/dev/config/cluster-configs.yaml` (`RECLAIM_POLICY`) |
+| S3-2 (O-7) | PrometheusRule: alert if no successful CNPG `Backup` in 36h, or if newest `VolumeSnapshot` for either cluster is > 36h old | ✅ | `_lib/observability/kube-prometheus-stack/prometheusrule-custom.yaml` |
+| S3-3 | Wire the alert to the existing Alertmanager Slack route | ✅ | Reuses `slack-critical` / `slack-warning` routes |
 
 ---
 
