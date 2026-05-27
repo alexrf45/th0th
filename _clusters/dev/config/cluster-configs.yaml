@@ -16,7 +16,13 @@ data:
   DATASET_PARENT: "home-share/iscsi/k8s/dev/volumes"
   DATASET_SNAPSHOTS: "home-share/iscsi/k8s/dev/snapshots"
   STORAGE_CLASS_NAME: "iscsi"
-  RECLAIM_POLICY: "Delete"
+  # Retain so PVs survive a PVC delete — TrueNAS owns the data lifecycle.
+  # Static PVs in the lab (dev-*-db-pv, dev-freshrss-pv) are already
+  # Retain by manifest; this flip is for the dynamically-provisioned ones
+  # (e.g. dev-*-dumps-pvc). reclaimPolicy is immutable on a live SC, so
+  # the SC has to be deleted + recreated for the change to land — done
+  # by hand once after this flip.
+  RECLAIM_POLICY: "Retain"
   ALLOW_INSECURE: "true"
   GATEWAY_NAME: "dev-app-gateway"
   # LAN resolver CoreDNS forwards *.home-0ps.com to (split-horizon). Must match

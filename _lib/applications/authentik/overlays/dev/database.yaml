@@ -23,6 +23,8 @@ spec:
       "pgaudit.log_catalog": "off"
       "pgaudit.log_parameter": "on"
       "pgaudit.log_relation": "on"
+  monitoring:
+    enablePodMonitor: true
   bootstrap:
     initdb:
       database: authentik
