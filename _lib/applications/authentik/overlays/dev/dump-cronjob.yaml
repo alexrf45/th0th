@@ -85,7 +85,7 @@ spec:
                 - |
                   set -euo pipefail
                   stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-                  out="/backup/authentik-${stamp}.dump"
+                  out="/backup/authentik-$stamp.dump"
                   echo "[cnpg-dump] $PGHOST/$PGDATABASE -> $out"
                   pg_dump --format=custom --no-owner --no-acl --file="$out"
                   bytes="$(stat -c %s "$out")"
