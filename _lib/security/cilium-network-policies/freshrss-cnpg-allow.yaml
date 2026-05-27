@@ -27,6 +27,15 @@ spec:
         - ports:
             - port: "5432"
               protocol: TCP
+    # Daily pg_dump CronJob (S-6 rip cord) → primary on 5432
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: freshrss
+            app: cnpg-dump
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
     # Intra-cluster: streaming replication + instance-manager probes
     - fromEndpoints:
         - matchLabels:

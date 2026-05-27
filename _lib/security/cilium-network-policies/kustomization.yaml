@@ -5,9 +5,11 @@ resources:
   - freshrss-default-deny.yaml
   - freshrss-allow.yaml
   - freshrss-cnpg-allow.yaml
+  - freshrss-dump-allow.yaml
   - authentik-default-deny.yaml
   - authentik-allow.yaml
   - authentik-cnpg-allow.yaml
+  - authentik-dump-allow.yaml
   - homer-default-deny.yaml
   - homer-allow.yaml
   - gatus-default-deny.yaml
