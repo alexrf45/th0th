@@ -314,7 +314,7 @@ spec:
     - name: external-secrets-operator
     - name: secrets
     - name: security
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/applications/freshrss/overlays/dev
@@ -344,7 +344,7 @@ spec:
     - name: external-secrets-operator
     - name: secrets
     - name: security
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/applications/obsidian-livesync/overlays/dev

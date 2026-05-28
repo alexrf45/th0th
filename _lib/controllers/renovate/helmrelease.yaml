@@ -4,7 +4,7 @@ metadata:
   name: renovate
   namespace: flux-system
 spec:
-  interval: 5m
+  interval: 30m
   chart:
     spec:
       chart: renovate
@@ -13,7 +13,7 @@ spec:
         kind: HelmRepository
         name: renovate
         namespace: flux-system
-      interval: 1m
+      interval: 30m
   targetNamespace: renovate
   values:
     cronjob:

@@ -11,7 +11,7 @@ spec:
     spec:
       chart: tailscale-operator
       version: 1.98.3
-      interval: 5m
+      interval: 30m
       sourceRef:
         kind: HelmRepository
         name: tailscale-operator

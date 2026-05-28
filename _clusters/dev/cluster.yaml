@@ -5,7 +5,7 @@ metadata:
   name: cluster-config
   namespace: flux-system
 spec:
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   path: ./_clusters/dev/config
   prune: false
@@ -28,7 +28,7 @@ metadata:
 spec:
   dependsOn:
     - name: cluster-config
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 5m0s
   path: ./_lib/coredns
@@ -65,7 +65,7 @@ spec:
   dependsOn:
     - name: cluster-config
     - name: crds
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/controllers
@@ -91,7 +91,7 @@ metadata:
 spec:
   dependsOn:
     - name: controllers
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/pki
@@ -118,7 +118,7 @@ spec:
   dependsOn:
     - name: controllers
     - name: pki
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/controllers/external-secrets
@@ -144,7 +144,7 @@ metadata:
 spec:
   dependsOn:
     - name: external-secrets-operator
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/secrets
@@ -175,7 +175,7 @@ metadata:
 spec:
   dependsOn:
     - name: secrets
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/networking
@@ -201,7 +201,7 @@ metadata:
 spec:
   dependsOn:
     - name: secrets
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/dns
@@ -227,7 +227,7 @@ metadata:
 spec:
   dependsOn:
     - name: secrets
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/storage
@@ -255,7 +255,7 @@ spec:
     - name: storage
     - name: secrets
     - name: networking
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 15m
   path: ./_lib/observability
@@ -282,7 +282,7 @@ metadata:
 spec:
   dependsOn:
     - name: controllers
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/security
@@ -313,7 +313,7 @@ spec:
     - name: external-secrets-operator
     - name: secrets
     - name: security
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/applications/freshrss/overlays/dev
@@ -344,7 +344,7 @@ spec:
     - name: external-secrets-operator
     - name: secrets
     - name: security
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 10m0s
   path: ./_lib/applications/authentik/overlays/dev
@@ -371,7 +371,7 @@ spec:
     - name: dns
     - name: networking
     - name: security
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 5m0s
   path: ./_lib/applications/homer/overlays/dev
@@ -397,7 +397,7 @@ spec:
     - name: storage
     - name: external-secrets-operator
     - name: secrets
-  interval: 10m
+  interval: 30m
   retryInterval: 1m
   timeout: 5m0s
   path: ./_lib/applications/gatus/overlays/dev

@@ -15,7 +15,7 @@ spec:
         name: external-secrets
         namespace: flux-system
       version: 0.20.1
-  interval: 1m0s
+  interval: 30m
   releaseName: external-secrets
   targetNamespace: external-secrets
   values:
