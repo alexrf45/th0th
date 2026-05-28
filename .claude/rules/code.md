@@ -6,3 +6,7 @@ Before suggesting any fix, do this: (1) state the exact error/symptom, (2) ident
 
 - When a fix fails, re-diagnose the root cause before attempting another fix; avoid stacking speculative changes
 - For permission/init-container issues, enumerate ALL writable paths the app needs (run dirs, log dirs, cache dirs) in one pass
+
+## File Editing
+
+- Always Read a file before attempting to Edit it (Edit tool requires prior Read)
