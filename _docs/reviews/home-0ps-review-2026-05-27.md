@@ -3,6 +3,8 @@
 > Generated: 2026-05-27 (`/lab-review`). Supersedes `home-0ps-review-2026-05-26.md`.
 > Scope: Live `memphis` dev cluster at HEAD `d0f93cb` of `dev`.
 > Trigger: **Storage sprint landed end-to-end the same evening as the baseline** + a follow-on Grafana OIDC fix today. **9 commits since the baseline `e495dae`**; headline = **CNPG backups now exist** (the four-review-streak gap is closed) and **Grafana OIDC `sub_mode` is pinned to `user_email`** so DB restores no longer orphan user_auth links.
+>
+> **In-place update — 2026-05-28:** the two paired follow-ups from this review's *Suggested Next Sprint* both landed today. Commits `bcdefb6` (drill log) + `ed3d828` (Gatus N-6 postgres persistence). The CNPG restore drill exercised both rip cords end-to-end against `freshrss-dev-cluster` (source untouched, drill cluster torn down — 3 drill zvols hand-cleaned from TrueNAS); N-6 spun up `gatus-dev-cluster` as the third CNPG cluster, history now survives pod restarts. Closed items struck through below; Suggested Next Sprint reordered accordingly.
 
 ---
 
@@ -15,6 +17,10 @@ Today (2026-05-27) a one-commit follow-up (`d0f93cb`) pinned the Grafana OIDC pr
 Live state is healthy: **6 nodes Ready** (Talos `v1.12.8` / k8s `v1.35.0`, ~3d1h), **all 17 Flux Kustomizations Ready at `d0f93cb`** (no propagation cascade at survey time), **all 16 HelmReleases Ready**, no pods outside Running/Completed, 3 certs Ready (`wildcard-tls` on `letsencrypt-production`), both CNPG clusters 1/1 single-instance on static zvols, 4 VolumeSnapshots present (2 scheduled snaps ~23h old, 2 hand tests from sprint validation), 2 dump CronJobs scheduled.
 
 **No DB-backup gap remains.** The next clear sprint is **Falco (H-3)** — long-standing top security item, deferred ~5 cycles — or **app dashboards (O-9 + O-10)** if you want a visible engagement win.
+
+**2026-05-28 update — additional closures:**
+- ✅ **CNPG restore drill** — both rip cords validated end-to-end against `freshrss-dev-cluster` (Path A VolumeSnapshot clone via `bootstrap.recovery.volumeSnapshots` matched source row counts exactly; Path B `pg_restore --clean --if-exists` from S-6 dump restored the dump's captured state cleanly). **6 gotchas** memorialized in `_docs/guides/cnpg-rescue.md` (see "Drill log — 2026-05-28"). Drill zvols hand-cleaned from TrueNAS — no residue.
+- ✅ **N-6 Gatus persistence upgrade** — `gatus-dev-cluster` (third CNPG cluster) live on static iSCSI PV; gatus storage flipped memory→postgres; history persisted across a verified pod restart; on-demand VolumeSnapshot + pg_dump smoke both passed; Prometheus scraping the new podmonitor; existing `CNPGBackupStale`/`CNPGDumpCronJobStale` alerts auto-cover the new cluster.
 
 ---
 
@@ -100,7 +106,7 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 | ID | Item | Status | Next action |
 | -- | ---- | ------ | ----------- |
 | R-3 | HPA | ⏸️ Deferred | Stateful single-replica apps; no candidate. |
-| N-6 | **Gatus persistence upgrade path** (G1-5) | ⏸️ Memory-only for v1 | `_lib/applications/gatus/base/configmap.yaml` (`storage.type: memory`) | **Now achievable** — S-tier infra is in place. Switch to `sqlite` on a small iscsi PVC (cheap and good enough for a single Gatus replica), or `postgres` against a new CNPG cluster. History lost on restart today. |
+| ~~N-6~~ | ~~**Gatus persistence upgrade path** (G1-5)~~ | ✅ Done 2026-05-28 (`ed3d828`) | postgres-backed via new `gatus-dev-cluster` CNPG (single-instance, static iSCSI PV `dev-gatus-db-pv`, daily VolumeSnapshot + S-6 dump, PodMonitor scraped). Persistence verified across a `rollout restart`. |
 
 ### Observability follow-ups
 
@@ -156,7 +162,7 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 | Beelink S13 BIOS power-loss = "Power On" | ❓ Unverified | Pairs with Proxmox HA for power-blip recovery. |
 | system-upgrade-controller for Talos | ⏸️ Hack-only | `_hack/scripts/upgrade.sh`; not in Flux. |
 | SSO public exposure (Phase 4) | ⏸️ **Unblocked** — Cloudflare Tunnel in place | Remaining: Authentik forward-auth outpost, Cloudflare WAF/access rules. |
-| **CNPG restore drill** (new) | ❌ Untested | `_docs/` rescue runbook + S-6 dumps exist on paper. Schedule a one-shot restore test (clone the freshrss snapshot into a scratch cluster, bootstrap from `pg_dump`, verify rowcount parity) so we know the rip cord actually fires. |
+| ~~**CNPG restore drill**~~ (new) | ✅ Done 2026-05-28 (`bcdefb6`) | Both rip cords validated against `freshrss-dev-cluster`. Path A (VolumeSnapshot clone via `bootstrap.recovery.volumeSnapshots`) — row counts matched source exactly. Path B (`pg_restore --clean --if-exists` from S-6 dump) — restored dump's captured state cleanly. **6 gotchas memorialized** in `_docs/guides/cnpg-rescue.md` "Drill log — 2026-05-28" (RESTORESIZE overhead, `--clean --if-exists` requirement, `postgresql.parameters` non-carry, CCNP cluster-name pinning, `pg_restore` exit-code semantics, TrueNAS-side manual cleanup). Drill zvols cleaned from TrueNAS. |
 
 ---
 
@@ -179,11 +185,12 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 In order, cut at natural stopping points:
 
 1. **H-3 Falco** — top security item, deferred ~5 cycles. CRD-ownership precedent exists (external-snapshotter, prometheus-operator-crds, cnpg-crds all live in `global/crds/`). Uncomment in `_lib/controllers/kustomization.yaml` + `_lib/security/kustomization.yaml`, verify `modern_ebpf` on Talos, populate `falco-rules/`, wire ServiceMonitor.
-2. **O-9 + O-10 app dashboards** — visible "lab demonstrates value" win, now that CNPG is stable. postgres-exporter per CNPG with custom queries; Grafana panels for freshrss unread/favorites + authentik logins + Gatus uptime.
-3. **N-6 Gatus persistence upgrade** — S-tier is done, so this is now small. Switch to `sqlite` on a 1Gi iscsi PVC, or `postgres` against a new CNPG cluster if you want exporter coverage as part of #2.
+2. **O-9 + O-10 app dashboards** — visible "lab demonstrates value" win, now that CNPG is stable. postgres-exporter per CNPG with custom queries; Grafana panels for freshrss unread/favorites + authentik logins + Gatus uptime (the gatus DB now exists, so panels can finally hit real history data). Three CNPG clusters means three exporter HRs; consider a shared `cnpg-postgres-exporter` chart pattern.
+3. ~~**N-6 Gatus persistence upgrade**~~ ✅ Done 2026-05-28 (`ed3d828`).
 4. **O-7 remaining alerts** — cert expiry, PVC near-full, Gatus endpoint-down via metrics. Half-day task on top of the existing prometheusrule-custom.yaml.
-5. **CNPG restore drill** (new) — schedule a one-shot test now, before the rip cord is needed in anger.
-6. **S-4 + I-1 + TF verify** — Talos pin revisit, R1/R2 module collapse verification, R5 memory typo.
+5. ~~**CNPG restore drill**~~ ✅ Done 2026-05-28 (`bcdefb6`). See `_docs/guides/cnpg-rescue.md` "Drill log — 2026-05-28" and the 6 gotchas memorialized there.
+6. **I-1 Talos kubernetes_version unpin** + **R5 worker memory typo** + **R1/R2 module collapse verification** — small Terraform housekeeping batch.
+7. **O-5/O-6 + WAF managed rules** — gateway header stripping + posture scans (popeye/kubescape) + Cloudflare WAF managed rules on the public hostname.
 
 ---
 
@@ -197,9 +204,14 @@ In order, cut at natural stopping points:
 | `_lib/applications/authentik/overlays/dev/cnpg-static-pv.yaml` | S-2 — static iSCSI PV manifest for authentik CNPG |
 | `_lib/applications/{freshrss,authentik}/overlays/dev/database.yaml` | S-2/S-5 — CNPG single-instance + ScheduledBackup (`method: volumeSnapshot`) + `monitoring.enablePodMonitor` |
 | `_lib/applications/{freshrss,authentik}/overlays/dev/dump-cronjob.yaml` | S-6 — pg_dump rip-cord CronJob + dumps-pvc |
-| `_lib/observability/kube-prometheus-stack/prometheusrule-custom.yaml` | O-7 (partial) — `CNPGBackupStale`, `CNPGDumpCronJobStale` |
+| `_lib/applications/gatus/overlays/dev/{cnpg-static-pv,database,dump-cronjob}.yaml` | N-6 — third CNPG cluster + ScheduledBackup + S-6 dump CronJob (2026-05-28) |
+| `_lib/applications/gatus/base/{configmap,deployment,externalsecret-db-creds,resourcequota,limitrange}.yaml` | N-6 — Gatus storage flip + PG_USER/PG_PASSWORD env + ESO from 1P `gatus_dev` + RQ/LR bump |
+| `_lib/security/cilium-network-policies/{gatus-cnpg-allow,gatus-dump-allow}.yaml` | N-6 — gatus CNPG ingress/egress + operator-ingress :8000 rule |
+| `_lib/observability/kube-prometheus-stack/prometheusrule-custom.yaml` | O-7 (partial) — `CNPGBackupStale`, `CNPGDumpCronJobStale` (label-selector-based, auto-cover the gatus cluster) |
 | `_clusters/dev/config/cluster-configs.yaml` | S-4 — `RECLAIM_POLICY: Retain` flip |
-| `_lib/applications/authentik/base/blueprint-grafana.yaml` | OIDC fix — `sub_mode: user_email` (today) |
+| `_clusters/dev/cluster.yaml` | N-6 — gatus Kustomization `dependsOn` gained `storage` + `external-secrets-operator` + `secrets` |
+| `_lib/applications/authentik/base/blueprint-grafana.yaml` | OIDC fix — `sub_mode: user_email` (2026-05-27) |
 | `_docs/storage-sprint.md` | Closed-out sprint plan; mirrors S-1..S-6 outcomes |
+| `_docs/guides/cnpg-rescue.md` | Drill log 2026-05-28 — both rip cords validated end-to-end; 6 gotchas memorialized |
 | `_docs/decisions/0003-static-pv-volumesnapshots-for-cnpg-backups.md` | ADR (Accepted) — strategy decided 2026-05-25, implemented 2026-05-26 |
 | `_docs/reviews/home-0ps-review-2026-05-26.md` | Prior review — superseded by this doc |
