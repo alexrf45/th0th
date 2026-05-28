@@ -133,6 +133,20 @@ spec:
         cpu: 500m
         memory: 1024Mi
 
+    # F-1 — mount the in-repo falco-custom-rules ConfigMap (security ns,
+    # name: falco-custom-rules) into /etc/falco/rules.d so the engine picks
+    # up the home-0ps custom-rule library. The chart's `mounts.volumes` /
+    # `mounts.volumeMounts` lists are appended to the Falco DS pod spec
+    # without overriding the chart's stock volumes (rules-volume etc.).
+    # falco.rules_files already lists /etc/falco/rules.d above.
+    mounts:
+      volumes:
+        - name: custom-rules
+          configMap:
+            name: falco-custom-rules
+      volumeMounts:
+        - name: custom-rules
+          mountPath: /etc/falco/rules.d
     falcosidekick:
       enabled: true
       responseActions:
@@ -145,23 +159,18 @@ spec:
         limits:
           cpu: 200m
           memory: 256Mi
+      # F-2 — disable the falcosidekick web UI + its bundled Redis. The UI
+      # shipped on by default in chart 8.0.0 (falcosidekick subchart 0.12.x),
+      # standing up a Deployment + a stateful Redis with a 1Gi iSCSI PVC. We
+      # surface alerts via Falco → falcosidekick HTTP → downstream (the
+      # http_output block above keeps the falcosidekick svc wired), so the
+      # web UI + Redis pair adds storage + attack surface for no win in a
+      # single-operator homelab. Disabling here drops the Deployment, the
+      # Service, and the Redis StatefulSet. NB: the orphaned
+      # security-falco-falcosidekick-ui-redis-data PVC will go unbound on
+      # the Retain-policy iSCSI StorageClass — manual TrueNAS zvol cleanup
+      # is needed post-merge to reclaim the 1Gi.
       webui:
-        enabled: true
-        replicaCount: 1
-        resources:
-          requests:
-            cpu: 50m
-            memory: 64Mi
-          limits:
-            cpu: 200m
-            memory: 256Mi
+        enabled: false
         redis:
-          enabled: true
-          storageEnabled: true
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 100m
-              memory: 128Mi
+          enabled: false
