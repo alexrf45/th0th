@@ -46,13 +46,14 @@ say "yq: $YQ ($("$YQ" --version 2>&1))"
 
 HR="_lib/controllers/falco/helmrelease.yaml"
 
-# 1. yamllint touched paths.
+# 1. yamllint touched YAML paths (accept.sh is a shell script, not YAML).
 TOUCH_PATHS=(
   "$HR"
-  ".claude/sprints/falco-bundle/accept.sh"
 )
 say "yamllint ${#TOUCH_PATHS[@]} files"
 yamllint -c .yamllint.yaml "${TOUCH_PATHS[@]}" || fail "yamllint failed"
+say "shellcheck-lite: bash -n accept.sh"
+bash -n .claude/sprints/falco-bundle/accept.sh || fail "accept.sh has shell syntax error"
 
 # 2. kustomize render non-empty (proves manifests still parse).
 say "kubectl kustomize _lib/controllers/falco"
