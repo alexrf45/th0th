@@ -17,6 +17,36 @@ cd "$REPO_ROOT"
 say() { printf '\033[1;34m[accept:%s]\033[0m %s\n' "$TASK_ID" "$*"; }
 fail() { printf '\033[1;31m[accept:%s FAIL]\033[0m %s\n' "$TASK_ID" "$*" >&2; exit 1; }
 
+# Resolve a mikefarah-yq binary (the assertions below use mikefarah-style
+# `eval`/`eval-all`, which Python's kislyuk/yq does not implement). CI
+# installs mikefarah yq at /usr/local/bin/yq; locally only the Python yq is
+# usually present on PATH (/usr/bin/yq → 3.x, jq-shim). Detect, and if no
+# mikefarah-style yq is present anywhere, download a cached copy under
+# .cache/.
+YQ=""
+if command -v yq >/dev/null 2>&1 && yq --version 2>&1 | grep -qi "mikefarah"; then
+  YQ="$(command -v yq)"
+elif [[ -x /usr/local/bin/yq ]] && /usr/local/bin/yq --version 2>&1 | grep -qi "mikefarah"; then
+  YQ="/usr/local/bin/yq"
+else
+  cache_dir="${REPO_ROOT}/.cache/sprint-bin"
+  mkdir -p "$cache_dir"
+  YQ="${cache_dir}/yq"
+  if [[ ! -x "$YQ" ]] || ! "$YQ" --version 2>&1 | grep -qi "mikefarah"; then
+    say "bootstrapping mikefarah/yq into $cache_dir (no system mikefarah-yq found)"
+    arch="$(uname -m)"
+    case "$arch" in
+      x86_64) yq_arch="amd64" ;;
+      aarch64|arm64) yq_arch="arm64" ;;
+      *) fail "unsupported arch for yq bootstrap: $arch" ;;
+    esac
+    curl -sSL -o "$YQ" "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${yq_arch}" \
+      || fail "failed to download mikefarah/yq"
+    chmod +x "$YQ"
+  fi
+fi
+say "yq: $YQ ($("$YQ" --version 2>&1))"
+
 # 1. yamllint touched paths.
 TOUCH_PATHS=(
   "_lib/controllers/falco/helmrelease.yaml"
@@ -57,7 +87,7 @@ done
 
 # 3a. _lib/controllers/falco renders a HelmRelease named "falco".
 say "assert: HelmRelease 'falco' in _lib/controllers/falco"
-echo "${RENDERS[_lib/controllers/falco]}" | yq eval-all '
+echo "${RENDERS[_lib/controllers/falco]}" | "$YQ" eval-all '
   select(.kind == "HelmRelease" and .metadata.name == "falco") | .metadata.name
 ' - | grep -qx "falco" || fail "HelmRelease 'falco' not found in _lib/controllers/falco render"
 
@@ -73,14 +103,14 @@ grep -E '^\s*-\s*\./falco\s*$' _lib/controllers/kustomization.yaml >/dev/null \
 
 # 3d. _lib/security render carries the falco-rules ConfigMap through.
 say "assert: falco-rules ConfigMap present in _lib/security render"
-echo "${RENDERS[_lib/security]}" | yq eval-all '
+echo "${RENDERS[_lib/security]}" | "$YQ" eval-all '
   select(.kind == "ConfigMap" and (.metadata.name | test("^falco-custom-rules"))) | .kind
 ' - | grep -qx "ConfigMap" \
   || fail "falco-custom-rules ConfigMap not present in _lib/security render"
 
 # 3e. observability render contains a ServiceMonitor named "falco".
 say "assert: ServiceMonitor 'falco' in _lib/observability/kube-prometheus-stack"
-echo "${RENDERS[_lib/observability/kube-prometheus-stack]}" | yq eval-all '
+echo "${RENDERS[_lib/observability/kube-prometheus-stack]}" | "$YQ" eval-all '
   select(.kind == "ServiceMonitor" and .metadata.name == "falco") | .metadata.name
 ' - | grep -qx "falco" || fail "ServiceMonitor 'falco' not found in observability render"
 
@@ -88,7 +118,7 @@ echo "${RENDERS[_lib/observability/kube-prometheus-stack]}" | yq eval-all '
 # (we own the ServiceMonitor in observability/). Falco's `serviceMonitor.create`
 # default is false — make sure no overlay flipped it to true.
 say "assert: Falco HR does not enable chart-side serviceMonitor.create"
-sm_create="$(yq eval '
+sm_create="$("$YQ" eval '
   select(.kind == "HelmRelease" and .metadata.name == "falco")
   | .spec.values.serviceMonitor.create // false
 ' _lib/controllers/falco/helmrelease.yaml)"
@@ -96,7 +126,7 @@ sm_create="$(yq eval '
 
 # 3g. Falco HR uses modern_ebpf driver (verified on Talos per H-3 brief).
 say "assert: Falco HR driver.kind == modern_ebpf"
-driver_kind="$(yq eval '
+driver_kind="$("$YQ" eval '
   select(.kind == "HelmRelease" and .metadata.name == "falco")
   | .spec.values.driver.kind
 ' _lib/controllers/falco/helmrelease.yaml)"
@@ -104,7 +134,7 @@ driver_kind="$(yq eval '
 
 # 3h. Falco HR enables metrics + falco.metrics service so the SM has a target.
 say "assert: Falco HR has metrics.enabled == true"
-metrics_enabled="$(yq eval '
+metrics_enabled="$("$YQ" eval '
   select(.kind == "HelmRelease" and .metadata.name == "falco")
   | .spec.values.metrics.enabled
 ' _lib/controllers/falco/helmrelease.yaml)"
@@ -119,7 +149,7 @@ metrics_enabled="$(yq eval '
 # whose true value would conflict with the rule (Falco chart has no such
 # flag; this is a forward guard).
 say "assert: Falco HR has no chart-level CRD-install flag set true"
-crd_install="$(yq eval '
+crd_install="$("$YQ" eval '
   select(.kind == "HelmRelease" and .metadata.name == "falco")
   | (.spec.values.crds.create // .spec.values.crds.enabled // .spec.values.installCRDs // false)
 ' _lib/controllers/falco/helmrelease.yaml)"
