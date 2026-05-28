@@ -40,6 +40,11 @@ data:
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
           signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+          # Default hashed_user_id ties sub to authentik's internal user PK
+          # + signing-key salt, so any DB restore that recreates the user
+          # row resets sub and breaks downstream user_auth linkages (we hit
+          # this after the CNPG single-instance migration in d09126e).
+          sub_mode: user_email
           redirect_uris:
             - matching_mode: strict
               url: "https://${GRAFANA_SUBDOMAIN}.home-0ps.com/login/generic_oauth"
