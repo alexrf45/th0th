@@ -62,7 +62,13 @@ spec:
         enabled: false
       ingress:
         enabled: false
+      # (O-9) Stand up the chart's metrics Service so Prometheus can scrape
+      # authentik. The chart-side ServiceMonitor stays disabled — ownership of
+      # ServiceMonitors is centralised in _lib/observability/kube-prometheus-stack/
+      # (same pattern as falco) so cardinality/relabel changes are made in one
+      # place. The obs-side SM cross-namespace selects this Service.
       metrics:
+        enabled: true
         serviceMonitor:
           enabled: false
       # Sized above observed steady-state (~543Mi / 16m). Request reserves real
@@ -79,6 +85,11 @@ spec:
       replicas: 1
       autoscaling:
         enabled: false
+      # (O-9) See server.metrics comment above — same rationale.
+      metrics:
+        enabled: true
+        serviceMonitor:
+          enabled: false
       # Sized above observed steady-state (~463Mi / 47m). The worker spikes
       # during blueprint application and DB migrations. (P-2 / H-4)
       resources:

@@ -39,3 +39,8 @@ ignore: |
   global/crds/external-snapshotter/
   _lib/storage/snapshot-controller/rbac-snapshot-controller.yaml
   _lib/storage/snapshot-controller/setup-snapshot-controller.yaml
+  # Community Grafana dashboard JSON shipped as ConfigMaps (O-9). Pinned to
+  # specific grafana.com revisions per file header; embedded markdown
+  # `content:` blocks in panels exceed the 300-char line cap. Not hand-edited.
+  _lib/observability/kube-prometheus-stack/dashboards/dashboard-authentik.yaml
+  _lib/observability/kube-prometheus-stack/dashboards/dashboard-cloudflared.yaml
