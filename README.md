@@ -13,12 +13,32 @@
 
 <div align="center">
 
-## Applications
+## Live status
 
-| Application                                                                                  | Status | Environment | Purpose                  |
-| -------------------------------------------------------------------------------------------- | ------ | ----------- | ------------------------ |
-| ![FreshRSS](https://img.shields.io/badge/FreshRSS-2D2D2D?logo=rss&logoColor=white)           | Active | Dev         | Self-hosted RSS reader   |
-| ![Syncthing](https://img.shields.io/badge/Syncthing-0891D1?logo=syncthing&logoColor=white)   | Active | Dev         | Continuous file sync     |
+Live health from [Gatus](https://github.com/TwiN/gatus) (`gatus` namespace, `dev`
+cluster), surfaced via the public Cloudflare Tunnel at
+[`dev-status.home-0ps.com`](https://dev-status.home-0ps.com). Badges render
+through `shields.io`'s endpoint adapter so they match the rest of this README.
+
+> **Note:** GitHub proxies external images through its `camo` CDN and caches
+> SVGs for ~5 minutes — state changes here lag the live dashboard by up to that
+> long. For real-time status, hit the dashboard directly.
+
+### Applications
+
+| Application | Status | Uptime (7d) | Purpose |
+| --- | --- | --- | --- |
+| ![Authentik](https://img.shields.io/badge/Authentik-FD4B2D?logo=authentik&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_authentik%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_authentik/uptimes/7d/badge.svg) | SSO / IdP |
+| ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_grafana%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_grafana/uptimes/7d/badge.svg) | Observability UI |
+| ![FreshRSS](https://img.shields.io/badge/FreshRSS-2D2D2D?logo=rss&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_freshrss%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_freshrss/uptimes/7d/badge.svg) | Self-hosted RSS reader |
+| ![Homer](https://img.shields.io/badge/Homer-2D2D2D?logo=homeassistant&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_homer%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_homer/uptimes/7d/badge.svg) | Service dashboard |
+
+### Infrastructure
+
+| Target | Status | Uptime (7d) | Purpose |
+| --- | --- | --- | --- |
+| ![TrueNAS](https://img.shields.io/badge/TrueNAS-0095D5?logo=truenas&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Finfrastructure_truenas%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/infrastructure_truenas/uptimes/7d/badge.svg) | iSCSI / NFS storage backend |
+| ![UniFi](https://img.shields.io/badge/UniFi-0559C9?logo=ubiquiti&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Finfrastructure_unifi%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/infrastructure_unifi/uptimes/7d/badge.svg) | Edge gateway / DNS resolver |
 
 </div>
 
@@ -84,7 +104,7 @@ kube dev -n freshrss rollout restart deploy/freshrss
 k8sop dev flux reconcile kustomization security --with-source
 k8sop dev helm list -A
 k8sop dev kustomize build _lib/applications/freshrss/overlays/dev
-k8sop dev stern -n syncthing .
+k8sop dev stern -n freshrss .
 ```
 
 **Why use this pattern in your own lab:**
