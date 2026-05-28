@@ -10,3 +10,4 @@ resources:
   - servicemonitor-flux.yaml
   - servicemonitor-gatus.yaml
   - servicemonitor-cloudflared.yaml
+  - servicemonitor-falco.yaml

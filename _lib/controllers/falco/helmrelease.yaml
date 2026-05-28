@@ -14,13 +14,19 @@ spec:
         name: falcosecurity
         kind: HelmRepository
         namespace: flux-system
+  # CRD ownership: per .claude/rules/crds.md, operator HRs do not install
+  # CRDs — global/crds/ does. The falcosecurity/falco 8.0.0 chart ships no
+  # CRDs of its own (the only CRD it consumes — monitoring.coreos.com/
+  # ServiceMonitor — is already owned by global/crds/prometheus-operator-crds/).
+  # `crds: Skip` is truthful here and forward-safe if the chart ever grows a
+  # CRD bundle.
   install:
-    crds: CreateReplace
+    crds: Skip
     remediation:
       retries: -1
   upgrade:
     cleanupOnFail: true
-    crds: CreateReplace
+    crds: Skip
     remediation:
       retries: -1
   uninstall:
@@ -108,11 +114,13 @@ spec:
               - falco-incubating-rules:latest
     metrics:
       enabled: true
+    # The chart's chart-side ServiceMonitor is intentionally off — the SM is
+    # owned by _lib/observability/kube-prometheus-stack/servicemonitor-falco.yaml
+    # to keep all scrape configs in one place (matches the cloudflared / flux
+    # pattern). NB: the chart's key is `create`, not `enabled` (the previous
+    # `enabled: true` was a no-op typo).
     serviceMonitor:
-      enabled: true
-      labels: {}
-      interval: 30s
-      scrapeTimeout: 10s
+      create: false
     grafana:
       dashboards:
         enabled: true
@@ -157,5 +165,3 @@ spec:
             limits:
               cpu: 100m
               memory: 128Mi
----
-
