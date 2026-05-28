@@ -145,6 +145,46 @@ kube dev -n freshrss create job --from=cronjob/freshrss-cnpg-dump cnpg-dump-manu
 | Dump file is empty / 0 bytes | The CronJob is failing | Check `kube dev -n <ns> logs job/<latest-cnpg-dump-job>`; the script bails if the dump is `<1024` bytes. |
 | Cluster won't bootstrap after delete | One of the instance PVCs survived | `kube dev -n <ns> get pvc | grep <cluster>` and clean up stragglers. CNPG one-shot bootstrap requires an empty slate ([[cnpg-bootstrap-immutable]]). |
 
+## Drill log — 2026-05-28
+
+First end-to-end exercise of both rip cords against `freshrss-dev-cluster`. The
+source cluster was never touched; everything ran in a throwaway
+`freshrss-drill-cluster` in the `freshrss` namespace. Both paths **PASSED**
+once the gotchas below were worked around.
+
+### Path A — VolumeSnapshot clone via `bootstrap.recovery.volumeSnapshots`
+
+| | |
+| --- | --- |
+| Source snapshot | `freshrss-dev-cluster-snap-20260528040000` (RESTORESIZE `10485776Ki`) |
+| Drill `storage.size` | `11Gi` — see gotcha #1 |
+| Time to `Cluster in healthy state` | ~80 s |
+| Row counts (source vs drill) | identical: `category=11`, `feed=43`, `entry=6874`, `tag=0` |
+| Result | **PASS** |
+
+### Path B — `pg_restore` from S-6 dump
+
+| | |
+| --- | --- |
+| Dump | `freshrss-20260528T030011Z.dump` (54 KiB, 03:00 UTC) |
+| Restore Job | `app=cnpg-restore` mounting `dev-freshrss-dumps-pvc`, connecting to `freshrss-drill-cluster-rw` over network |
+| Test perturbation | `DROP TABLE freshrss_fr3d_entry CASCADE;` |
+| Flags | `--clean --if-exists --no-owner --no-acl` (see gotcha #2) |
+| Errors after `--clean --if-exists` | 2 (benign — `must be owner of extension pgaudit`, harmless since the extension is already loaded) |
+| Row counts after restore | `category=3`, `feed=30`, `entry=248`, `tag=0` — exactly matches the dump's captured state |
+| Result | **PASS** |
+
+The dump's snapshot is from 03:00 UTC, and the freshrss feed-actualize burst happened between 03:00 and 04:00 UTC, so the S-6 dump is meaningfully behind the VolumeSnapshot (248 entries vs 6874). Worth noting for RPO planning: **the S-6 dump's worst-case RPO is ~24h, but its in-window staleness can be material if the source is actively ingesting.** The primary VolumeSnapshot path is preferred whenever it's available.
+
+### Gotchas surfaced
+
+1. **VolumeSnapshot restore size overhead.** democratic-csi's VolumeSnapshot reports `RESTORESIZE` slightly larger than the source PV (`10485776 KiB` for a 10Gi source — ~16 KiB of TrueNAS metadata). Requesting `storage.size: 10Gi` on the drill Cluster fails with `requested volume size 10737418240 is less than the size 10737434624 for the source snapshot`. **Bump the drill PVC by ~1 GiB** (`11Gi` works). Confirmed in the runbook's Path A by inspecting the snapshot's `RESTORESIZE` field before applying.
+2. **`pg_restore` without `--clean --if-exists` corrupts not-dropped tables.** First attempt restored from the dump without those flags after dropping only `entry`. Result: 36 ignored errors, plus the dump's *old* `feed` rows were COPYed onto the post-OPML-import feed table (43 → 73 rows; 30 stale CSHub-era feeds reappeared from the dump). **Always use `--clean --if-exists`** unless you've already dropped every table the dump touches.
+3. **`bootstrap.recovery` does not carry `postgresql.parameters`.** The source `freshrss-dev-cluster` has `pgaudit.log = 'all, -misc'` set, and that database-level setting is preserved in the recovered data. Without a matching `postgresql.parameters` block on the drill Cluster spec, pgaudit isn't loaded in `shared_preload_libraries`, and the first statement against the restored DB errors with `pgaudit must be loaded via shared_preload_libraries`. **Mirror the source's `postgresql.parameters` on any drill/restore cluster.**
+4. **CCNPs are cluster-name-specific.** `freshrss-cnpg-allow` selects `cnpg.io/cluster: freshrss-${ENVIRONMENT}-cluster`, so the drill cluster's pods fall through to `freshrss-default-deny`. The CNPG operator can't reach the drill instance-manager on `:8000` and the cluster sticks at "Setting up primary". **Either name the drill cluster the same as production (won't fly — the names must differ) or apply a one-shot CCNP that mirrors the production rules with the drill cluster's selector.** This drill applied `freshrss-drill-cluster-allow` for that purpose.
+5. **`pg_restore` exit code is non-zero on any ignored error**, even when the data restore is correct (warning lines like "errors ignored on restore: 2" still exit 1). `restartPolicy: Never` + `backoffLimit: 0` on the restore Job keeps the pod around so the operator can inspect logs and decide; `OnFailure` would otherwise loop and BackOff before logs are reachable.
+6. **TrueNAS-side cleanup is manual.** With `reclaimPolicy: Retain` on the iscsi SC (the post-S4 default), deleting the Released PVs in k8s does NOT remove the underlying iSCSI extents/zvols on TrueNAS. After this drill, three ~11 GiB drill zvols (`pvc-538ff539-…`, `pvc-db9d85d3-…`, `pvc-e7fec3ea-…`) remain on TrueNAS and need hand-deletion to fully reclaim space.
+
 ## See also
 
 - ADR-0003 — `_docs/decisions/0003-cnpg-local-snapshots.md`
