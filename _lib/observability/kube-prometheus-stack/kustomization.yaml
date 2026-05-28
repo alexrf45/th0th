@@ -11,3 +11,5 @@ resources:
   - servicemonitor-gatus.yaml
   - servicemonitor-cloudflared.yaml
   - servicemonitor-falco.yaml
+  - servicemonitor-authentik.yaml
+  - dashboards
