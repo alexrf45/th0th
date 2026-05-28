@@ -88,3 +88,101 @@ spec:
           annotations:
             summary: "CNPG dump CronJob {{ $labels.namespace }}/{{ $labels.cronjob }}: no successful run in >36h"
             description: "The independent pg_dump rip cord (S-6) has not produced a fresh dump in >36h. VolumeSnapshot backups may still be healthy — check the CronJob job history and the dump PVC."
+
+    # Cert expiry — cert-manager emits a per-Certificate expiry timestamp.
+    # The live metric in this cluster is `certmanager_certificate_expiration_timestamp_seconds`
+    # (verified 2026-05-28 via in-cluster Prometheus /api/v1/label/__name__/values).
+    # Days-to-expiry = (timestamp - now) / 86400. Two tiers so renewals get a
+    # warning shot before they page.
+    - name: cert-manager-expiry
+      interval: 30m
+      rules:
+        - alert: CertExpiringSoon
+          expr: |
+            (certmanager_certificate_expiration_timestamp_seconds - time()) / 86400 < 14
+            and
+            (certmanager_certificate_expiration_timestamp_seconds - time()) / 86400 >= 3
+          for: 1h
+          labels:
+            severity: warning
+            app: cert-manager
+          annotations:
+            summary: "Certificate {{ $labels.exported_namespace }}/{{ $labels.name }} expires in <14d"
+            description: |
+              cert-manager Certificate {{ $labels.name }} (issuer {{ $labels.issuer_kind }}/{{ $labels.issuer_name }}) has {{ printf "%.1f" $value }} days left.
+              Confirm renewal is progressing; check `kube dev -n {{ $labels.exported_namespace }} describe certificate {{ $labels.name }}` for ACME or issuer errors.
+
+        - alert: CertExpiringSoon
+          expr: |
+            (certmanager_certificate_expiration_timestamp_seconds - time()) / 86400 < 3
+          for: 1h
+          labels:
+            severity: critical
+            app: cert-manager
+          annotations:
+            summary: "Certificate {{ $labels.exported_namespace }}/{{ $labels.name }} expires in <3d"
+            description: |
+              cert-manager Certificate {{ $labels.name }} (issuer {{ $labels.issuer_kind }}/{{ $labels.issuer_name }}) has {{ printf "%.1f" $value }} days left and is about to outage TLS.
+              Force renewal: `kube dev -n {{ $labels.exported_namespace }} cmctl renew {{ $labels.name }}`. Investigate the Issuer if renewal is failing.
+
+    # PVC near-full — kubelet exposes available + capacity bytes per PVC.
+    # `*-dumps-pvc` are the S-6 pg_dump rip cord volumes; they're sized to
+    # fill up by design (oldest dumps rotate out), so excluding them prevents
+    # constant noise. Warning at <10% free, critical at <5% free.
+    - name: pvc-capacity
+      interval: 1m
+      rules:
+        - alert: PVCNearFull
+          expr: |
+            (
+              kubelet_volume_stats_available_bytes{persistentvolumeclaim!~".*-dumps-pvc"}
+              /
+              kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!~".*-dumps-pvc"}
+            ) < 0.10
+            and
+            (
+              kubelet_volume_stats_available_bytes{persistentvolumeclaim!~".*-dumps-pvc"}
+              /
+              kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!~".*-dumps-pvc"}
+            ) >= 0.05
+          for: 30m
+          labels:
+            severity: warning
+            pvc: "{{ $labels.persistentvolumeclaim }}"
+          annotations:
+            summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is {{ printf \"%.1f\" (mul $value 100) }}% free (<10%)"
+            description: "PersistentVolumeClaim {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} has <10% free space for 30m. Consider expanding the PVC (storage class supports online expansion) or pruning data."
+
+        - alert: PVCNearFull
+          expr: |
+            (
+              kubelet_volume_stats_available_bytes{persistentvolumeclaim!~".*-dumps-pvc"}
+              /
+              kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!~".*-dumps-pvc"}
+            ) < 0.05
+          for: 10m
+          labels:
+            severity: critical
+            pvc: "{{ $labels.persistentvolumeclaim }}"
+          annotations:
+            summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is {{ printf \"%.1f\" (mul $value 100) }}% free (<5%)"
+            description: "PersistentVolumeClaim {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} has <5% free space — writes will start failing soon. Expand the volume now or free space; the workload may degrade or crash."
+
+    # Gatus endpoint down — Gatus emits `gatus_results_endpoint_success` as a
+    # 0/1 gauge per endpoint, labelled by `key` (group + name, e.g.
+    # `applications_authentik`). Verified live 2026-05-28 via the in-cluster
+    # PodMonitor target. A sustained 0 means probes have been failing for the
+    # configured window in Gatus.
+    - name: gatus-endpoints
+      interval: 1m
+      rules:
+        - alert: GatusEndpointDown
+          expr: gatus_results_endpoint_success == 0
+          for: 5m
+          labels:
+            severity: warning
+            app: gatus
+            endpoint: "{{ $labels.key }}"
+          annotations:
+            summary: "Gatus endpoint {{ $labels.key }} ({{ $labels.name }}) failing probes"
+            description: "Gatus endpoint key={{ $labels.key }} group={{ $labels.group }} name={{ $labels.name }} type={{ $labels.type }} has been failing probes for 5m. Open the Gatus dashboard to see which condition is red."
