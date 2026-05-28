@@ -6,12 +6,13 @@ metadata:
   namespace: gatus
 spec:
   limits:
-    # Safety-net defaults for any container that omits resources. The gatus
-    # container sets its own, so these only apply to future additions.
+    # Defaults injected into any container that omits resources — notably the
+    # CNPG postgres pods (the Cluster spec sets none) — so the ResourceQuota
+    # can require requests + limits on every pod without rejecting them.
     - type: Container
       defaultRequest:
-        cpu: 25m
-        memory: 32Mi
-      default:
-        cpu: 200m
+        cpu: 50m
         memory: 128Mi
+      default:
+        cpu: 500m
+        memory: 512Mi

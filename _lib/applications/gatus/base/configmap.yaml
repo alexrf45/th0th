@@ -11,11 +11,17 @@ data:
   # Mounted at /config/config.yaml. Gatus watches this file and reloads on
   # change, so a Flux reconcile of an edit propagates to the running pod
   # without a rollout (kubelet refresh, ~60s).
-  # Flux postBuild substitutes ${...} from cluster-config at reconcile.
+  # Flux postBuild substitutes ${...} from cluster-config at reconcile;
+  # $${VAR} escapes the substitution so Gatus expands it at runtime from env.
   config.yaml: |
     metrics: true
     storage:
-      type: memory
+      # Postgres persistence (N-6) — backed by gatus-${ENVIRONMENT}-cluster
+      # CNPG, libpq DSN avoids URL-encoding pitfalls on the 1P password.
+      # sslmode=require matches the cluster's hostssl pg_hba (encrypted, no
+      # cert-pinning — CNPG self-signs).
+      type: postgres
+      path: "host=gatus-${ENVIRONMENT}-cluster-rw port=5432 user=$${PG_USER} password=$${PG_PASSWORD} dbname=gatus sslmode=require"
     ui:
       title: "home-0ps · ${ENVIRONMENT} status"
       description: "Live status for home-0ps.com services."

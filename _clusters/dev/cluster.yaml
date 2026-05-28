@@ -394,6 +394,9 @@ spec:
     - name: dns
     - name: networking
     - name: security
+    - name: storage
+    - name: external-secrets-operator
+    - name: secrets
   interval: 10m
   retryInterval: 1m
   timeout: 5m0s

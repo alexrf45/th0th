@@ -5,6 +5,7 @@ namespace: gatus
 resources:
   - namespace.yaml
   - externalsecret.yaml
+  - externalsecret-db-creds.yaml
   - configmap.yaml
   - deployment.yaml
   - service.yaml

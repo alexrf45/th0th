@@ -5,10 +5,12 @@ metadata:
   name: gatus
   namespace: gatus
 spec:
-  # Single-replica status engine (Recreate strategy → no rollout surge).
-  # Sized above the gatus container's 50m/64Mi request and 200m/128Mi limit.
+  # Guardrail for the namespace (app + single-instance CNPG cluster + the
+  # daily S-6 dump CronJob). Sized above steady-state with headroom for CNPG
+  # rolling restarts and transient backup pods. The LimitRange supplies
+  # defaults so every pod qualifies.
   hard:
-    requests.cpu: 100m
-    requests.memory: 128Mi
-    limits.cpu: 500m
-    limits.memory: 256Mi
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "3"
+    limits.memory: 2Gi

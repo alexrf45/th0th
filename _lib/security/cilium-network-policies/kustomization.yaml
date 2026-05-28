@@ -14,5 +14,7 @@ resources:
   - homer-allow.yaml
   - gatus-default-deny.yaml
   - gatus-allow.yaml
+  - gatus-cnpg-allow.yaml
+  - gatus-dump-allow.yaml
   - cloudflared-default-deny.yaml
   - cloudflared-allow.yaml

@@ -10,10 +10,9 @@ metadata:
     app.kubernetes.io/version: "${GATUS_VERSION}"
     environment: "${ENVIRONMENT}"
 spec:
-  # Memory-only storage means uptime history is lost on restart. Recreate
+  # Postgres-backed history (N-6) — uptime survives pod restarts. Recreate
   # strategy keeps the ResourceQuota tight (no rollout surge); brief gap on
-  # config-driven rollout is fine for a status engine. Persistence upgrade
-  # path (SQLite-on-PVC or CNPG) tracked in sprint G1-5.
+  # config-driven rollout is fine for a status engine.
   replicas: 1
   strategy:
     type: Recreate
@@ -56,14 +55,24 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           env:
-            # Gatus's config.yaml references this as $${SLACK_WEBHOOK_URL}
-            # (the $$ escapes Flux's envsubst so the literal ${...} survives
-            # to Gatus's own env-var interpolation at runtime).
+            # Gatus's config.yaml references these as $${VAR} (the $$ escapes
+            # Flux's envsubst so the literal ${VAR} survives to Gatus's own
+            # env-var interpolation at runtime).
             - name: SLACK_WEBHOOK_URL
               valueFrom:
                 secretKeyRef:
                   name: gatus-slack-webhook
                   key: url
+            - name: PG_USER
+              valueFrom:
+                secretKeyRef:
+                  name: gatus-db-creds
+                  key: username
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gatus-db-creds
+                  key: password
           ports:
             - name: http
               containerPort: 8080
@@ -104,8 +113,8 @@ spec:
               - key: config.yaml
                 path: config.yaml
         # Gatus writes ephemeral state under /data; emptyDir keeps it
-        # RO-rootfs-compatible. Memory storage means nothing important lives
-        # here yet — upgrade to a PVC when persistence lands (G1-5 follow-up).
+        # RO-rootfs-compatible. With postgres persistence (N-6), history
+        # lives in CNPG — /data is just transient scratch.
         - name: data
           emptyDir: {}
         - name: tmp
