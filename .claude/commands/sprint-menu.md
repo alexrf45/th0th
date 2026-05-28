@@ -13,7 +13,7 @@ This is the session-kickoff / triage command. It does **not** survey the live cl
    - **Tasks** — discrete open items worth doing on their own: `ID · what · file path · next action`. **Flag quick wins** (<30 min, low risk, reversible) explicitly.
    - **Questions** — decision forks and clarifications to resolve before/while working: anything marked ❓ in the review, "decide X first" notes embedded in next-actions (e.g. CRD-ownership, which-app-first), and scope ambiguities. These shape the work — surface them so the user can answer or defer.
 
-4. **Present + pick.** Output the three groups compactly (IDs + one line each — the detail lives in the review doc; cite it so the user can drill in). Then use an interactive picker (AskUserQuestion) offering: the candidate sprints, a "single task" choice, and an "answer a question first" choice. Put the recommended sprint (the review's #1) first and label it (Recommended). Honor the selection.
+4. **Present + pick.** Output the three groups compactly (IDs + one line each — the detail lives in the review doc; cite it so the user can drill in). Then use an interactive picker (AskUserQuestion) offering: the candidate sprints, a "single task" choice, and an "answer a question first" choice. Put the recommended sprint (the review's #1) first and label it (Recommended). Honor the selection. If the chosen sprint bundles ≥2 independent tasks (no file overlap among the IDs), mention `/sprint-orchestrate <ids...>` as a parallel-execution alternative — the user can still pick sequential if they want closer supervision.
 
 5. **Start the selected work.**
    - Create a task list (TaskCreate) for the chosen sprint/task; mark the first item in_progress.

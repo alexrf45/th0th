@@ -300,3 +300,6 @@ ob-archiver.plain.yaml
 # MkDocs build output + local docs venv
 /site/
 .venv-docs/
+
+# /sprint-orchestrate runtime state (per-task accept.sh under .claude/sprints/<id>/ is tracked)
+.claude/sprint-state.json
