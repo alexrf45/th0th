@@ -150,7 +150,7 @@ spec:
             severity: warning
             pvc: "{{ $labels.persistentvolumeclaim }}"
           annotations:
-            summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is {{ printf \"%.1f\" (mul $value 100) }}% free (<10%)"
+            summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is {{ humanizePercentage $value }} free (<10%)"
             description: "PersistentVolumeClaim {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} has <10% free space for 30m. Consider expanding the PVC (storage class supports online expansion) or pruning data."
 
         - alert: PVCNearFull
@@ -165,7 +165,7 @@ spec:
             severity: critical
             pvc: "{{ $labels.persistentvolumeclaim }}"
           annotations:
-            summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is {{ printf \"%.1f\" (mul $value 100) }}% free (<5%)"
+            summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is {{ humanizePercentage $value }} free (<5%)"
             description: "PersistentVolumeClaim {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} has <5% free space — writes will start failing soon. Expand the volume now or free space; the workload may degrade or crash."
 
     # Gatus endpoint down — Gatus emits `gatus_results_endpoint_success` as a
