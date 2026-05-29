@@ -1,11 +1,11 @@
-## Cluster access tooling — `kubeop.sh`
+# Cluster access (`kubeop.sh`)
 
 The kubeconfig for every cluster in this lab lives in 1Password (written there
-by `terraform/dev/talos-pve-v3.1.0/config-export.tf` as a Secure Note titled
+by the Talos Terraform module as a Secure Note titled
 `<cluster-name>-kubeconfig`). It never lands on disk.
 
-To make this ergonomic, a small zsh helper at [`_hack/scripts/kubeop.sh`](./_hack/scripts/kubeop.sh)
-(also kept in `~/.zsh/kubeop.sh` on the operator workstation) fetches the
+To make this ergonomic, a small zsh helper (`_hack/scripts/kubeop.sh` in the
+repo, also kept in `~/.zsh/kubeop.sh` on the operator workstation) fetches the
 kubeconfig on demand via `op read` and feeds it to kubeconfig-aware tools via
 process substitution — the config materializes as a `/dev/fd/N` pipe inside a
 short-lived bash subshell and is never written to a file.
@@ -30,7 +30,7 @@ Examples:
 ```bash
 kube dev get pods -A
 kube dev -n freshrss rollout restart deploy/freshrss
-k8sop dev flux reconcile kustomization security --with-source
+k8sop dev flux reconcile kustomization security
 k8sop dev helm list -A
 k8sop dev kustomize build _lib/applications/freshrss/overlays/dev
 k8sop dev stern -n freshrss .

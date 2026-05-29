@@ -1,0 +1,81 @@
+# System context — GitOps homelab reconciliation + secrets + traffic flow
+# Gruvbox Material palette via theme-overrides (light) + dark-theme-overrides (dark).
+vars: {
+  d2-config: {
+    # Gruvbox Material — light (medium)
+    theme-overrides: {
+      N1: "#654735" # darkest text
+      N2: "#4f3829"
+      N3: "#7c6f64"
+      N4: "#928374"
+      N5: "#d5c4a1"
+      N6: "#ebdbb2"
+      N7: "#fbf1c7" # canvas
+      B1: "#45707a"
+      B2: "#45707a"
+      B3: "#4c7a5d"
+      B4: "#a9b094"
+      B5: "#d5c4a1"
+      B6: "#ebdbb2"
+      AA2: "#c35e0a"
+      AA4: "#e0b070"
+      AA5: "#ebdbb2"
+      AB4: "#945e80"
+      AB5: "#d3a6bd"
+    }
+    # Gruvbox Material — dark (medium)
+    dark-theme-overrides: {
+      N1: "#d4be98" # lightest text
+      N2: "#ddc7a1"
+      N3: "#a89984"
+      N4: "#7c6f64"
+      N5: "#504945"
+      N6: "#3c3836"
+      N7: "#282828" # canvas
+      B1: "#7daea3"
+      B2: "#7daea3"
+      B3: "#89b482"
+      B4: "#45707a"
+      B5: "#3c3836"
+      B6: "#32302f"
+      AA2: "#e78a4e"
+      AA4: "#d8a657"
+      AA5: "#3c3836"
+      AB4: "#d3869b"
+      AB5: "#504945"
+    }
+  }
+}
+
+direction: down
+
+operator: Operator {shape: person}
+user: User {shape: person}
+
+src: Source of truth {
+  repo: Git repo\n(main branch) {shape: cylinder}
+}
+
+secrets: Secrets pipeline {
+  op: 1Password
+  connect: 1P Connect
+  eso: External Secrets Operator
+  op -> connect
+  connect -> eso
+}
+
+cluster: Talos Kubernetes on Proxmox {
+  flux: Flux CD
+  controllers: Controllers
+  networking: Networking\n(Cilium Gateway)
+  applications: Applications
+
+  flux -> controllers: applies layered\nKustomizations
+  controllers -> networking
+  networking -> applications
+}
+
+operator -> src.repo: git push
+src.repo -> cluster.flux: watches & reconciles
+secrets.eso -> cluster.applications: injects Secrets
+user -> cluster.networking: *.lab.example.com

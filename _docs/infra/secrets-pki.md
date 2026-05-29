@@ -1,36 +1,47 @@
-# Infra guide: Secrets & PKI
+# Secrets & PKI
 
-**Layers:** `external-secrets-operator` + `secrets` (runtime secrets); `pki` (internal CA / trust).
-**Two trust roots:** 1Password (secret material) and an internal CA (service-to-service TLS).
-**Principle:** keep secrets **rotatable** — never hardcode a 1P-backed field, even a non-sensitive one (rotation flexibility is the goal).
+Two trust roots underpin the lab: **1Password** (secret material, via External
+Secrets) and an **internal CA** (service-to-service TLS). The guiding principle:
+keep secrets **rotatable** — never hardcode a 1Password-backed field, even a
+non-sensitive one, because rotation flexibility is the goal.
 
----
+**Layers:** `external-secrets-operator` + `secrets` (runtime secrets); `pki`
+(internal CA / trust).
 
 ## Secret flow
 
 ```
 1Password  →  1Password Connect  →  External Secrets Operator  →  Kubernetes Secret  →  workload
-   (vault)      (in-cluster API)        (ExternalSecret CR)          (synced)
+  (vault)      (in-cluster API)        (ExternalSecret CR)           (synced)
 ```
 
 | Component | Path | Notes |
 | --- | --- | --- |
-| 1Password Connect | `_lib/secrets/onepassword/` | chart `connect@2.0.5`, `onepassword` ns; `op-connect-tls` cert; `servicemonitor.yaml` scraped by Prometheus |
-| External Secrets Operator | `_lib/controllers/external-secrets/` | chart `0.20.1`; its Flux layer `dependsOn` controllers **+ pki** (mTLS) |
-| ClusterSecretStore | `_lib/secrets/cluster-secret-store/cluster-secret-store.yaml` | the cluster-wide store apps reference |
+| 1Password Connect | `_lib/secrets/onepassword/` | chart `connect@2.0.5`, `onepassword` ns; `op-connect-tls` cert; scraped by Prometheus |
+| External Secrets Operator | `_lib/controllers/external-secrets/` | chart `0.20.1`; its Flux layer `dependsOn` controllers **+ pki** (for mTLS) |
+| ClusterSecretStore | `_lib/secrets/cluster-secret-store/` | the cluster-wide store apps reference |
 
-Apps declare an `ExternalSecret` referencing a 1Password item; ESO produces the K8s Secret. Convention: one 1P item → one `ExternalSecret` → one Secret, even when it emits multiple key shapes (see the Authentik DB+chart secret in [apps/authentik.md](../apps/authentik.md#secrets)).
+Each app declares an `ExternalSecret` referencing a 1Password item; ESO produces
+the Kubernetes Secret. Convention: **one 1Password item → one `ExternalSecret` →
+one Secret**, even when that Secret emits multiple key shapes (see the Authentik
+DB+chart secret in [Authentik](../apps/authentik.md#secrets)).
+
+Not on 1Password? ESO supports many backends (Vault, AWS/GCP secret managers,
+Kubernetes) — only the `ClusterSecretStore` provider block changes.
 
 ## SOPS (Flux-decrypted secrets)
 
-For secrets that live in git (ObjectStore creds, Cloudflare DNS token, Tailscale keys), Flux decrypts with the `sops-age` secret in `flux-system`. Config at `_clusters/dev/.sops.yaml`:
+For secrets that must live in git (object-storage creds, the Cloudflare DNS
+token, Tailscale keys), Flux decrypts at reconcile time with a `sops-age` secret
+in `flux-system`. The SOPS config (`.sops.yaml`) controls scope:
 
 - files matching `*values.yaml` are **fully** encrypted;
-- other YAML encrypts only `data`/`stringData` (or per-file `encrypted-regex`, e.g. ObjectStore `^(data|destinationPath|endpointURL)$`).
+- other YAML encrypts only `data`/`stringData` (or a per-file `encrypted-regex`).
 
-> **Project rule:** never modify or re-encrypt `.env`/SOPS files without explicit confirmation — the operator manages secrets. Claude writes plaintext drafts (`*.plain.yaml`); the operator encrypts.
-
-The Age key is seeded from 1Password at bootstrap (Terraform `kubernetes_secret.sops_age`).
+> **Discipline:** treat SOPS/`.env` files as operator-owned — generate plaintext
+> drafts (`*.plain.yaml`) and encrypt them deliberately; don't re-encrypt
+> existing secret files casually. The Age key is seeded from your secret manager
+> at bootstrap (Terraform `kubernetes_secret`).
 
 ## Internal PKI
 
@@ -38,18 +49,26 @@ The Age key is seeded from 1Password at bootstrap (Terraform `kubernetes_secret.
 
 | Path | What |
 | --- | --- |
-| `certauth/homelab-internal-ca-keypair.yaml` | internal CA keypair (SOPS) |
+| `certauth/…-ca-keypair.yaml` | internal CA keypair (SOPS) |
 | `certauth/int-cluster-issuer.yaml` | cert-manager Issuer backed by the CA |
 | `trust-manager/` | trust-manager `v0.16.0` |
 | `trust-bundle/bundle.yaml` | distributes the CA bundle to namespaces |
 
-Live internal certs: `trust-manager-tls`, `op-connect-tls`, `barman-cloud-{client,server}-tls` (CNPG↔Barman mTLS). The `pki` layer is a dependency of ESO so 1P Connect's mTLS is available before secrets sync.
+Internal certs (trust-manager, 1P Connect, and any service-to-service mTLS) are
+issued from this CA. The `pki` layer is a dependency of ESO so 1P Connect's mTLS
+is available before secrets sync.
 
 ## CNPG network-policy dependency (easy to miss)
 
-Every new `<app>-cnpg-allow` CCNP must allow ingress from the CNPG operator (database ns + `cloudnative-pg` label) on **8000** — otherwise fresh clusters get stuck at `1/N` instances. See `_lib/security/cilium-network-policies/*-cnpg-allow.yaml`.
+Every new `<app>-cnpg-allow` network policy must allow ingress from the CNPG
+operator (the database namespace + `cloudnative-pg` label) on **port 8000** —
+otherwise fresh database clusters get stuck at `1/N` instances.
 
 ## Rotation notes
 
-- **1P-backed fields** resync on the `ExternalSecret` `refreshInterval` (typically 5–15m). Running pods don't re-read — rotation matters for the *next* reinstall/restart (e.g. Authentik `bootstrap_password`). Force a sync with `kube dev -n <ns> annotate externalsecret <name> force-sync="$(date +%s)" --overwrite`.
-- **R2/Cloudflare tokens** are Terraform-managed (90–180d TTL); re-issue via targeted `terraform apply` and ESO picks up the rewritten 1P item ([apps/authentik.md](../apps/authentik.md#recovery-and-day-2)).
+- **1Password-backed fields** resync on the `ExternalSecret` `refreshInterval`
+  (typically 5–15m). Running pods don't re-read — rotation takes effect on the
+  *next* restart. Force a sync with
+  `kube dev -n <ns> annotate externalsecret <name> force-sync="$(date +%s)" --overwrite`.
+- **Object-storage / Cloudflare tokens** are Terraform-managed (90–180-day TTL);
+  re-issue via a targeted `terraform apply` and ESO picks up the rewritten item.
