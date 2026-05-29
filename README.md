@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://avatars.githubusercontent.com/u/61287648?s=200&v=4" width="144" height="144" alt="kubernetes"/>
+<img src="https://avatars.githubusercontent.com/u/61287648?s=200&v=4" width="144px" height="144px" alt="kubernetes"/>
 
 <br/>
 <br/>
