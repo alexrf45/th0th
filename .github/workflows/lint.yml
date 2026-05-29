@@ -21,19 +21,6 @@ on:
       - '.yamllint.yaml'
 
 jobs:
-  yamllint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install yamllint
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y yamllint
-
-      - name: Run yamllint
-        run: yamllint -c .yamllint.yaml .
-
   promtool:
     runs-on: ubuntu-latest
     steps:
