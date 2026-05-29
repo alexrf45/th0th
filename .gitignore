@@ -303,3 +303,9 @@ ob-archiver.plain.yaml
 
 # /sprint-orchestrate runtime state (per-task accept.sh under .claude/sprints/<id>/ is tracked)
 .claude/sprint-state.json
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
