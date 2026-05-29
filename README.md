@@ -1,11 +1,11 @@
 <div align="center">
 
-<img src="https://avatars.githubusercontent.com/u/61287648?s=200&v=4" align="center" width="144px" height="144px" alt="kubernetes"/>
+<img src="https://avatars.githubusercontent.com/u/61287648?s=200&v=4" width="144px" height="144px" alt="kubernetes"/>
 
-## home-0ps.com
+<br/>
+<br/>
 
-![GitHub repo size](https://img.shields.io/github/repo-size/alexrf45/home-0ps.com) [![Status Page](https://img.shields.io/badge/home--0ps.com-blue?style=plastic)](https://dev-status.home-0ps.com)
-![Static Badge](https://img.shields.io/badge/talos-v1.12.8-orange?style=plastic&logo=Talos&logoColor=%23FF7300) ![Static Badge](https://img.shields.io/badge/k8s-v1.35.0-blue?style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto) ![Static Badge](https://img.shields.io/badge/flux-v2.7.0-blue?style=plastic&logo=flux&logoSize=auto) ![Static Badge](https://img.shields.io/badge/terraform-v1.15.5-purple?style=plastic&logo=terraform&color=%237B42BC) ![Static Badge](https://img.shields.io/badge/proxmox-v9.1.9-orange?style=plastic&logo=proxmox&logoSize=auto)
+<a href="https://dev-status.home-0ps.com"><img src="https://img.shields.io/badge/home--0ps.com-blue?style=plastic" alt="home-0ps.com" height="140px" width="140px" /></a>
 
 **_A living, breathing home lab that champions a love of learning and discovery_**
 
@@ -17,16 +17,16 @@
 
 ### Cluster
 
-![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Ftalos_version)
-![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fkubernetes_version)
-![Flux](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fflux_version)
-![Nodes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_node_count)
-![Pods](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_pod_count)
-![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_age_days)
-![Uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_uptime_days)
-![CPU](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_cpu_usage)
-![Memory](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_memory_usage)
-![Alerts](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_alert_count)
+![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Ftalos_version&style=plastic&logo=Talos&logoColor=%23FF7300)
+![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fkubernetes_version&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
+![Flux](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fflux_version&style=plastic&logo=flux&logoSize=auto)
+![Nodes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_node_count&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
+![Pods](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_pod_count&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
+![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_age_days&style=plastic&logo=prometheus&logoColor=%23E6522C)
+![Uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_uptime_days&style=plastic&logo=prometheus&logoColor=%23E6522C)
+![CPU](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_cpu_usage&style=plastic&logo=prometheus&logoColor=%23E6522C)
+![Memory](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_memory_usage&style=plastic&logo=prometheus&logoColor=%23E6522C)
+![Alerts](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_alert_count&style=plastic&logo=prometheus&logoColor=%23E6522C)
 
 ### Applications
 
