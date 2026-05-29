@@ -9,17 +9,17 @@ A home lab built following GitOps principles using Talos Linux on Proxmox & Flux
 
 <div class="grid cards" markdown>
 
-- :material-clipboard-check-outline:{ .lg .middle } **[Prerequisites](prerequisites.md)**
+-   :material-clipboard-check-outline:{ .lg .middle } __[Prerequisites](prerequisites.md)__
 
-  ***
+    ---
 
-  Hardware, network, accounts, and tools you need before the first command.
+    Hardware, network, accounts, and tools you need before the first command.
 
-- :material-rocket-launch-outline:{ .lg .middle } **[Bootstrap the cluster](bootstrap.md)**
+-   :material-rocket-launch-outline:{ .lg .middle } __[Bootstrap the cluster](bootstrap.md)__
 
-  ***
+    ---
 
-  The ordered build: provision Talos, bootstrap Flux, then layer the platform.
+    The ordered build: provision Talos, bootstrap Flux, then layer the platform.
 
 </div>
 
@@ -27,37 +27,23 @@ A home lab built following GitOps principles using Talos Linux on Proxmox & Flux
 
 <div class="grid cards" markdown>
 
-- :material-lan:{ .lg .middle } **[Infrastructure](infra/networking.md)**
+-   :material-lan:{ .lg .middle } __[Infrastructure](infra/index.md)__
 
-  ***
+    ---
 
-  The platform layers — networking, DNS, storage, secrets/PKI, observability.
+    The platform layers — networking, DNS, storage, secrets/PKI, observability.
 
-  [Networking](infra/networking.md) ·
-  [DNS](infra/dns.md) ·
-  [Storage](infra/storage.md) ·
-  [Secrets & PKI](infra/secrets-pki.md) ·
-  [Observability](infra/observability.md)
+-   :material-apps:{ .lg .middle } __[Applications](apps/index.md)__
 
-- :material-apps:{ .lg .middle } **[Applications](apps/authentik.md)**
+    ---
 
-  ***
+    The workloads — how each is deployed, exposed, and recovered.
 
-  The workloads — how each is deployed, exposed, and recovered.
+-   :material-wrench-outline:{ .lg .middle } __[Operations](guides/index.md)__
 
-  [Authentik](apps/authentik.md) ·
-  [FreshRSS](apps/freshrss.md) ·
-  [Homer](apps/homer.md)
+    ---
 
-- :material-wrench-outline:{ .lg .middle } **[Operations](kubectl-wrapper.md)**
-
-  ***
-
-  Day-2: cluster access, hard-won best practices, database rescue.
-
-  [Cluster access](kubectl-wrapper.md) ·
-  [Best practices](guides/best-practices.md) ·
-  [Database rescue](guides/cnpg-rescue.md)
+    Day-2: cluster access, hard-won best practices, database rescue.
 
 </div>
 

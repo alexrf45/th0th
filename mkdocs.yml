@@ -76,16 +76,19 @@ nav:
   - Prerequisites: prerequisites.md
   - Bootstrap the cluster: bootstrap.md
   - Infrastructure:
+      - infra/index.md
       - Networking: infra/networking.md
       - DNS: infra/dns.md
       - Storage: infra/storage.md
       - Secrets & PKI: infra/secrets-pki.md
       - Observability: infra/observability.md
   - Applications:
+      - apps/index.md
       - Authentik (SSO): apps/authentik.md
       - FreshRSS: apps/freshrss.md
       - Homer: apps/homer.md
   - Operations:
+      - guides/index.md
       - Cluster access: kubectl-wrapper.md
       - Best practices: guides/best-practices.md
       - Database rescue: guides/cnpg-rescue.md
