@@ -40,4 +40,6 @@ data:
   GATUS_SUBDOMAIN: "dev.int.status"
   #observability
   GRAFANA_SUBDOMAIN: "dev.int.grafana"
+  KROMGO_VERSION: "v0.10.0"
+  KROMGO_SUBDOMAIN: "dev.int.kromgo"
 ---

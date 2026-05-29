@@ -4,8 +4,8 @@
 
 ## home-0ps.com
 
-![GitHub repo size](https://img.shields.io/github/repo-size/alexrf45/khepri) [![Static Badge](https://img.shields.io/badge/fr3d.dev-blue?style=plastic&link=https%3A%2F%2Ffr3d.dev)](https://blog.fr3d.dev)
-![Static Badge](https://img.shields.io/badge/talos-v1.13.0-orange?style=plastic&logo=Talos&logoColor=%23FF7300) ![Static Badge](https://img.shields.io/badge/k8s-v1.35.0-blue?style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto) ![Static Badge](https://img.shields.io/badge/flux-v2.7.5-blue?style=plastic&logo=flux&logoSize=auto&link=https%3A%2F%2Fblog.fr3d.dev) ![Static Badge](https://img.shields.io/badge/terraform-v1.13.3-purple?style=plastic&logo=terraform&color=%237B42BC) ![Static Badge](https://img.shields.io/badge/proxmox-v9.1.4-orange?style=plastic&logo=proxmox&logoSize=auto&link=https%3A%2F%2Fblog.fr3d.dev)
+![GitHub repo size](https://img.shields.io/github/repo-size/alexrf45/home-0ps.com) [![Status Page](https://img.shields.io/badge/home--0ps.com-blue?style=plastic)](https://dev-status.home-0ps.com)
+![Static Badge](https://img.shields.io/badge/talos-v1.12.8-orange?style=plastic&logo=Talos&logoColor=%23FF7300) ![Static Badge](https://img.shields.io/badge/k8s-v1.35.0-blue?style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto) ![Static Badge](https://img.shields.io/badge/flux-v2.7.0-blue?style=plastic&logo=flux&logoSize=auto) ![Static Badge](https://img.shields.io/badge/terraform-v1.15.5-purple?style=plastic&logo=terraform&color=%237B42BC) ![Static Badge](https://img.shields.io/badge/proxmox-v9.1.9-orange?style=plastic&logo=proxmox&logoSize=auto)
 
 **_A living, breathing home lab that champions a love of learning and discovery_**
 
@@ -15,30 +15,34 @@
 
 ## Live status
 
-Live health from [Gatus](https://github.com/TwiN/gatus) (`gatus` namespace, `dev`
-cluster), surfaced via the public Cloudflare Tunnel at
-[`dev-status.home-0ps.com`](https://dev-status.home-0ps.com). Badges render
-through `shields.io`'s endpoint adapter so they match the rest of this README.
+### Cluster
 
-> **Note:** GitHub proxies external images through its `camo` CDN and caches
-> SVGs for ~5 minutes — state changes here lag the live dashboard by up to that
-> long. For real-time status, hit the dashboard directly.
+![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Ftalos_version)
+![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fkubernetes_version)
+![Flux](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fflux_version)
+![Nodes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_node_count)
+![Pods](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_pod_count)
+![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_age_days)
+![Uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_uptime_days)
+![CPU](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_cpu_usage)
+![Memory](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_memory_usage)
+![Alerts](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_alert_count)
 
 ### Applications
 
-| Application | Status | Uptime (7d) | Purpose |
-| --- | --- | --- | --- |
-| ![Authentik](https://img.shields.io/badge/Authentik-FD4B2D?logo=authentik&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_authentik%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_authentik/uptimes/7d/badge.svg) | SSO / IdP |
-| ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_grafana%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_grafana/uptimes/7d/badge.svg) | Observability UI |
-| ![FreshRSS](https://img.shields.io/badge/FreshRSS-2D2D2D?logo=rss&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_freshrss%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_freshrss/uptimes/7d/badge.svg) | Self-hosted RSS reader |
-| ![Homer](https://img.shields.io/badge/Homer-2D2D2D?logo=homeassistant&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_homer%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_homer/uptimes/7d/badge.svg) | Service dashboard |
+| Application                                                                                | Status                                                                                                                                                        | Uptime (7d)                                                                                             | Purpose                |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------- |
+| ![Authentik](https://img.shields.io/badge/Authentik-FD4B2D?logo=authentik&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_authentik%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_authentik/uptimes/7d/badge.svg) | SSO / IdP              |
+| ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white)       | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_grafana%2Fhealth%2Fbadge.shields)   | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_grafana/uptimes/7d/badge.svg)   | Observability UI       |
+| ![FreshRSS](https://img.shields.io/badge/FreshRSS-2D2D2D?logo=rss&logoColor=white)         | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_freshrss%2Fhealth%2Fbadge.shields)  | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_freshrss/uptimes/7d/badge.svg)  | Self-hosted RSS reader |
+| ![Homer](https://img.shields.io/badge/Homer-2D2D2D?logo=homeassistant&logoColor=white)     | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Fapplications_homer%2Fhealth%2Fbadge.shields)     | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_homer/uptimes/7d/badge.svg)     | Service dashboard      |
 
 ### Infrastructure
 
-| Target | Status | Uptime (7d) | Purpose |
-| --- | --- | --- | --- |
+| Target                                                                               | Status                                                                                                                                                        | Uptime (7d)                                                                                             | Purpose                     |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------- |
 | ![TrueNAS](https://img.shields.io/badge/TrueNAS-0095D5?logo=truenas&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Finfrastructure_truenas%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/infrastructure_truenas/uptimes/7d/badge.svg) | iSCSI / NFS storage backend |
-| ![UniFi](https://img.shields.io/badge/UniFi-0559C9?logo=ubiquiti&logoColor=white) | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Finfrastructure_unifi%2Fhealth%2Fbadge.shields) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/infrastructure_unifi/uptimes/7d/badge.svg) | Edge gateway / DNS resolver |
+| ![UniFi](https://img.shields.io/badge/UniFi-0559C9?logo=ubiquiti&logoColor=white)    | ![status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-status.home-0ps.com%2Fapi%2Fv1%2Fendpoints%2Finfrastructure_unifi%2Fhealth%2Fbadge.shields)   | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/infrastructure_unifi/uptimes/7d/badge.svg)   | Edge gateway / DNS resolver |
 
 </div>
 
@@ -49,6 +53,7 @@ through `shields.io`'s endpoint adapter so they match the rest of this README.
 ![Terraform](https://img.shields.io/badge/Terraform-7B42BC?logo=terraform&logoColor=white)
 ![Proxmox](https://img.shields.io/badge/Proxmox-E57000?logo=proxmox&logoColor=white)
 ![Flux](https://img.shields.io/badge/Flux-5468FF?logo=flux&logoColor=white)
+![Helm](https://img.shields.io/badge/Helm-0F1689?logo=helm&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=white)
 ![Cilium](https://img.shields.io/badge/Cilium-F8C517?logo=cilium&logoColor=black)
 ![CoreDNS](https://img.shields.io/badge/CoreDNS-1F7DD1?logo=coredns&logoColor=white)
@@ -59,73 +64,19 @@ through `shields.io`'s endpoint adapter so they match the rest of this README.
 ![CloudNativePG](https://img.shields.io/badge/CloudNativePG-336791?logo=postgresql&logoColor=white)
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?logo=prometheus&logoColor=white)
 ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white)
+![Loki](https://img.shields.io/badge/Loki-F46800?logo=grafana&logoColor=white)
+![Alloy](https://img.shields.io/badge/Grafana_Alloy-F46800?logo=grafana&logoColor=white)
+![Gatus](https://img.shields.io/badge/Gatus-2D2D2D?logo=statuspage&logoColor=white)
 ![Cert-Manager](https://img.shields.io/badge/cert--manager-326CE5?logo=kubernetes&logoColor=white)
 ![External Secrets](https://img.shields.io/badge/External_Secrets-326CE5?logo=kubernetes&logoColor=white)
 ![1Password](https://img.shields.io/badge/1Password-0094F5?logo=1password&logoColor=white)
+![SOPS](https://img.shields.io/badge/SOPS-1A1A1A?logo=mozilla&logoColor=white)
 ![Renovate](https://img.shields.io/badge/Renovate-1A1F6C?logo=renovatebot&logoColor=white)
+![Authentik](https://img.shields.io/badge/Authentik-FD4B2D?logo=authentik&logoColor=white)
 ![Kyverno](https://img.shields.io/badge/Kyverno-3BCEAC?logo=kubernetes&logoColor=white)
+![Falco](https://img.shields.io/badge/Falco-00AEEF?logo=falco&logoColor=white)
+![Trivy](https://img.shields.io/badge/Trivy-1904DA?logo=aquasecurity&logoColor=white)
 ![Tailscale](https://img.shields.io/badge/Tailscale-242424?logo=tailscale&logoColor=white)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?logo=cloudflare&logoColor=white)
 
 </div>
-
-## Cluster access tooling — `kubeop.sh`
-
-The kubeconfig for every cluster in this lab lives in 1Password (written there
-by `terraform/dev/talos-pve-v3.1.0/config-export.tf` as a Secure Note titled
-`<cluster-name>-kubeconfig`). It never lands on disk.
-
-To make this ergonomic, a small zsh helper at [`_hack/scripts/kubeop.sh`](./_hack/scripts/kubeop.sh)
-(also kept in `~/.zsh/kubeop.sh` on the operator workstation) fetches the
-kubeconfig on demand via `op read` and feeds it to kubeconfig-aware tools via
-process substitution — the config materializes as a `/dev/fd/N` pipe inside a
-short-lived bash subshell and is never written to a file.
-
-Source it from your `~/.zshrc`:
-
-```bash
-source ~/.zsh/kubeop.sh
-```
-
-It exposes four functions:
-
-| Function | Purpose |
-| --- | --- |
-| `kube [env] <args>`         | kubectl (env defaults to `dev`) |
-| `k9s-op [env] <args>`       | k9s |
-| `k8sop <env> <tool> <args>` | any kubeconfig-aware tool: flux, helm, kustomize, kubectl-cnpg, stern, kubecolor, etc. |
-| `kube-flush`                | drop the in-memory kubeconfig cache and force a re-fetch |
-
-Examples:
-
-```bash
-kube dev get pods -A
-kube dev -n freshrss rollout restart deploy/freshrss
-k8sop dev flux reconcile kustomization security --with-source
-k8sop dev helm list -A
-k8sop dev kustomize build _lib/applications/freshrss/overlays/dev
-k8sop dev stern -n freshrss .
-```
-
-**Why use this pattern in your own lab:**
-
-- **Zero plaintext kubeconfigs at rest.** Compromise of a workstation user
-  account doesn't immediately leak cluster admin creds; the secret is only
-  ever in environment-variable / file-descriptor form during a single command.
-- **Single source of truth.** Cluster bootstrap (Terraform) writes the
-  credential; everyone who needs it pulls it the same way. No `scp`-ing
-  configs, no stale `~/.kube/config` merges.
-- **Multi-cluster from one shell.** `dev`, `staging`, `prod` are positional
-  args — no `kubectx` dance, no risk of acting on the wrong cluster because
-  you forgot to switch context.
-- **Works with anything that takes `--kubeconfig`.** kubectl, k9s, flux, helm,
-  kustomize, stern, kubectl-cnpg, kubecolor — all transparent.
-
-Prerequisites: 1Password CLI (`op`) signed in, `bash` available at `/bin/bash`,
-and the cluster's kubeconfig stored in the configured vault as a Secure Note
-named `<cluster-name>-kubeconfig`. Override the vault per-shell with
-`export OP_VAULT="..."` before sourcing the script.
-
-Caveat: the wrapper hardcodes `--kubeconfig`, so it won't work for tools that
-use a different flag (notably `talosctl`, which uses `--talosconfig`). Run
-those directly.

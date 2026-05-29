@@ -18,3 +18,5 @@ resources:
   - gatus-dump-allow.yaml
   - cloudflared-default-deny.yaml
   - cloudflared-allow.yaml
+  - kromgo-default-deny.yaml
+  - kromgo-allow.yaml

@@ -60,13 +60,21 @@ spec:
               protocol: TCP
             - port: "443"
               protocol: TCP
-    # Tunnel backends — currently just gatus. Append additional backend
-    # endpoint selectors here as new public hostnames are added to
-    # terraform/cloudflare-tunnel/main.tf's ingress list.
+    # Tunnel backends. Append additional backend endpoint selectors here as
+    # new public hostnames are added to terraform/cloudflare-tunnel/main.tf's
+    # ingress list.
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: gatus
             app: gatus
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+            app: kromgo
       toPorts:
         - ports:
             - port: "8080"

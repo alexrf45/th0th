@@ -6,3 +6,4 @@ resources:
   - tailscale-egress
   - alloy
   - scrape-configs
+  - kromgo
