@@ -1,6 +1,6 @@
 # home-0ps.com
 
-A home lab built following GitOps principles using Talos Linux on Proxmox & Flux CD, with secrets sourced from 1Password
+A home lab built following GitOps principles using Talos Linux on Proxmox & Flux CD with secrets sourced from 1Password
 
 ![System context](diagrams/system-context-light.svg#only-light)
 ![System context](diagrams/system-context-dark.svg#only-dark)
@@ -9,21 +9,17 @@ A home lab built following GitOps principles using Talos Linux on Proxmox & Flux
 
 <div class="grid cards" markdown>
 
-- :material-clipboard-check-outline:{ .lg .middle } **Prerequisites**
+- :material-clipboard-check-outline:{ .lg .middle } **[Prerequisites](prerequisites.md)**
 
   ***
 
   Hardware, network, accounts, and tools you need before the first command.
 
-  [:octicons-arrow-right-24: Prerequisites](prerequisites.md)
-
-- :material-rocket-launch-outline:{ .lg .middle } **Bootstrap the cluster**
+- :material-rocket-launch-outline:{ .lg .middle } **[Bootstrap the cluster](bootstrap.md)**
 
   ***
 
   The ordered build: provision Talos, bootstrap Flux, then layer the platform.
-
-  [:octicons-arrow-right-24: Bootstrap](bootstrap.md)
 
 </div>
 
