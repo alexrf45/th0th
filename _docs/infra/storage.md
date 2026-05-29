@@ -1,54 +1,86 @@
-# Infra guide: Storage
+# Storage
 
-**Layer:** `storage` (Flux Kustomization, depends on `secrets`).
-**Backing:** TrueNAS Scale @ `192.168.20.106` (ZFS). iSCSI block storage + node-local hostpath.
-**Strategy direction:** [ADR-0003](../decisions/0003-cnpg-local-snapshots.md) (single-instance CNPG on static iSCSI + CSI snapshots), [ADR-0002](../decisions/0002-object-storage-r2.md) (R2 object-storage capability).
+How the lab provides persistent storage: NAS-backed iSCSI block storage through
+a CSI driver, node-local paths for scratch data, and S3-compatible object
+storage for off-site backups.
 
----
+> **Example values.** Addresses, hostnames, pool names, and bucket names below
+> are placeholders (`10.10.20.0/24`, `lab.example.com`, `tank`, …). Substitute
+> your own. The design — not the literals — is what transfers.
 
-## What's deployed
+## Prerequisites
 
-| Component | Path | Notes |
+- A ZFS NAS (this lab uses TrueNAS Scale) reachable on the LAN — e.g.
+  `10.10.20.10` — with the iSCSI service enabled and a pool (here: `tank`).
+- The `secrets` layer working: the CSI driver reads its NAS API credentials from
+  a Kubernetes Secret synced by External Secrets, so `storage` depends on it.
+
+## What you deploy
+
+| Component | Path | Role |
 | --- | --- | --- |
-| democratic-csi (freenas-iscsi) | `_lib/storage/freenas-csi/` | chart `0.15.0`; driver `freenas-api-iscsi`; portal `192.168.20.106:3260`; creds via ESO |
-| local-path-provisioner | `_lib/storage/local-path/` | node-local hostpath; **used by all CNPG clusters today** (the DR gap ADR-0003 fixes) |
-| Barman Cloud plugin | `_lib/storage/barman-cloud/` | CNPG WAL/base archival to S3-compatible object storage |
+| democratic-csi (`freenas-iscsi`) | `_lib/storage/freenas-csi/` | iSCSI CSI driver — dynamic + static PVs against the NAS (`driver: freenas-api-iscsi`, portal `10.10.20.10:3260`, creds via ESO) |
+| local-path-provisioner | `_lib/storage/local-path/` | node-local hostpath for scratch / non-critical data |
+| Barman Cloud plugin | `_lib/storage/barman-cloud/` | optional CNPG WAL/base archival to S3-compatible object storage |
 
-StorageClasses & params come from the `cluster-config` ConfigMap: `STORAGE_CLASS_NAME: iscsi`, `DATASET_PARENT: home-share/iscsi/k8s/dev/volumes`, `DATASET_SNAPSHOTS: home-share/iscsi/k8s/dev/snapshots`, `RECLAIM_POLICY: "Delete"`.
+StorageClass parameters come from the `cluster-config` ConfigMap so they stay
+environment-agnostic:
 
-## How volumes are used today
+```yaml
+STORAGE_CLASS_NAME: iscsi
+DATASET_PARENT: tank/iscsi/k8s/volumes
+DATASET_SNAPSHOTS: tank/iscsi/k8s/snapshots
+RECLAIM_POLICY: "Retain"   # keep volumes if a PVC is deleted by accident
+```
 
-| Workload | Class | Notes |
-| --- | --- | --- |
-| FreshRSS app data | `iscsi` (static `dev-freshrss-pv`, `Retain`) | the reference static-volume pattern |
-| Monitoring (Prometheus 50Gi, Tempo 30Gi, Grafana 5Gi, Alertmanager 5Gi) | `iscsi` (dynamic) | ~90Gi total |
-| CNPG (authentik 3×5Gi+2Gi-wal, freshrss 3×5Gi+2Gi-wal) | `local-path` | **node-local — latent resilience bug** (ADR-0003) |
+## Provision a static iSCSI volume
 
-## The static iSCSI volume pattern
+The reference pattern for any stateful workload that must survive a full
+teardown — pre-create the backing zvol, then pin a static PV/PVC to it.
 
-Pre-create a zvol on TrueNAS, check a static PV + PVC into the overlay, pin with `volumeName`. Reference: `_lib/applications/freshrss/overlays/dev/volume.yaml` —
+1. **Create a zvol** on the NAS under your volumes dataset
+   (`tank/iscsi/k8s/volumes/<name>`).
+2. **Define a static PV** and check it into the app overlay
+   (reference: `_lib/applications/freshrss/overlays/dev/volume.yaml`):
+   - `storageClassName: iscsi`
+   - `persistentVolumeReclaimPolicy: Retain`
+   - `csi.driver: freenas-api-iscsi`
+   - `volumeHandle` = the zvol name
+   - `iqn: iqn.2005-10.org.freenas.ctl:<name>`
+   - `portal: 10.10.20.10:3260`
+3. **Bind it** from the PVC with `volumeName: <pv>` for an explicit, stable bind.
 
-- PV: `storageClassName: iscsi`, `persistentVolumeReclaimPolicy: Retain`, `csi.driver: freenas-api-iscsi`, `volumeHandle` = the zvol name, `iqn: iqn.2005-10.org.freenas.ctl:<name>`, `portal: 192.168.20.106:3260`.
-- PVC: `volumeName: <pv>` for an explicit bind.
+## Database storage (CNPG)
 
-This is what [ADR-0003](../decisions/0003-cnpg-local-snapshots.md) extends to CNPG (one zvol per DB, bound via `pvcTemplate.volumeName`).
+Run PostgreSQL clusters (CloudNativePG) **single-instance on a static iSCSI
+zvol** — one zvol per database, bound via `pvcTemplate.volumeName` — with
+durability provided by CSI `VolumeSnapshot`s rather than streaming replicas. The
+NAS's own ZFS redundancy is the underlying durability layer. See
+[ADR-0003](../decisions/0003-cnpg-local-snapshots.md) for why this beats
+node-local paths (which don't survive a node loss) for a single-operator lab.
 
-## Object storage (R2)
+To enable scheduled snapshots you need, in order: the `external-snapshotter`
+CRDs (in `global/crds/`), the snapshot-controller and CSI snapshotter sidecar
+(in the `storage` layer), and a `VolumeSnapshotClass`. Verify a *manual*
+snapshot succeeds before wiring `ScheduledBackup`.
 
-Reusable Terraform module `terraform/modules/object-storage/` (`backend = r2 | aws_s3`, default R2). Today's only consumer is the Authentik CNPG Barman backup (bucket `dev-authentik-e53522c0`). Per [ADR-0003](../decisions/0003-cnpg-local-snapshots.md) this is being retired from the CNPG path in favor of local snapshots; the module stays as a generic capability for a future genuine off-site need. Wiring + token rotation: `terraform/modules/object-storage/README.md`; [apps/authentik.md](../apps/authentik.md#recovery-and-day-2).
+## Object storage for backups (optional)
 
-## Open items (storage tier)
-
-| ID | Item | Action |
-| --- | --- | --- |
-| S-1 | Snapshot infra absent | Add `external-snapshotter` CRDs (→ `global/crds/`), snapshot-controller (→ `storage`), CSI snapshotter sidecar, `VolumeSnapshotClass freenas-iscsi-snapclass`. **Blocks scheduled backups.** Verify a manual snapshot first. |
-| S-2 | CNPG → single static iSCSI zvol | Per-DB zvol + static `Retain` PV; `instances: 1`; drop `walStorage`; migrate via `bootstrap.pg_basebackup` (no S3). Verify `pvcTemplate.volumeName` honored by operator `0.27.0` on a throwaway first. |
-| S-3 | Retire R2/S3 from CNPG | Drop Authentik Barman/R2 ObjectStore; `terraform destroy` wallabag S3; destroy Authentik R2 bucket (lifecycle rule needs manual dashboard cleanup). |
-| S-4 | Reclaim default `Delete` | `cluster-configs.yaml:RECLAIM_POLICY` → `Retain` so accidental dynamic iSCSI volumes survive PVC deletion. |
-| S-5 | FreshRSS DB unprotected | Resolved by S-2's VolumeSnapshot ScheduledBackup. |
+A reusable Terraform module (`terraform/modules/object-storage/`, `backend = r2
+| aws_s3`) provisions an S3-compatible bucket — e.g. for CNPG Barman archival to
+a bucket like `homelab-authentik-backup`. For a single NAS with ZFS snapshots,
+local CSI snapshots cover most recovery needs; keep object storage for a genuine
+off-site copy. Wiring and credential rotation live in the module's `README.md`.
 
 ## Gotchas
 
-- **CNPG bootstrap is one-shot/immutable.** To retry a failed recovery: suspend Flux, delete the `Cluster` + instance PVCs, resume. CNPG does **not** GC instance PVCs on cluster deletion — that's what enables the soft-teardown / re-adopt loop.
-- **CNPG recovery archiver path:** when promoting/restoring on object storage, the archiver `destinationPath` must point at a *new empty* prefix; recovery reads from the *old* prefix.
-- Sequence S-1 (snapshot infra) **before** S-3 (retiring R2) — you can't lose the only backup before the replacement is proven.
+- **CNPG bootstrap is one-shot / immutable.** To retry a failed recovery:
+  suspend Flux, delete the `Cluster` + its instance PVCs, resume. CNPG does
+  **not** garbage-collect instance PVCs on cluster deletion — that's what makes
+  the soft-teardown / re-adopt loop possible.
+- **CNPG recovery archiver path:** when promoting or restoring on object
+  storage, the archiver `destinationPath` must point at a *new, empty* prefix;
+  recovery reads from the *old* prefix. Pointing both at the same prefix
+  corrupts the archive.
+- **Don't retire your only backup before the replacement is proven.** Stand up
+  and test snapshots before dropping any pre-existing object-storage backup.
