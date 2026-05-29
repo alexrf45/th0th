@@ -8,8 +8,9 @@
 
 <a href="https://dev-status.home-0ps.com"><img src="https://img.shields.io/badge/home--0ps.com-blue?style=plastic" alt="home-0ps.com" height="140px" width="140px"/></a>
 
-</div>
 **_A living, breathing home lab that champions a love of learning and discovery_**
+
+</div>
 
 <div align="center">
 
