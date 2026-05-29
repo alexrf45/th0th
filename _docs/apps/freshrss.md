@@ -30,7 +30,7 @@ any image that wants to run as root but shouldn't.
 | `_lib/applications/freshrss/overlays/dev/database.yaml` | CNPG `Cluster` |
 | `_lib/security/cilium-network-policies/freshrss-{default-deny,allow,cnpg-allow}.yaml` | network policy |
 
-## The securityContext / writable-paths pattern
+## The securityContext / writable-paths pattern {#the-securitycontext--writable-paths-pattern}
 
 FreshRSS's Alpine entrypoint expects to run as root (it writes
 `/etc/php84/php.ini` and seeds a `Docker/` dir), but the main container runs as

@@ -1,0 +1,49 @@
+# Strict build-check for the docs site. Deployment is handled by Cloudflare
+# Pages' Git integration (connect the repo in the CF dashboard):
+#   Build command:     pip install -r requirements.txt && mkdocs build
+#   Build output dir:  site
+#   Root directory:    /
+#   Production branch:  dev   (or main, once promoted)
+# This workflow only gates PRs so a broken build can't merge.
+name: docs
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '_docs/**'
+      - 'mkdocs.yml'
+      - 'requirements.txt'
+      - '.github/workflows/docs.yml'
+  push:
+    branches: [dev]
+    paths:
+      - '_docs/**'
+      - 'mkdocs.yml'
+      - 'requirements.txt'
+      - '.github/workflows/docs.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install MkDocs Material
+        run: pip install -r requirements.txt
+
+      # --strict turns broken links / missing nav refs into build failures,
+      # mirroring the promtool/yamllint gate pattern.
+      - name: Build site (strict)
+        run: mkdocs build --strict
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: site/
+          retention-days: 7

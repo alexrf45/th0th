@@ -28,7 +28,7 @@ stack.
   `kubectl`/`flux`/`helm` target nothing. (`talosctl` is the only exception.) See
   [the cluster-access wrapper](../kubectl-wrapper.md).
 
-## 2. Security & hardening
+## 2. Security & hardening {#2-security--hardening}
 
 ### Pod Security Standards
 Aim for namespace `pod-security.kubernetes.io/enforce: restricted` with a pod
@@ -139,7 +139,7 @@ Apply these to every stateful app, in priority order:
   On" (pairs with Proxmox HA for power-blip self-recovery), and verify it on
   every node.
 
-## 8. Things to skip on a Talos lab
+## 8. Things to skip on a Talos lab {#things-to-skip-on-a-talos-lab}
 
 Advice aimed at single-server `k3s`/`nginx`/`ufw` setups doesn't apply here:
 

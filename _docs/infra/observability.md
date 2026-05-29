@@ -47,7 +47,7 @@ Alloy ships logs from every node; the Loki backend is plain filesystem.
 - **Grafana OIDC** via Authentik (`auth.generic_oauth`), roles mapped from
   entitlements (Admins/Editors/Viewers), credentials from a `grafana-oidc` ESO
   secret, with the local admin retained for break-glass. Setup:
-  [Authentik](../apps/authentik.md#wiring-an-oidc-consumer-grafana).
+  [Authentik](../apps/authentik.md#wiring-an-oidc-consumer).
 - **Alertmanager → Slack** (`slack-critical`/`slack-warning` receivers, a route
   tree, inhibit rules) plus the chart's `defaultRules`.
 
