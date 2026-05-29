@@ -1,12 +1,12 @@
 # Storage
 
 How the lab provides persistent storage: NAS-backed iSCSI block storage through
-a CSI driver, node-local paths for scratch data, and S3-compatible object
-storage for off-site backups.
+a CSI driver, node-local paths for scratch data, and CSI `VolumeSnapshot`s for
+database durability.
 
-> **Example values.** Addresses, hostnames, pool names, and bucket names below
-> are placeholders (`10.10.20.0/24`, `lab.example.com`, `tank`, …). Substitute
-> your own. The design — not the literals — is what transfers.
+> **Example values.** Addresses, hostnames, and pool names below are
+> placeholders (`10.10.20.0/24`, `lab.example.com`, `tank`, …). Substitute your
+> own. The design — not the literals — is what transfers.
 
 ## Prerequisites
 
@@ -21,7 +21,6 @@ storage for off-site backups.
 | --- | --- | --- |
 | democratic-csi (`freenas-iscsi`) | `_lib/storage/freenas-csi/` | iSCSI CSI driver — dynamic + static PVs against the NAS (`driver: freenas-api-iscsi`, portal `10.10.20.10:3260`, creds via ESO) |
 | local-path-provisioner | `_lib/storage/local-path/` | node-local hostpath for scratch / non-critical data |
-| Barman Cloud plugin | `_lib/storage/barman-cloud/` | optional CNPG WAL/base archival to S3-compatible object storage |
 
 StorageClass parameters come from the `cluster-config` ConfigMap so they stay
 environment-agnostic:
@@ -55,22 +54,13 @@ teardown — pre-create the backing zvol, then pin a static PV/PVC to it.
 Run PostgreSQL clusters (CloudNativePG) **single-instance on a static iSCSI
 zvol** — one zvol per database, bound via `pvcTemplate.volumeName` — with
 durability provided by CSI `VolumeSnapshot`s rather than streaming replicas. The
-NAS's own ZFS redundancy is the underlying durability layer. See
-[ADR-0003](../decisions/0003-cnpg-local-snapshots.md) for why this beats
-node-local paths (which don't survive a node loss) for a single-operator lab.
+NAS's own ZFS redundancy is the underlying durability layer. For a
+single-operator lab this beats node-local paths, which don't survive a node loss.
 
 To enable scheduled snapshots you need, in order: the `external-snapshotter`
 CRDs (in `global/crds/`), the snapshot-controller and CSI snapshotter sidecar
 (in the `storage` layer), and a `VolumeSnapshotClass`. Verify a *manual*
 snapshot succeeds before wiring `ScheduledBackup`.
-
-## Object storage for backups (optional)
-
-A reusable Terraform module (`terraform/modules/object-storage/`, `backend = r2
-| aws_s3`) provisions an S3-compatible bucket — e.g. for CNPG Barman archival to
-a bucket like `homelab-authentik-backup`. For a single NAS with ZFS snapshots,
-local CSI snapshots cover most recovery needs; keep object storage for a genuine
-off-site copy. Wiring and credential rotation live in the module's `README.md`.
 
 ## Gotchas
 

@@ -1,33 +1,56 @@
-# Infra guide: DNS
+# DNS
+
+The lab runs **two DNS surfaces**: ExternalDNS publishes records for your
+services, and a CoreDNS split-horizon forward lets in-cluster workloads resolve
+those same internal hostnames.
+
+> **Example values.** `lab.example.com`, `10.10.20.1` (your LAN gateway/DNS
+> resolver), and `<app>.int.lab.example.com` are placeholders — substitute your
+> own zone and resolver.
 
 **Layer:** `dns` (Flux Kustomization, depends on `secrets`).
-**Internal zone:** `home-0ps.com`, served by UniFi (`10.3.3.1`). Records published by ExternalDNS.
-**Two DNS surfaces:** ExternalDNS (record publishing) + CoreDNS (in-cluster resolution).
 
----
+## ExternalDNS — publishing records
 
-## ExternalDNS (record publishing)
+`_lib/dns/external-dns/` runs ExternalDNS (chart `1.19.0`) with the **UniFi
+webhook provider** pointed at the LAN gateway's DNS (`10.10.20.1`). It watches
+`HTTPRoute`s and `Service`s and publishes `*.lab.example.com` records into the
+gateway's DNS, so LAN clients resolve `<app>.int.lab.example.com` automatically.
 
-`_lib/dns/external-dns/` — chart `1.19.0`, **UniFi webhook provider** targeting the UniFi gateway at `10.3.3.1`. It watches HTTPRoutes/Services and publishes `*.home-0ps.com` records into UniFi's DNS so LAN clients resolve `dev.int.<app>.home-0ps.com`. Cloudflare credentials are **not** used here — those are independent and only feed cert-manager DNS-01 (see below).
+If your gateway isn't UniFi, swap the provider — ExternalDNS supports many DNS
+backends; only the webhook/provider block changes. Cloudflare credentials are
+**not** used here; those are independent and only feed cert-manager DNS-01
+(below) — keep edge/DNS-challenge perms separate from record publishing.
 
-## CoreDNS split-horizon (in-cluster resolution)
+## CoreDNS split-horizon — in-cluster resolution
 
-**Problem it solves:** in-cluster back-channels (e.g. Grafana → Authentik OIDC token exchange) need to resolve `dev.int.auth.home-0ps.com`, but cluster CoreDNS doesn't know the internal zone — it NXDOMAIN'd. This was the final blocker for Grafana OIDC ([ADR-0001](../decisions/0001-sso-authentik.md)).
+**Problem it solves:** in-cluster back-channels (e.g. Grafana calling Authentik
+for an OIDC token exchange) need to resolve `auth.int.lab.example.com`, but
+cluster CoreDNS doesn't know your internal zone — it returns NXDOMAIN.
 
-**Fix:** a split-horizon forward so the internal zone resolves via UniFi:
+**Fix:** a split-horizon forward so the internal zone resolves via your LAN
+resolver:
 
 ```
-home-0ps.com:53 { forward . 10.3.3.1 }
+lab.example.com:53 { forward . 10.10.20.1 }
 ```
 
-- **Live:** applied as a manual edit to the CoreDNS ConfigMap.
-- **IaC:** committed as a Talos inlineManifest in `terraform/dev/talos-pve-v3.1.0/talos.tf` (commit `8b3af1f`) — **apply status unverified**. A cluster rebuild *without* applying this reverts the manual edit. Close the drift with `/terraform-plan` → `/terraform-apply` (interactive 1Password auth).
+Apply it as a Flux-owned patch to the `kube-system/coredns` ConfigMap so it
+survives cluster rebuilds (a manual `kubectl edit` is reverted on the next
+reconcile or rebuild).
 
-## cert-manager DNS-01 (Cloudflare)
+## cert-manager DNS-01 (Let's Encrypt via Cloudflare)
 
-The Let's Encrypt ClusterIssuers solve DNS-01 challenges via a **Cloudflare API token** (`Zone:DNS:Edit` + `Zone:Zone:Read`), stored in `_lib/networking/clusterissuers/cf-secrets.yaml` (SOPS). This is **separate** from the R2 storage token ([ADR-0002](../decisions/0002-object-storage-r2.md)) — keep edge/DNS perms and storage perms apart. See [infra/networking.md](networking.md#tls-and-clusterissuers).
+The Let's Encrypt ClusterIssuers solve DNS-01 challenges with a **Cloudflare API
+token** scoped `Zone:DNS:Edit` + `Zone:Zone:Read`, stored SOPS-encrypted in
+`_lib/networking/clusterissuers/`. Keep this token distinct from any
+object-storage token — edge/DNS permissions and storage permissions should never
+share a credential. See [Networking](networking.md#tls-and-clusterissuers).
 
 ## Gotchas
 
-- **The `*.home-0ps.com` wildcard does not cover three-label hosts.** `dev.int.auth` is *three* labels deep — both DNS and the wildcard TLS cert must handle it explicitly (the cert via explicit SANs).
-- NXDOMAIN on a `dev.int.*` host: check ExternalDNS logs *and* that the CoreDNS split-horizon forward is present in the live ConfigMap.
+- **A `*.lab.example.com` wildcard does not cover three-label hosts.**
+  `auth.int.lab.example.com` is three labels deep beyond the apex — both DNS and
+  the wildcard TLS cert must handle it explicitly (the cert via an explicit SAN).
+- **NXDOMAIN on an `<app>.int.*` host:** check ExternalDNS logs *and* that the
+  CoreDNS split-horizon forward is present in the live ConfigMap.
