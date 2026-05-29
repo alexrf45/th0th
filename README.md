@@ -2,11 +2,14 @@
 
 <img src="https://avatars.githubusercontent.com/u/61287648?s=200&v=4" align="center" width="144px" height="144px" alt="kubernetes"/>
 
+</div>
+
+<div align="center"
+
 <a href="https://dev-status.home-0ps.com"><img src="https://img.shields.io/badge/home--0ps.com-blue?style=plastic" alt="home-0ps.com" height="140px" width="140px"/></a>
 
-**_A living, breathing home lab that champions a love of learning and discovery_**
-
 </div>
+**_A living, breathing home lab that champions a love of learning and discovery_**
 
 <div align="center">
 
