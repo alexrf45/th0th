@@ -27,35 +27,35 @@ A home lab built following GitOps principles using Talos Linux on Proxmox & Flux
 
 <div class="grid cards" markdown>
 
-- :material-lan:{ .lg .middle } **Infrastructure**
+- :material-lan:{ .lg .middle } **[Infrastructure](infra/networking.md)**
 
   ***
 
   The platform layers — networking, DNS, storage, secrets/PKI, observability.
 
-  [:octicons-arrow-right-24: Networking](infra/networking.md) ·
+  [Networking](infra/networking.md) ·
   [DNS](infra/dns.md) ·
   [Storage](infra/storage.md) ·
   [Secrets & PKI](infra/secrets-pki.md) ·
   [Observability](infra/observability.md)
 
-- :material-apps:{ .lg .middle } **Applications**
+- :material-apps:{ .lg .middle } **[Applications](apps/authentik.md)**
 
   ***
 
   The workloads — how each is deployed, exposed, and recovered.
 
-  [:octicons-arrow-right-24: Authentik](apps/authentik.md) ·
+  [Authentik](apps/authentik.md) ·
   [FreshRSS](apps/freshrss.md) ·
   [Homer](apps/homer.md)
 
-- :material-wrench-outline:{ .lg .middle } **Operations**
+- :material-wrench-outline:{ .lg .middle } **[Operations](kubectl-wrapper.md)**
 
   ***
 
   Day-2: cluster access, hard-won best practices, database rescue.
 
-  [:octicons-arrow-right-24: Cluster access](kubectl-wrapper.md) ·
+  [Cluster access](kubectl-wrapper.md) ·
   [Best practices](guides/best-practices.md) ·
   [Database rescue](guides/cnpg-rescue.md)
 
