@@ -2,9 +2,7 @@
 
 <img src="https://avatars.githubusercontent.com/u/61287648?s=200&v=4" align="center" width="144px" height="144px" alt="kubernetes"/>
 
-## home-0ps.com
-
-![GitHub repo size](https://img.shields.io/github/repo-size/alexrf45/home-0ps.com) [![Status Page](https://img.shields.io/badge/home--0ps.com-blue?style=plastic)](https://dev-status.home-0ps.com)
+[![home-0ps.com](https://img.shields.io/badge/home--0ps.com-blue?style=plastic)](https://dev-status.home-0ps.com)
 
 **_A living, breathing home lab that champions a love of learning and discovery_**
 
