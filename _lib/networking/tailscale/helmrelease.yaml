@@ -61,4 +61,3 @@ spec:
     apiServerProxyConfig:
       mode: "true" # "true", "false", "noauth"
       allowImpersonation: "true"
-

@@ -17,5 +17,3 @@ spec:
   interval: 24h
   url: https://wiremind.github.io/wiremind-helm-charts
 ---
-
-
