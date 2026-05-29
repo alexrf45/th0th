@@ -1,0 +1,33 @@
+# System context — GitOps homelab reconciliation + secrets + traffic flow
+direction: down
+
+operator: Operator {shape: person}
+user: User {shape: person}
+
+src: Source of truth {
+  repo: Git repo\n(main branch) {shape: cylinder}
+}
+
+secrets: Secrets pipeline {
+  op: 1Password
+  connect: 1P Connect
+  eso: External Secrets Operator
+  op -> connect
+  connect -> eso
+}
+
+cluster: Talos Kubernetes on Proxmox {
+  flux: Flux CD
+  controllers: Controllers
+  networking: Networking\n(Cilium Gateway)
+  applications: Applications
+
+  flux -> controllers: applies layered\nKustomizations
+  controllers -> networking
+  networking -> applications
+}
+
+operator -> src.repo: git push
+src.repo -> cluster.flux: watches & reconciles
+secrets.eso -> cluster.applications: injects Secrets
+user -> cluster.networking: *.lab.example.com
