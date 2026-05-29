@@ -1,8 +1,9 @@
 # home-0ps.com Review — 2026-05-29
 
 > Generated: 2026-05-29 (`/lab-review`). Supersedes `home-0ps-review-2026-05-28.md`.
-> Scope: Live `memphis` dev cluster — Flux applied revision `0a47a77` (one tick behind branch tip `b5e71cb`; reconcile pending for the kromgo configMapGenerator refactor).
-> Trigger: **A heavy observability+CI day.** Three baseline items closed (F-1+F-2+F-3, O-7 remaining alerts), six new fixes shipped (PVCNearFull template, kromgo end-to-end, flux scrape rewrite, CI lint workflow). **13 non-merge commits + 2 PR merges since baseline.**
+> **Updated: 2026-05-29 PM** — re-run after a public-docs-site session on branch `docs/bootstrap-guide`. Cluster state **carried forward** from the AM run (1Password auth prompt dismissed at 11:47Z → live cluster not re-verified this run; snapshot in Section 2 is the AM-verified state, marked accordingly).
+> Scope: Live `memphis` dev cluster — Flux applied revision `0a47a77` (one tick behind branch tip `b5e71cb`; reconcile pending for the kromgo configMapGenerator refactor). **Plus** the public guide site on unmerged branch `docs/bootstrap-guide` (Cloudflare Pages, separate from cluster GitOps — see DOC items).
+> Trigger: **A heavy observability+CI day**, then a docs-site polish session. Three baseline items closed (F-1+F-2+F-3, O-7 remaining alerts), six new fixes shipped (PVCNearFull template, kromgo end-to-end, flux scrape rewrite, CI lint workflow); PM session reworked the MkDocs landing page (clickable grid cards + section landing pages). **13 non-merge commits + 2 PR merges on `dev` since baseline; +3 docs commits on `docs/bootstrap-guide`.**
 
 ---
 
@@ -23,6 +24,8 @@ Baseline catch-up: **F-1 + F-2 + F-3 closed** via PR #49 (FALCO-BUNDLE — custo
 Live state is healthy: **6 nodes Ready** (Talos `v1.12.8` / k8s `v1.35.0`, ~4d4h), **17 Flux Kustomizations Ready at `0a47a77`**, **17 HelmReleases Ready**, no pods outside Running/Completed, 3 certs Ready (wildcard on letsencrypt-**production**), **3 CNPG clusters single-instance** (all 1/1), **10 VolumeSnapshots ReadyToUse** (daily snaps firing for all 3 — authentik 04:30 / freshrss 04:00 / gatus 05:00; gatus's missing-snapshot worry from the 2026-05-28 review resolved itself), 3 dump CronJobs scheduled.
 
 Two TargetDown alerts firing: **authentik-server-metrics** and **authentik-worker-metrics** — the O-9 ServiceMonitor is in `monitoring/authentik` but the chart-side metrics services in `authentik/` are unreachable. Captured as **O-17**.
+
+**Freshest open thread (PM):** the public guide site on `docs/bootstrap-guide` — landing-page grid cards fixed + section landing pages added (`030949f`); branch is unmerged to `dev`. Pick up at **DOC-1/DOC-2** (confirm CF Pages build + icons, then merge).
 
 **Recommended next sprint:** **O-15 KSM label allowlist + `flux_version` PromQL rewrite** (15 min — closes the last broken kromgo badge) + **O-17 authentik scrape repair** (resolves the TargetDown firing) + **O-10 postgres-exporter** (now possible since the KSM allowlist work overlaps with the per-CNPG scrape pattern).
 
@@ -45,10 +48,13 @@ Two TargetDown alerts firing: **authentik-server-metrics** and **authentik-worke
 | **PodMonitors live** | 4 (authentik, freshrss, gatus, tailscale-operator) | 5 (+ flux-system) — tailscale-operator one has historically matched zero targets (worth a check) |
 | **VolumeSnapshots ReadyToUse** | 7 | 10 (3 new daily snaps on 2026-05-29) |
 | **Dev tip** | `56277b1` | `b5e71cb` (13 non-merge commits + 2 PR merges since baseline) |
+| **Public guide site (PM)** | Genericized how-to content live on `docs/bootstrap-guide`; landing page had dead "button" cards + wall of side links; grid cards rendering wonky (bodies escaping the card box) | ✅ Landing page reworked (`030949f`): Material canonical grid-card format (4-space indent + `---` divider) fixes layout; cards are clickable; Reference cards link to NEW section landing pages (`infra/index.md`, `apps/index.md`, `guides/index.md`) wired into nav as section indexes. Branch still **unmerged to `dev`** (DOC-1). |
 
 ---
 
-## Section 2 — Live Cluster Snapshot (2026-05-29, applied rev `0a47a77`)
+## Section 2 — Live Cluster Snapshot (2026-05-29 **AM**, applied rev `0a47a77`)
+
+> ⚠️ **Carried forward from the AM run — not re-verified in the PM update.** The PM re-run hit a dismissed 1Password auth prompt (11:47Z) so the live cluster wasn't re-queried. Nothing cluster-side changed in the PM session (docs-site-only work on a separate branch), so this snapshot is still the best-known state. Re-verify with the Section-3 survey commands on next session.
 
 ```
 Nodes:        6 Ready — 3 cp + 3 worker — Talos v1.12.8 / k8s v1.35.0 — ~4d4h
@@ -154,6 +160,16 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 | -- | ---- | ------ | -------- | ----------- |
 | HM-1 | Homer read-only root FS | ⚠️ `readOnlyRootFilesystem: false` | `_lib/applications/homer/base/deployment.yaml` | Enumerate writable paths, mount `emptyDir`, flip to RO. |
 
+### Documentation / public guide site (DOC)
+
+> Public build-your-own-lab guide — MkDocs Material (gruvbox), D2 sketch diagrams, Cloudflare Pages git-integration. Lives on unmerged branch `docs/bootstrap-guide` (26 files vs `dev`). Distinct from the retired in-cluster MkDocs wiki.
+
+| ID | Item | Status | Location | Next action |
+| -- | ---- | ------ | -------- | ----------- |
+| **DOC-1** | **`docs/bootstrap-guide` branch unmerged to `dev`** | 🟡 **Open — in flight** | branch `docs/bootstrap-guide` (whole `_docs/` genericization + `mkdocs.yml` + `.github/workflows/docs.yml` + `requirements.txt`) | Review the 26-file diff and merge to `dev` when the CF Pages build is confirmed green. User merges (README/docs rule). |
+| **DOC-2** | **Verify card icons render on the CF Pages build** | ❓ **Pending user check** | `_docs/{README,infra/index,apps/index,guides/index}.md` | PM landing-page rework used material icons (`material-key-chain`, `material-account-key`, `material-database-refresh`, `material-console`, `material-lightbulb-on`, etc.). Confirm none render as raw `:material-…:` text on the live build; swap any missing ones. |
+| DOC-3 | Local `mkdocs build` not run this session | ⚠️ Note | `mkdocs.yml` | Couldn't confirm mkdocs is installed locally; CF Pages build is the verification path. Optionally add a local build step / venv (`requirements.txt` exists). |
+
 ### Storage migration (S-tier — **COMPLETE**)
 
 > ADR-0003 implemented end-to-end (commits `328148f` → `d5c5ca2`, 2026-05-26 evening).
@@ -203,7 +219,9 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 
 **Thoth** — ✅ Descoped (ADR-0005). No change.
 
-**docs-site** — 🗑️ Retired 2026-05-26. No change.
+**docs-site (in-cluster wiki)** — 🗑️ Retired 2026-05-26. No change. Not to be confused with the public guide site below.
+
+**Public guide site** — 🟡 In flight on `docs/bootstrap-guide` (Cloudflare Pages). PM session fixed the landing-page grid cards + added section landing pages. Branch unmerged to `dev` (DOC-1); icon render pending user check (DOC-2).
 
 **Gatus** — ✅ Live + hardened + persistent. Daily snapshots firing as of 2026-05-29 (the missing-snap concern from 2026-05-28 review resolved).
 
@@ -221,6 +239,7 @@ Grouped by tier. Each item: **ID · what · status · location · next action.**
 
 In order, cut at natural stopping points:
 
+0. **DOC-1 + DOC-2 — land the public guide site** (in flight, quick). Confirm the CF Pages build is green + icons render (DOC-2), then review the 26-file `docs/bootstrap-guide` diff and merge to `dev` (DOC-1). This is the freshest open thread — pick up here.
 1. **O-15 + O-17 + O-18 — observability cleanup bundle** (90 min). KSM label allowlist + kromgo `flux_version` query rewrite; authentik TargetDown triage; tailscale-operator PodMonitor sanity check. Closes the visible "broken badge" + the firing alerts in one PR. Natural cut.
 2. **O-10 postgres-exporter** (multi-day). Three CNPG clusters now warrant a shared exporter pattern. Mind [[cilium-gateway-egress-l7-filter]] for CCNPs. Pairs with O-15 because both touch the kps HelmRelease.
 3. **O-14 — codify the "audit community configs" rule** (15 min). One file in `.claude/rules/`. Pre-emptive against the next bjw-s/onedr0p copy-paste class of bug.
@@ -251,3 +270,6 @@ In order, cut at natural stopping points:
 | `_docs/kubectl-wrapper.md` | NEW — kubectl wrapper docs moved out of README. |
 | `README.md` | NEW `## Cluster` block (10 kromgo badges); architecture badges expanded; status badge fixed to markdown link form. |
 | `_docs/reviews/home-0ps-review-2026-05-28.md` | Prior baseline. O-12, O-13, O-16 carry forward as ✅; O-15, O-17, O-18, Hyg-2, Hyg-3 are new. |
+| `_docs/README.md` (docs branch) | Public-site landing page; PM rework — clickable Material grid cards, Reference cards → section index pages. |
+| `_docs/{infra,apps,guides}/index.md` | NEW — section landing pages; wired into `mkdocs.yml` nav as section indexes (`navigation.indexes`). |
+| `mkdocs.yml` (docs branch) | Nav now lists each section's `index.md` first → section landing page. |
