@@ -15,17 +15,17 @@
 - **G0** — Cloudflare Tunnel stood up via Terraform (`terraform/cloudflare-tunnel/`,
   own S3 state so it survives cluster rebuilds). Tunnel created with
   `config_src = "cloudflare"`; connector token written to 1Password
-  (`cf_tunnel_home-0ps.com`/`tunnel-token`) directly by Terraform's
+  (`cf_tunnel_th0th.dev`/`tunnel-token`) directly by Terraform's
   `onepassword_item` resource. In-cluster cloudflared 2026.5.1 (2 replicas,
   HA, RO-rootfs nonroot 65532) reads the token via ESO. See [[cloudflare-tunnel-live]].
 - **G1** — Gatus 5.36.0 deployed at `_lib/applications/gatus/` (raw manifests,
   matches homer/docs-site pattern). Memory storage; internal HTTPRoute at
-  `dev.int.status.home-0ps.com`. Probes 4 in-cluster apps (authentik, grafana,
+  `dev.int.status.th0th.dev`. Probes 4 in-cluster apps (authentik, grafana,
   freshrss, homer) + 2 infra (TrueNAS, UniFi `insecure: true`). Per-endpoint
   alerts opt in via the shared Slack webhook (1Password `metrics_webhook_dev`,
   reused with Alertmanager).
 - **G2** — Public ingress via Terraform (`cloudflare_zero_trust_tunnel_cloudflared_config`
-  + `cloudflare_dns_record`) at `dev-status.home-0ps.com`. Rate limit
+  + `cloudflare_dns_record`) at `dev-status.th0th.dev`. Rate limit
   via `cloudflare_ruleset` (free-plan-compatible: `period: 10`,
   `requests_per_period: 20`, `["ip.src", "cf.colo.id"]`, action `block`).
 - **G3** — Dropped. The docs-site (MkDocs wiki) was retired in the same change
@@ -87,7 +87,7 @@ cluster, don't guess.
 owned by Terraform** (`terraform/cloudflare-tunnel/`, its own S3 state so a
 cluster rebuild never destroys it). Terraform creates the tunnel
 (`config_src = "cloudflare"`), reads the connector token, and **writes it into
-the 1Password item** `cf_tunnel_home-0ps.com` (field `tunnel-token`). The cluster
+the 1Password item** `cf_tunnel_th0th.dev` (field `tunnel-token`). The cluster
 ExternalSecret ingests that item; cloudflared runs with the single `TUNNEL_TOKEN`.
 Public-hostname ingress is managed Cloudflare-side (added in G2 via
 `cloudflare_zero_trust_tunnel_cloudflared_config` + a DNS record) — no manual
@@ -96,15 +96,15 @@ dashboard steps and no `config.yaml`.
 **Token needed:** a Cloudflare **API token** for Terraform — account-scoped
 **Cloudflare Tunnel: Edit** (+ **Zone: DNS: Edit** for the G2 DNS record),
 ideally an account-owned token. This is separate from the cert-manager DNS-01
-token (`cf_token_home-0ps.com`). 1Password writes use the existing service-account
+token (`cf_token_th0th.dev`). 1Password writes use the existing service-account
 token (same one `terraform/dev` uses).
 
 | ID | Task | Status | Notes |
 | -- | ---- | ------ | ----- |
 | ~~G0-1~~ | ~~Design the tunnel~~ | ✅ Done | Token-based + Terraform-managed (own state) |
-| ~~G0-2~~ | ~~Cluster manifests: Deployment + ExternalSecret + namespace/PSA + RQ/LimitRange~~ | ✅ Done | `_lib/networking/cloudflared/`; cloudflared `2026.5.1`, 2 replicas (HA), metrics:2000, RO-rootfs/nonroot. Token via ESO from `cf_tunnel_home-0ps.com` → `tunnel-token` |
+| ~~G0-2~~ | ~~Cluster manifests: Deployment + ExternalSecret + namespace/PSA + RQ/LimitRange~~ | ✅ Done | `_lib/networking/cloudflared/`; cloudflared `2026.5.1`, 2 replicas (HA), metrics:2000, RO-rootfs/nonroot. Token via ESO from `cf_tunnel_th0th.dev` → `tunnel-token` |
 | ~~G0-3~~ | ~~Terraform: tunnel + token data source + onepassword_item~~ | ✅ Done | `terraform/cloudflare-tunnel/` (cloudflare 5.19.1, onepassword 3.3.1); `fmt`+`validate` green |
-| ~~G0-4~~ | ~~`terraform apply` (creates tunnel + 1P item)~~ | ✅ Done | Tunnel + token in 1Password as `cf_tunnel_home-0ps.com` / `tunnel-token` |
+| ~~G0-4~~ | ~~`terraform apply` (creates tunnel + 1P item)~~ | ✅ Done | Tunnel + token in 1Password as `cf_tunnel_th0th.dev` / `tunnel-token` |
 | ~~G0-5~~ | ~~Deploy cluster manifests + verify connectors register, tunnel "Healthy"~~ | ✅ Done 2026-05-25 | Both cloudflared connectors registered; tunnel Healthy in Cloudflare |
 | ~~G0-6~~ | ~~Hardening: cloudflared CCNPs~~ | ✅ Done 2026-05-26 | `_lib/security/cilium-network-policies/cloudflared-{default-deny,allow}.yaml`. Egress: kube-dns 53 + world:7844 UDP/TCP + world:443 TCP + gatus.gatus:8080 (tunnel backend). Ingress: host/remote-node + monitoring on :2000 |
 | ~~G0-7~~ | ~~Observability: metrics Service + ServiceMonitor~~ | ✅ Done 2026-05-26 | New `cloudflared-metrics` Service + `_lib/observability/kube-prometheus-stack/servicemonitor-cloudflared.yaml`. KPS Prometheus SM selectors are empty (cluster-wide), so no label required |
@@ -118,33 +118,33 @@ history is lost on restart; upgrade path noted below), Recreate rollout.
 | ID | Task | Status | Notes |
 | -- | ---- | ------ | ----- |
 | ~~G1-1~~ | ~~Scaffold `_lib/applications/gatus/{base,overlays/dev}`~~ | ✅ Done | namespace (PSA restricted, policy-target=application), Deployment (RO-rootfs, nonroot 1000), Service, ConfigMap, HTTPRoute, RQ + LimitRange |
-| ~~G1-2~~ | ~~Gatus config — endpoint groups~~ | ✅ Done | 5 apps (authentik, grafana, freshrss, homer, docs) probing the live `*.home-0ps.com` hostnames + 2 infra (TrueNAS, UniFi with `insecure: true`). Conditions: `[STATUS] < 400` / `[RESPONSE_TIME] < 3000`. 1P Connect deferred (easy add-on) |
+| ~~G1-2~~ | ~~Gatus config — endpoint groups~~ | ✅ Done | 5 apps (authentik, grafana, freshrss, homer, docs) probing the live `*.th0th.dev` hostnames + 2 infra (TrueNAS, UniFi with `insecure: true`). Conditions: `[STATUS] < 400` / `[RESPONSE_TIME] < 3000`. 1P Connect deferred (easy add-on) |
 | ~~G1-3~~ | ~~Guardrails — RQ + LimitRange, explicit resources + `runAsUser`~~ | ✅ Done | `runAsUser: 1000` (Kyverno mutation gotcha) |
 | ~~G1-4~~ | ~~Hardening: gatus CCNPs~~ | ✅ Done 2026-05-26 | `_lib/security/cilium-network-policies/gatus-{default-deny,allow}.yaml`. Egress: kube-dns 53 + world:443 (covers gateway LB IP + TrueNAS + UniFi probes). Ingress: reserved:ingress (gateway) + host/remote-node + monitoring on :8080 |
 | ~~G1-5~~ | ~~Persistence — start memory-only; document upgrade path~~ | ✅ Recorded | `storage.type: memory` for v1. Upgrade path: switch to `sqlite` on a `democratic-csi` PVC (small, cheap) or `postgres` against a new CNPG cluster once S-tier (S-1/S-2 in the lab review) lands |
 | ~~G1-6~~ | ~~Top-level Flux Kustomization + `GATUS_SUBDOMAIN` cluster-config var~~ | ✅ Done | `gatus` Kustomization (dependsOn dns/networking/security; mirrors docs-site). Added `GATUS_VERSION` + `GATUS_SUBDOMAIN: dev.int.status` to cluster-configs |
-| ~~G1-7~~ | ~~Internal HTTPRoute on the Cilium Gateway~~ | ✅ Done | `dev.int.status.home-0ps.com` → `gatus:8080` via `${GATEWAY_NAME}` (wildcard cert) |
+| ~~G1-7~~ | ~~Internal HTTPRoute on the Cilium Gateway~~ | ✅ Done | `dev.int.status.th0th.dev` → `gatus:8080` via `${GATEWAY_NAME}` (wildcard cert) |
 | ~~G1-8~~ | ~~ServiceMonitor: scrape /metrics on :8080~~ | ✅ Done 2026-05-26 | `_lib/observability/kube-prometheus-stack/servicemonitor-gatus.yaml` |
 | ~~G1-9~~ | ~~Deploy + verify probes 🟢~~ | ✅ Done 2026-05-25 | 5 apps + 2 infra all green (`docs` endpoint was removed when docs-site retired 2026-05-26) |
 | ~~G1-10~~ | ~~Gatus → Slack alerting (was G3-4)~~ | ✅ Done 2026-05-26 | New `gatus-slack-webhook` ExternalSecret (reuses 1Password item `metrics_webhook_dev` → field `credential`). Configmap has `alerting.slack.webhook-url: $${SLACK_WEBHOOK_URL}` (escaped for Flux envsubst) + per-endpoint `alerts: [- type: slack]`. Defaults: 3 failures to fire, 2 successes to resolve, send-on-resolved=true |
 
 ## Sprint G2 — Public status board
 
-Public hostname **`dev-status.home-0ps.com`** routed through the Cloudflare
+Public hostname **`dev-status.th0th.dev`** routed through the Cloudflare
 Tunnel from G0; ingress rules + DNS record managed in
 `terraform/cloudflare-tunnel/`.
 
 | ID | Task | Status | Notes |
 | -- | ---- | ------ | ----- |
-| ~~G2-1~~ | ~~Route the Gatus status page through the Cloudflare Tunnel~~ | ✅ Done | Terraform `cloudflare_zero_trust_tunnel_cloudflared_config` (ingress `dev-status.home-0ps.com` → `http://gatus.gatus.svc.cluster.local:8080`) + `cloudflare_dns_record` (CNAME, proxied) |
-| ~~G2-2~~ | ~~Harden the public surface — rate limit~~ | ✅ Done 2026-05-26 | `cloudflare_ruleset` (phase `http_ratelimit`, kind `zone`) — **60 req/min per IP** on `dev-status.home-0ps.com`, action `block`, 60s mitigation. WAF managed rules + security headers are a follow-on (O-5 superset). |
+| ~~G2-1~~ | ~~Route the Gatus status page through the Cloudflare Tunnel~~ | ✅ Done | Terraform `cloudflare_zero_trust_tunnel_cloudflared_config` (ingress `dev-status.th0th.dev` → `http://gatus.gatus.svc.cluster.local:8080`) + `cloudflare_dns_record` (CNAME, proxied) |
+| ~~G2-2~~ | ~~Harden the public surface — rate limit~~ | ✅ Done 2026-05-26 | `cloudflare_ruleset` (phase `http_ratelimit`, kind `zone`) — **60 req/min per IP** on `dev-status.th0th.dev`, action `block`, 60s mitigation. WAF managed rules + security headers are a follow-on (O-5 superset). |
 | ~~G2-3~~ | ~~Decide public scope~~ | ✅ Done | Full endpoint view (no public/internal split); revisit if topology exposure becomes a concern |
 
 ## ~~Sprint G3 — Rebuild the services page (`status.md`)~~ — DROPPED (2026-05-26)
 
 The docs-site (MkDocs wiki) was retired in the same change that delivered G2 —
 `_docs/status.md` no longer exists. Gatus is the sole status surface now:
-internal at `dev.int.status.home-0ps.com`, public at `dev-status.home-0ps.com`.
+internal at `dev.int.status.th0th.dev`, public at `dev-status.th0th.dev`.
 Cross-linking to Homer was kept; alerting (originally G3-4) remains a useful
 follow-up (Gatus → Slack, or a Prometheus alert on Gatus metrics).
 

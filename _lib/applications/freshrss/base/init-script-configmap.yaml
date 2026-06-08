@@ -59,7 +59,7 @@ data:
 
     php -f ./cli/do-install.php -- \
       --api-enabled \
-      --base-url "https://${FRESHRSS_SUBDOMAIN}.home-0ps.com" \
+      --base-url "https://${FRESHRSS_SUBDOMAIN}.th0th.dev" \
       --db-type pgsql \
       --db-host "$DB_HOST" \
       --db-base "$DB_BASE" \

@@ -36,7 +36,7 @@ pve = {
 nameservers = {
   primary   = "1.1.1.1"
   secondary = "8.8.8.8"
-  internal  = "192.168.20.1" # resolver for *.home-0ps.com (split-horizon); must serve internal records
+  internal  = "192.168.20.1" # resolver for *.th0th.dev (split-horizon); must serve internal records
 }
 
 controlplane_nodes = {
@@ -134,7 +134,7 @@ worker_labels = {
 
 flux_config = {
   enabled           = true
-  git_url           = "ssh://git@github.com/alexrf45/home-0ps.git"
+  git_url           = "ssh://git@github.com/alexrf45/th0th.git"
   cluster_path      = "clusters/abydos"
   branch            = "main"
   cluster_domain    = "cluster.local"

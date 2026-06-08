@@ -100,7 +100,7 @@ ${chomp(local.machine_common)}
                 pod-security.kubernetes.io/enforce: "privileged"
                 app: "storage"
         # NOTE: the kube-system/coredns Corefile (incl. the split-horizon
-        # home-0ps.com forward) is managed by Flux at _lib/coredns/, NOT here.
+        # th0th.dev forward) is managed by Flux at _lib/coredns/, NOT here.
         # Talos only ever CREATES manifests and never edits them, so a custom
         # coredns ConfigMap delivered as an inlineManifest races the built-in
         # one on the same object name and can't reliably win. Flux force-applies

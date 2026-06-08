@@ -66,7 +66,7 @@ bootstrap resources, and `terraform.tfvars.example` for a full variable set.
 
 ## Split-horizon DNS
 
-`var.nameservers.internal` is the resolver CoreDNS forwards `*.home-0ps.com` to
+`var.nameservers.internal` is the resolver CoreDNS forwards `*.th0th.dev` to
 (so in-cluster back-channels like Grafana → Authentik resolve internal records).
 It falls back to `var.nameservers.secondary` when unset — set it explicitly to your
 internal resolver; do not leave it pointing at a public upstream.

@@ -13,7 +13,7 @@ spec:
     - name: ${GATEWAY_NAME}
       namespace: networking
   hostnames:
-    - "${FRESHRSS_SUBDOMAIN}.home-0ps.com"
+    - "${FRESHRSS_SUBDOMAIN}.th0th.dev"
   rules:
     - matches:
         - path:

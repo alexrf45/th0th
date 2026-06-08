@@ -8,7 +8,7 @@ Once the dev branch has reached a user-defined state of maturity, it will be pro
 
 ## Lab Goals & Requirements
 
-The aim is to preside over a lab environment that is as close to production ready as possible with robust monitoring, observability, resilience, disaster recovery, alerting, best practices for cloud native security and network architecture. Services are exposed externally either via Tailscale, Cloudflare Tunnels or Ngrok. Services are exposed internally with the home-0ps.com domain.
+The aim is to preside over a lab environment that is as close to production ready as possible with robust monitoring, observability, resilience, disaster recovery, alerting, best practices for cloud native security and network architecture. Services are exposed externally either via Tailscale, Cloudflare Tunnels or Ngrok. Services are exposed internally with the th0th.dev domain.
 
 Applications hosted in this environment should have a iOS mobile app equivalent or method to consume/interact with data from the cluster to extend and get the most out of the services. Users spend frequent time writing poetry, taking notes, saving links/articles and curating knowledge & media.
 

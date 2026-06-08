@@ -186,7 +186,7 @@ spec:
             key: client_secret
       grafana.ini:
         server:
-          root_url: "https://${GRAFANA_SUBDOMAIN}.home-0ps.com/"
+          root_url: "https://${GRAFANA_SUBDOMAIN}.th0th.dev/"
         auth:
           # SSO-only: the local username/password login form is hidden so
           # Authentik (auth.generic_oauth below) is the only interactive path.
@@ -215,9 +215,9 @@ spec:
           auto_login: false
           use_pkce: true
           use_refresh_token: true
-          auth_url: "https://${AUTHENTIK_SUBDOMAIN}.home-0ps.com/application/o/authorize/"
-          token_url: "https://${AUTHENTIK_SUBDOMAIN}.home-0ps.com/application/o/token/"
-          api_url: "https://${AUTHENTIK_SUBDOMAIN}.home-0ps.com/application/o/userinfo/"
+          auth_url: "https://${AUTHENTIK_SUBDOMAIN}.th0th.dev/application/o/authorize/"
+          token_url: "https://${AUTHENTIK_SUBDOMAIN}.th0th.dev/application/o/token/"
+          api_url: "https://${AUTHENTIK_SUBDOMAIN}.th0th.dev/application/o/userinfo/"
           # JMESPath against the userinfo response. Falls through to
           # Viewer when the user is in none of the mapped entitlements.
           role_attribute_path: "contains(entitlements, 'Grafana Admins') && 'Admin' || contains(entitlements, 'Grafana Editors') && 'Editor' || 'Viewer'"

@@ -5,7 +5,7 @@
 <br/>
 <br/>
 
-<a href="https://dev-status.home-0ps.com"><img src="https://img.shields.io/badge/home--0ps.com-blue?style=plastic" alt="home-0ps.com" height="140px" width="140px" /></a>
+<a href="https://dev-status.th0th.dev"><img src="https://img.shields.io/badge/home--0ps.com-blue?style=plastic" alt="th0th.dev" height="140px" width="140px" /></a>
 
 **_A living, breathing home lab that champions a love of learning and discovery_**
 
@@ -17,32 +17,32 @@
 
 ### Cluster
 
-![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Ftalos_version&style=plastic&logo=Talos&logoColor=%23FF7300)
-![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fkubernetes_version&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
-![Flux](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fflux_version&style=plastic&logo=flux&logoSize=auto)
-![Nodes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_node_count&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
-![Pods](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_pod_count&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
-![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_age_days&style=plastic&logo=prometheus&logoColor=%23E6522C)
-![Uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_uptime_days&style=plastic&logo=prometheus&logoColor=%23E6522C)
-![CPU](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_cpu_usage&style=plastic&logo=prometheus&logoColor=%23E6522C)
-![Memory](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_memory_usage&style=plastic&logo=prometheus&logoColor=%23E6522C)
-![Alerts](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.home-0ps.com%2Fcluster_alert_count&style=plastic&logo=prometheus&logoColor=%23E6522C)
+![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Ftalos_version&style=plastic&logo=Talos&logoColor=%23FF7300)
+![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fkubernetes_version&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
+![Flux](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fflux_version&style=plastic&logo=flux&logoSize=auto)
+![Nodes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_node_count&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
+![Pods](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_pod_count&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
+![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_age_days&style=plastic&logo=prometheus&logoColor=%23E6522C)
+![Uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_uptime_days&style=plastic&logo=prometheus&logoColor=%23E6522C)
+![CPU](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_cpu_usage&style=plastic&logo=prometheus&logoColor=%23E6522C)
+![Memory](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_memory_usage&style=plastic&logo=prometheus&logoColor=%23E6522C)
+![Alerts](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_alert_count&style=plastic&logo=prometheus&logoColor=%23E6522C)
 
 ### Applications
 
 | Application                                                                                | Status                                                                                                                                                        | Uptime (7d)                                                                                             | Purpose                |
 | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------- |
-| ![Authentik](https://img.shields.io/badge/Authentik-FD4B2D?logo=authentik&logoColor=white) | ![status](https://dev-status.home-0ps.com/api/v1/endpoints/applications_authentik/health/badge.svg) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_authentik/uptimes/7d/badge.svg) | SSO / IdP              |
-| ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white)       | ![status](https://dev-status.home-0ps.com/api/v1/endpoints/applications_grafana/health/badge.svg)   | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_grafana/uptimes/7d/badge.svg)   | Observability UI       |
-| ![FreshRSS](https://img.shields.io/badge/FreshRSS-2D2D2D?logo=rss&logoColor=white)         | ![status](https://dev-status.home-0ps.com/api/v1/endpoints/applications_freshrss/health/badge.svg)  | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_freshrss/uptimes/7d/badge.svg)  | Self-hosted RSS reader |
-| ![Homer](https://img.shields.io/badge/Homer-2D2D2D?logo=homeassistant&logoColor=white)     | ![status](https://dev-status.home-0ps.com/api/v1/endpoints/applications_homer/health/badge.svg)     | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/applications_homer/uptimes/7d/badge.svg)     | Service dashboard      |
+| ![Authentik](https://img.shields.io/badge/Authentik-FD4B2D?logo=authentik&logoColor=white) | ![status](https://dev-status.th0th.dev/api/v1/endpoints/applications_authentik/health/badge.svg) | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/applications_authentik/uptimes/7d/badge.svg) | SSO / IdP              |
+| ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white)       | ![status](https://dev-status.th0th.dev/api/v1/endpoints/applications_grafana/health/badge.svg)   | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/applications_grafana/uptimes/7d/badge.svg)   | Observability UI       |
+| ![FreshRSS](https://img.shields.io/badge/FreshRSS-2D2D2D?logo=rss&logoColor=white)         | ![status](https://dev-status.th0th.dev/api/v1/endpoints/applications_freshrss/health/badge.svg)  | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/applications_freshrss/uptimes/7d/badge.svg)  | Self-hosted RSS reader |
+| ![Homer](https://img.shields.io/badge/Homer-2D2D2D?logo=homeassistant&logoColor=white)     | ![status](https://dev-status.th0th.dev/api/v1/endpoints/applications_homer/health/badge.svg)     | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/applications_homer/uptimes/7d/badge.svg)     | Service dashboard      |
 
 ### Infrastructure
 
 | Target                                                                               | Status                                                                                                                                                        | Uptime (7d)                                                                                             | Purpose                     |
 | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------- |
-| ![TrueNAS](https://img.shields.io/badge/TrueNAS-0095D5?logo=truenas&logoColor=white) | ![status](https://dev-status.home-0ps.com/api/v1/endpoints/infrastructure_truenas/health/badge.svg) | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/infrastructure_truenas/uptimes/7d/badge.svg) | iSCSI / NFS storage backend |
-| ![UniFi](https://img.shields.io/badge/UniFi-0559C9?logo=ubiquiti&logoColor=white)    | ![status](https://dev-status.home-0ps.com/api/v1/endpoints/infrastructure_unifi/health/badge.svg)   | ![uptime](https://dev-status.home-0ps.com/api/v1/endpoints/infrastructure_unifi/uptimes/7d/badge.svg)   | Edge gateway / DNS resolver |
+| ![TrueNAS](https://img.shields.io/badge/TrueNAS-0095D5?logo=truenas&logoColor=white) | ![status](https://dev-status.th0th.dev/api/v1/endpoints/infrastructure_truenas/health/badge.svg) | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/infrastructure_truenas/uptimes/7d/badge.svg) | iSCSI / NFS storage backend |
+| ![UniFi](https://img.shields.io/badge/UniFi-0559C9?logo=ubiquiti&logoColor=white)    | ![status](https://dev-status.th0th.dev/api/v1/endpoints/infrastructure_unifi/health/badge.svg)   | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/infrastructure_unifi/uptimes/7d/badge.svg)   | Edge gateway / DNS resolver |
 
 </div>
 

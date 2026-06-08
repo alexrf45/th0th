@@ -4,7 +4,7 @@
 - **Date:** 2026-05-25
 - **Deciders:** fr3d
 - **Related:** [infra/observability.md](../infra/observability.md) (what's already scrapeable), [service-status sprint](../service-status-sprint.md) (delivery plan).
-- **Historical note:** Originally framed as "replace the browser-side probe in `status.md`". The docs-site (MkDocs wiki) was retired 2026-05-26 — Gatus is now the sole status surface (internal `dev.int.status.home-0ps.com`, public `dev-status.home-0ps.com`), and the rebuild-the-services-page sprint (G3) was dropped.
+- **Historical note:** Originally framed as "replace the browser-side probe in `status.md`". The docs-site (MkDocs wiki) was retired 2026-05-26 — Gatus is now the sole status surface (internal `dev.int.status.th0th.dev`, public `dev-status.th0th.dev`), and the rebuild-the-services-page sprint (G3) was dropped.
 
 ## Context
 
@@ -54,7 +54,7 @@ service status engine.
 - **Public exposure needs a Cloudflare Tunnel** (today: Tailscale + Cilium
   Gateway). G0 stands one up: **Terraform-managed** in its own state
   (`terraform/cloudflare-tunnel/`, remotely-managed/token-based), which also
-  writes the connector token into 1Password (`cf_tunnel_home-0ps.com`) for the
+  writes the connector token into 1Password (`cf_tunnel_th0th.dev`) for the
   cluster ExternalSecret to ingest. cloudflared runs in-cluster
   (`_lib/networking/cloudflared/`). Requires a new account-scoped Cloudflare API
   token (Tunnel: Edit) for Terraform — separate from the DNS-01 token. Net-new

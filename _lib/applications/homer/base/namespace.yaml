@@ -5,7 +5,7 @@ metadata:
   name: homer
   labels:
     app: "homer"
-    home-0ps.com/policy-target: "application"
+    th0th.dev/policy-target: "application"
     ${GATEWAY_NAME}: "true"
     # Homer is a static dashboard with no privileged needs — enforce the
     # restricted Pod Security Standard (the pod spec satisfies it).

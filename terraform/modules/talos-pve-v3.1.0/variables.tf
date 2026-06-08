@@ -140,7 +140,7 @@ variable "bootstrap_cluster" {
 # DNS
 
 variable "nameservers" {
-  description = "DNS servers for the nodes. `internal` is the resolver CoreDNS forwards *.home-0ps.com to (split-horizon); falls back to `secondary` when unset."
+  description = "DNS servers for the nodes. `internal` is the resolver CoreDNS forwards *.th0th.dev to (split-horizon); falls back to `secondary` when unset."
   type = object({
     primary   = string
     secondary = string

@@ -4,7 +4,7 @@ kind: CiliumClusterwideNetworkPolicy
 metadata:
   name: gatus-default-deny
   labels:
-    home-0ps.com/policy-target: application
+    th0th.dev/policy-target: application
     app: gatus
 spec:
   description: |

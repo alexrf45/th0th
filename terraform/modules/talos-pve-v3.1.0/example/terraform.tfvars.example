@@ -39,7 +39,7 @@ pve = {
 nameservers = {
   primary   = "1.1.1.1"
   secondary = "8.8.8.8"
-  internal  = "10.3.3.1" # resolver for *.home-0ps.com (split-horizon); must serve internal records
+  internal  = "10.3.3.1" # resolver for *.th0th.dev (split-horizon); must serve internal records
 }
 
 controlplane_nodes = {

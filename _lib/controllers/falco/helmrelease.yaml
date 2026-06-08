@@ -135,7 +135,7 @@ spec:
 
     # F-1 — mount the in-repo falco-custom-rules ConfigMap (security ns,
     # name: falco-custom-rules) into /etc/falco/rules.d so the engine picks
-    # up the home-0ps custom-rule library. The chart's `mounts.volumes` /
+    # up the th0th custom-rule library. The chart's `mounts.volumes` /
     # `mounts.volumeMounts` lists are appended to the Falco DS pod spec
     # without overriding the chart's stock volumes (rules-volume etc.).
     # falco.rules_files already lists /etc/falco/rules.d above.

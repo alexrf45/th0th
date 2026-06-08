@@ -16,12 +16,12 @@ data "cloudflare_zero_trust_tunnel_cloudflared_token" "this" {
 }
 
 # Publish the token to 1Password so the cluster ExternalSecret
-# (_lib/networking/cloudflared/externalsecret.yaml → key cf_tunnel_home-0ps.com,
+# (_lib/networking/cloudflared/externalsecret.yaml → key cf_tunnel_th0th.dev,
 # property tunnel-token) ingests it. Rotatable: re-apply republishes; ESO
 # re-syncs within its refreshInterval.
 resource "onepassword_item" "cf_tunnel" {
   vault    = var.op_vault_id
-  title    = "cf_tunnel_home-0ps.com"
+  title    = "cf_tunnel_th0th.dev"
   category = "password"
 
   section {
@@ -38,8 +38,8 @@ resource "onepassword_item" "cf_tunnel" {
 # Public ingress for the cloudflared tunnel. Remotely-managed config is pushed
 # to Cloudflare; the cluster cloudflared connectors pick it up automatically
 # (no redeploy). Routes:
-#   dev-status.home-0ps.com → gatus (G2)
-#   dev-kromgo.home-0ps.com → kromgo (README live cluster stats)
+#   dev-status.th0th.dev → gatus (G2)
+#   dev-kromgo.th0th.dev → kromgo (README live cluster stats)
 # Add more public hostnames by appending entries below the existing ones
 # (the trailing http_status:404 catch-all stays last).
 resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
@@ -49,11 +49,11 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
   config = {
     ingress = [
       {
-        hostname = "dev-status.home-0ps.com"
+        hostname = "dev-status.th0th.dev"
         service  = "http://gatus.gatus.svc.cluster.local:8080"
       },
       {
-        hostname = "dev-kromgo.home-0ps.com"
+        hostname = "dev-kromgo.th0th.dev"
         service  = "http://kromgo.monitoring.svc.cluster.local:8080"
       },
       {
@@ -66,7 +66,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
 # CNAME -> tunnel; orange-cloud (proxied) so the tunnel actually routes it.
 resource "cloudflare_dns_record" "gatus_public" {
   zone_id = var.cloudflare_zone_id
-  name    = "dev-status.home-0ps.com"
+  name    = "dev-status.th0th.dev"
   type    = "CNAME"
   content = "${cloudflare_zero_trust_tunnel_cloudflared.this.id}.cfargotunnel.com"
   ttl     = 1 # 1 = automatic; required when proxied
@@ -80,7 +80,7 @@ resource "cloudflare_dns_record" "gatus_public" {
 # through the tunnel and to put the rate-limit ruleset below in the path.
 resource "cloudflare_dns_record" "kromgo_public" {
   zone_id = var.cloudflare_zone_id
-  name    = "dev-kromgo.home-0ps.com"
+  name    = "dev-kromgo.th0th.dev"
   type    = "CNAME"
   content = "${cloudflare_zero_trust_tunnel_cloudflared.this.id}.cfargotunnel.com"
   ttl     = 1 # 1 = automatic; required when proxied
@@ -105,7 +105,7 @@ resource "cloudflare_ruleset" "public_status_rate_limit" {
   rules = [
     {
       description = "Block IPs exceeding 20 req/10s on tunnel-fronted public hosts"
-      expression  = "(http.host in {\"dev-status.home-0ps.com\" \"dev-kromgo.home-0ps.com\"})"
+      expression  = "(http.host in {\"dev-status.th0th.dev\" \"dev-kromgo.th0th.dev\"})"
       action      = "block"
       enabled     = true
       ratelimit = {

@@ -1,4 +1,4 @@
-site_name: home-0ps.com
+site_name: th0th.dev
 site_description: Build-your-own GitOps Kubernetes home lab — Talos, Flux, Cilium, CNPG, External Secrets.
 site_author: alexrf45
 copyright: Built with MkDocs Material · diagrams as code with D2
@@ -49,8 +49,8 @@ theme:
 extra_css:
   - assets/gruvbox.css
 
-repo_url: https://github.com/alexrf45/home-0ps.com
-repo_name: alexrf45/home-0ps.com
+repo_url: https://github.com/alexrf45/th0th
+repo_name: alexrf45/th0th
 edit_uri: edit/dev/_docs/
 
 markdown_extensions:

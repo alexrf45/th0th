@@ -4,7 +4,7 @@ kind: CiliumClusterwideNetworkPolicy
 metadata:
   name: authentik-default-deny
   labels:
-    home-0ps.com/policy-target: application
+    th0th.dev/policy-target: application
     app: authentik
 spec:
   description: |

@@ -1,4 +1,4 @@
-# home-0ps lab guide
+# th0th lab guide
 
 A build-your-own **GitOps Kubernetes home lab**: Talos Linux on Proxmox,
 reconciled by Flux CD, with secrets sourced from 1Password through the External

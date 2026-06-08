@@ -20,7 +20,7 @@ metadata:
 data:
   custom-rules.yaml: |
     # ---------------------------------------------------------------
-    # home-0ps.com homelab — custom Falco rules (baseline)
+    # th0th.dev homelab — custom Falco rules (baseline)
     # ---------------------------------------------------------------
     # Keep this list intentionally short. Each rule should pull its
     # weight on a hobby cluster — anything noisy in dev gets dropped.
@@ -35,7 +35,7 @@ data:
 
     - rule: Shell spawned in lab namespace
       desc: >
-        A shell was launched inside a pod in a home-0ps.com namespace.
+        A shell was launched inside a pod in a th0th.dev namespace.
         Legit operator work (kubectl exec) trips this — that is the point;
         the alert is the audit trail.
       condition: >
@@ -50,11 +50,11 @@ data:
         ns=%k8s.ns.name pod=%k8s.pod.name container=%container.name
         image=%container.image.repository)
       priority: NOTICE
-      tags: [shell, mitre_execution, home-0ps]
+      tags: [shell, mitre_execution, th0th]
 
     - rule: Write below etc in lab namespace
       desc: >
-        File write into /etc from a container in a home-0ps.com namespace.
+        File write into /etc from a container in a th0th.dev namespace.
         Excludes the normal package/cert manager writers; everything else
         is suspicious enough to surface.
       condition: >
@@ -76,4 +76,4 @@ data:
         cmdline=%proc.cmdline user=%user.name
         ns=%k8s.ns.name pod=%k8s.pod.name image=%container.image.repository)
       priority: WARNING
-      tags: [filesystem, mitre_persistence, home-0ps]
+      tags: [filesystem, mitre_persistence, th0th]

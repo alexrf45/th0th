@@ -5,5 +5,5 @@ metadata:
   name: freshrss
   labels:
     app: "freshrss"
-    home-0ps.com/policy-target: "application"
+    th0th.dev/policy-target: "application"
     ${GATEWAY_NAME}: "true"

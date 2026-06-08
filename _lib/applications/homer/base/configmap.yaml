@@ -14,7 +14,7 @@ data:
   # subdomains so they stay in sync via Flux postBuild substitution.
   config.yml: |
     ---
-    title: "home-0ps"
+    title: "th0th"
     subtitle: "${ENVIRONMENT} · memphis"
     header: true
     footer: false
@@ -35,7 +35,7 @@ data:
           - name: "FreshRSS"
             subtitle: "RSS reader"
             icon: "fas fa-rss"
-            url: "https://${FRESHRSS_SUBDOMAIN}.home-0ps.com"
+            url: "https://${FRESHRSS_SUBDOMAIN}.th0th.dev"
             target: "_blank"
       - name: "Identity & Observability"
         icon: "fas fa-shield-halved"
@@ -43,17 +43,17 @@ data:
           - name: "Authentik"
             subtitle: "SSO / IdP"
             icon: "fas fa-key"
-            url: "https://${AUTHENTIK_SUBDOMAIN}.home-0ps.com"
+            url: "https://${AUTHENTIK_SUBDOMAIN}.th0th.dev"
             target: "_blank"
           - name: "Grafana"
             subtitle: "Dashboards & metrics"
             icon: "fas fa-chart-line"
-            url: "https://${GRAFANA_SUBDOMAIN}.home-0ps.com"
+            url: "https://${GRAFANA_SUBDOMAIN}.th0th.dev"
             target: "_blank"
           - name: "Gatus"
             subtitle: "Service status"
             icon: "fas fa-heart-pulse"
-            url: "https://${GATUS_SUBDOMAIN}.home-0ps.com"
+            url: "https://${GATUS_SUBDOMAIN}.th0th.dev"
             target: "_blank"
       - name: "Infrastructure"
         icon: "fas fa-server"

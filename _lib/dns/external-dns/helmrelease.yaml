@@ -62,4 +62,4 @@ spec:
     sources: ["ingress", "service", "gateway-httproute"]
     txtOwnerId: default
     txtPrefix: k8s.
-    domainFilters: ["home-0ps.com"]
+    domainFilters: ["th0th.dev"]

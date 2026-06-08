@@ -4,7 +4,7 @@ kind: CiliumClusterwideNetworkPolicy
 metadata:
   name: gatus-allow
   labels:
-    home-0ps.com/policy-target: application
+    th0th.dev/policy-target: application
     app: gatus
 spec:
   description: |
@@ -39,7 +39,7 @@ spec:
             - port: "8080"
               protocol: TCP
     # cloudflared tunnel connector → gatus. The public hostname
-    # dev-status.home-0ps.com is proxied from cloudflared directly to the
+    # dev-status.th0th.dev is proxied from cloudflared directly to the
     # gatus pod (not via the Cilium Gateway / reserved:ingress identity),
     # so this allow is required for the public path to work.
     - fromEndpoints:
@@ -52,7 +52,7 @@ spec:
               protocol: TCP
   egress:
     # DNS against kube-dns — covers in-cluster names + CoreDNS split-horizon
-    # forwarding *.home-0ps.com queries out to UniFi.
+    # forwarding *.th0th.dev queries out to UniFi.
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: kube-system

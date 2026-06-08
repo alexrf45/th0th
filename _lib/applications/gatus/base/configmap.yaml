@@ -23,9 +23,9 @@ data:
       type: postgres
       path: "host=gatus-${ENVIRONMENT}-cluster-rw port=5432 user=$${PG_USER} password=$${PG_PASSWORD} dbname=gatus sslmode=require"
     ui:
-      title: "home-0ps · ${ENVIRONMENT} status"
-      description: "Live status for home-0ps.com services."
-      header: "home-0ps · ${ENVIRONMENT}"
+      title: "th0th · ${ENVIRONMENT} status"
+      description: "Live status for th0th.dev services."
+      header: "th0th · ${ENVIRONMENT}"
     alerting:
       # $${SLACK_WEBHOOK_URL} escapes Flux envsubst so Gatus expands it from
       # the SLACK_WEBHOOK_URL env (sourced from the gatus-slack-webhook
@@ -43,7 +43,7 @@ data:
       # endpoint into the alerting.slack defaults set above.
       - name: authentik
         group: applications
-        url: https://${AUTHENTIK_SUBDOMAIN}.home-0ps.com
+        url: https://${AUTHENTIK_SUBDOMAIN}.th0th.dev
         interval: 30s
         conditions:
           - "[STATUS] < 400"
@@ -52,7 +52,7 @@ data:
           - type: slack
       - name: grafana
         group: applications
-        url: https://${GRAFANA_SUBDOMAIN}.home-0ps.com
+        url: https://${GRAFANA_SUBDOMAIN}.th0th.dev
         interval: 30s
         conditions:
           - "[STATUS] < 400"
@@ -61,7 +61,7 @@ data:
           - type: slack
       - name: freshrss
         group: applications
-        url: https://${FRESHRSS_SUBDOMAIN}.home-0ps.com
+        url: https://${FRESHRSS_SUBDOMAIN}.th0th.dev
         interval: 30s
         conditions:
           - "[STATUS] < 400"
@@ -70,7 +70,7 @@ data:
           - type: slack
       - name: homer
         group: applications
-        url: https://${HOMER_SUBDOMAIN}.home-0ps.com
+        url: https://${HOMER_SUBDOMAIN}.th0th.dev
         interval: 30s
         conditions:
           - "[STATUS] < 400"

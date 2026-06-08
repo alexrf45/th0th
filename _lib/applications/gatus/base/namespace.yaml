@@ -7,5 +7,5 @@ metadata:
     app: gatus
     env: ${ENVIRONMENT}
     owner: ${OWNER}
-    home-0ps.com/policy-target: application
+    th0th.dev/policy-target: application
     pod-security.kubernetes.io/enforce: restricted

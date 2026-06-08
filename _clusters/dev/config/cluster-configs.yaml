@@ -25,7 +25,7 @@ data:
   RECLAIM_POLICY: "Retain"
   ALLOW_INSECURE: "true"
   GATEWAY_NAME: "dev-app-gateway"
-  # LAN resolver CoreDNS forwards *.home-0ps.com to (split-horizon). Must match
+  # LAN resolver CoreDNS forwards *.th0th.dev to (split-horizon). Must match
   # terraform var.nameservers.secondary (the UniFi gateway). Consumed by
   # _lib/coredns/configmap.yaml.
   INTERNAL_DNS_RESOLVER: "10.3.3.1"

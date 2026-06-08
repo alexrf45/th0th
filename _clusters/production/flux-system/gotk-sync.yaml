@@ -11,7 +11,7 @@ spec:
     branch: main
   secretRef:
     name: flux-system
-  url: https://github.com/alexrf45/home-0ps.com.git
+  url: https://github.com/alexrf45/th0th.git
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization

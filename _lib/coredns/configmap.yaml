@@ -8,7 +8,7 @@
 # the same object name and the loser is silently ignored. Flux DOES continuously
 # reconcile and force-applies conflicts, so it owns the Corefile here.
 #
-# The split-horizon server block forwards internal *.home-0ps.com names to the
+# The split-horizon server block forwards internal *.th0th.dev names to the
 # LAN resolver (UniFi, ${INTERNAL_DNS_RESOLVER}), which serves the records
 # external-dns writes; everything else stays on the node upstreams via
 # /etc/resolv.conf. Without it, in-cluster OIDC back-channels (e.g. Grafana's
@@ -50,7 +50,7 @@ data:
         reload
         loadbalance
     }
-    home-0ps.com:53 {
+    th0th.dev:53 {
         errors
         cache 30
         forward . ${INTERNAL_DNS_RESOLVER}

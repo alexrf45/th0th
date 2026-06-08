@@ -9,17 +9,17 @@ spec:
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
-  commonName: "*.home-0ps.com"
+  commonName: "*.th0th.dev"
   dnsNames:
-  - "*.home-0ps.com"
-  - "home-0ps.com"
+  - "*.th0th.dev"
+  - "th0th.dev"
   # Multi-label internal hostnames (three labels deep, e.g. dev.int.X) are
-  # NOT covered by the single-label *.home-0ps.com wildcard, so each is added
+  # NOT covered by the single-label *.th0th.dev wildcard, so each is added
   # as an explicit SAN. They all share this one cert because Cilium Gateway's
   # per-SNI selection across multiple certificateRefs is unreliable (it serves
   # the first ref for all SNIs) — one SAN cert sidesteps that.
-  - "dev.int.auth.home-0ps.com"
-  - "dev.int.grafana.home-0ps.com"
-  - "dev.int.homer.home-0ps.com"
-  - "dev.int.freshrss.home-0ps.com"
-  - "dev.int.docs.home-0ps.com"
+  - "dev.int.auth.th0th.dev"
+  - "dev.int.grafana.th0th.dev"
+  - "dev.int.homer.th0th.dev"
+  - "dev.int.freshrss.th0th.dev"
+  - "dev.int.docs.th0th.dev"

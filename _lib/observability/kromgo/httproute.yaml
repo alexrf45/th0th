@@ -16,7 +16,7 @@ spec:
     - name: ${GATEWAY_NAME}
       namespace: networking
   hostnames:
-    - "${KROMGO_SUBDOMAIN}.home-0ps.com"
+    - "${KROMGO_SUBDOMAIN}.th0th.dev"
   rules:
     - matches:
         - path:

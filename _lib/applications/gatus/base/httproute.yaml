@@ -13,7 +13,7 @@ spec:
     - name: ${GATEWAY_NAME}
       namespace: networking
   hostnames:
-    - "${GATUS_SUBDOMAIN}.home-0ps.com"
+    - "${GATUS_SUBDOMAIN}.th0th.dev"
   rules:
     - matches:
         - path:

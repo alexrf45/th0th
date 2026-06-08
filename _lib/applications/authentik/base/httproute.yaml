@@ -13,7 +13,7 @@ spec:
     - name: ${GATEWAY_NAME}
       namespace: networking
   hostnames:
-    - "${AUTHENTIK_SUBDOMAIN}.home-0ps.com"
+    - "${AUTHENTIK_SUBDOMAIN}.th0th.dev"
   rules:
     - matches:
         - path:

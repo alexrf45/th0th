@@ -71,7 +71,7 @@ manual re-sync per the in-file note). 10. CP/worker `proxmox_virtual_environment
 to unify; separate resources preserve the v3.0.0 independent-scaling design.
 
 **Hardcoded / latent bugs** 11. `pve.tf` hardcodes `/24` in `ip_config` while `node_network` is a configurable CIDR. 12. `talos.tf` hardcodes the 2nd disk device `/dev/vdb` (install disk is a var). 13. CoreDNS split-horizon forwarder overloads `var.nameservers.secondary` as **both**
-the public node fallback **and** the internal `home-0ps.com` forwarder — and its
+the public node fallback **and** the internal `th0th.dev` forwarder — and its
 default is `8.8.8.8`, so if ever left at default, internal split-horizon DNS
 silently breaks. Give the internal forwarder its own variable.
 
