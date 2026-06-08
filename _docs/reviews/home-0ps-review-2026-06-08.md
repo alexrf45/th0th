@@ -35,9 +35,17 @@ Uncommitted working tree — **the active workstream**:
   → `home-share/k8s/dev`, snapshots path likewise (matches the manual TrueNAS PVE-plugin + iSCSI rework).
 - `_hack/portainer/loki` tailscale image `v1.78` → `v1.98.4`; `best-practices.md` bpg-deprecation note.
 
-**Recommended next sprint:** **apply `terraform/proxmox-base/`** (admin user + RBAC + SDN), **then
-resolve PB-4** (Simple zone can't host the HA cluster — pick VXLAN/EVPN or endpoint redesign) **before
-re-bootstrapping `memphis`**. Commit the uncommitted foundation work first.
+**Update 2026-06-08:** `terraform/proxmox-base/` is now **applied** — admin user + RBAC + SDN live,
+and the `terraform@pve` automation token authenticates and re-applies clean (PB-1/2/3, after fixing a
+doubled-token bug in `users.tf`; see [[project_bpg_user_token_value_is_full_token]]).
+
+**Recommended next sprint — the Talos-pve → SDN migration (TP-tier):** the foundation is up, so the
+next macro-task is moving the Talos module off the flat LAN onto vnet `vtalos` / `10.30.0.0/24`. This
+is gated by **TP-1 (= PB-4): the zone-type decision** — Simple zone is per-node isolated L2, which
+can't host the Talos VIP + Cilium L2 LB across hosts. Pick **(A) Simple/single-host** (fast, no HA,
+proves the plumbing), **(B) VXLAN/EVPN** (recommended — restores stretched L2, existing design ports
+over unchanged), or **(C) drop the L2 dep** (routed endpoint + Cilium BGP). Write the ADR, then re-IP
+(TP-2) and re-bootstrap. Commit the uncommitted foundation work (PB-7) first.
 
 ---
 
@@ -88,12 +96,33 @@ the repo config behind it is unchanged from baseline (0 commits touched `_lib/`)
 
 | ID | Item | Status | Location | Next action |
 | -- | ---- | ------ | -------- | ----------- |
-| **PB-1** | Admin user + RBAC + automation token | 🟡 Coded, not applied | `terraform/proxmox-base/{users.tf,providers.tf}` | Phase-1 `apply` (root@pam) → creates `admin@pve` (PVEAdmin), `terraform@pve` + role + token→1P. Verify in Datacenter → Permissions. |
-| **PB-2** | SDN Simple zone + vnet + subnet + applier | 🟡 Coded, not applied | `terraform/proxmox-base/sdn.tf` | `apply`; confirm Datacenter → SDN shows `talos`/`vtalos`/`10.30.0.0/24` **applied** (not pending). Smoke-test a throwaway VM on bridge `vtalos` (SNAT egress). |
-| **PB-3** | Provider auth cutover → token (Phase 2) | ❌ Open (after PB-1) | `terraform/proxmox-base/providers.tf` + `terraform/dev/providers.tf` | Set `TF_VAR_pve_api_token` from the 1P `proxmox-terraform-token` item, re-plan both roots (no diff). Dev `providers.tf` still uses root@pam — wire the same conditional. |
+| **PB-1** | Admin user + RBAC + automation token | ✅ **Applied 2026-06-08** | `terraform/proxmox-base/{users.tf,providers.tf}` | Phase-1 `apply` (root@pam) created `admin@pve` (PVEAdmin), `terraform@pve` + role + token→1P. Done. |
+| **PB-2** | SDN Simple zone + vnet + subnet + applier | ✅ **Applied 2026-06-08** | `terraform/proxmox-base/sdn.tf` | Zone/vnet/subnet/applier applied. Still TODO: smoke-test a throwaway VM on bridge `vtalos` (SNAT egress) before the cluster moves there. |
+| **PB-3** | Provider auth cutover → token (Phase 2) | 🟡 **proxmox-base done; dev root pending** | `terraform/proxmox-base/providers.tf` + `terraform/dev/providers.tf` | proxmox-base Phase-2 **VERIFIED 2026-06-08** — `terraform@pve!tf` token re-applies clean (after fixing a doubled-token bug in `users.tf`, see [[project_bpg_user_token_value_is_full_token]]). Remaining: wire the same `pve_api_token` conditional into `terraform/dev/providers.tf` (still root@pam). |
 | **PB-5** | Manual prereqs: 1P admin item + tfvars + backend, SOPS-encrypt | ❌ Open (user) | `terraform/proxmox-base/{terraform.tfvars,remote.tfbackend}` | Pre-create 1P `proxmox-admin` (password field); fill tfvars (endpoint `192.168.20.6`, hosts `pve01..pve06`); `key=state/proxmox-base/v1.tfstate`; **SOPS-encrypt before commit**. |
 | **PB-6** | Talos module bridge param | ✅ Done (coded) | `terraform/modules/talos-pve-v3.1.0/{pve.tf,variables.tf}` | `var.pve.bridge` default `vmbr0`. Future VNet move = set `bridge="vtalos"` + new subnet/IPs. |
 | **PB-7** | Commit the uncommitted foundation work | ❌ Open | working tree | `terraform/proxmox-base/`, module bridge, cluster-configs reorg, loki bump, best-practices note all uncommitted — branch + commit (SSH-signed by user). |
+
+### Talos-pve → SDN migration (TP-tier — NEXT workstream)
+
+**The task:** with the Proxmox foundation applied and the automation token working (PB-1/2/3),
+move `terraform/modules/talos-pve-v3.1.0/` (consumed by `terraform/dev/`) off the flat LAN
+`192.168.20.0/24` and onto the SDN vnet `vtalos` / subnet `10.30.0.0/24`. **TP-1 (the zone-type
+decision, = PB-4) gates the rest.** See [[project_talos_pve_sdn_migration]].
+
+**Why it's not just a re-IP:** today node IPs + the Talos control-plane VIP (`talos.vip_ip`) + the
+Cilium L2 LB pool (`cilium_config.load_balancer_ip`, `node_network 192.168.20.0/24`) all live on
+one **stretched L2** broadcast domain — the VIP floats by gratuitous ARP and Cilium L2 announces LB
+IPs by ARP. A Simple SDN zone is **per-node isolated L2** (L3-routed between hosts), so neither
+crosses hosts. The zone strategy decides whether the existing design ports over or has to change.
+
+| ID | Item | Status | Location | Next action |
+| -- | ---- | ------ | -------- | ----------- |
+| **TP-1** | **Zone-type decision (= PB-4)** | ❌ **Open — gates TP-2..TP-5** | `terraform/proxmox-base/sdn.tf` + new ADR | Pick one, write ADR in `_docs/decisions/`: **(A) Simple zone, single-host** — pin all nodes to one PVE host (shared local L2); proves SDN+token+storage+bridge end-to-end, **no HA**. **(B) VXLAN/EVPN zone** *(recommended for HA)* — swap `proxmox_sdn_zone_simple`→vxlan/evpn (+ EVPN controller/peers); stretched L2 returns, existing VIP + Cilium L2 design ports over **unchanged, just re-IP'd**. **(C) Drop L2 dep** — routed CP endpoint (kube-vip BGP / haproxy / DNS-RR) + Cilium L2→BGP peer with the SDN gateway; biggest lift, most "real". |
+| **TP-2** | Re-IP the module onto `10.30.0.0/24` | ❌ Open (after TP-1) | `terraform/dev/` tfvars + `modules/talos-pve-v3.1.0/variables.tf` | Set `var.pve.bridge="vtalos"` (PB-6 param), `var.pve.gateway="10.30.0.1"`; move `cilium_config.node_network`→`10.30.0.0/24`, all `controlplane_nodes/worker_nodes[*].ip`, `talos.vip_ip`, `cilium_config.load_balancer_ip*`→`10.30.0.x`. CIDR validations in `variables.tf` re-check automatically. |
+| **TP-3** | Control-plane endpoint + Cilium LB per chosen path | ❌ Open (after TP-1) | `modules/talos-pve-v3.1.0/{talos.tf,cilium_config.tf,locals.tf}` | Path B: no logic change, just the re-IP. Path A: pin CP `for_each` nodes to one host. Path C: replace the `eth0.vip` block + switch Cilium L2 announcement → BGP. |
+| **TP-4** | Off-TF networking & DNS | ❌ Open (user) | UniFi + `_lib/coredns/` + ExternalDNS | LAN clients can't reach `10.30.0.0/24` (SNAT egress only). Add UniFi route `10.30.0.0/24 → a pve host`, **or** expose services only via the existing Cloudflare Tunnel / Tailscale. Update the CoreDNS split-horizon forward + ExternalDNS records for the new IPs ([[project_coredns_split_horizon_forward]]). |
+| **TP-5** | Validate the move | ❌ Open (after TP-2/3) | `terraform/dev/` | `terraform apply` dev with `bootstrap_cluster=true` on the new subnet; confirm nodes Ready, API VIP reachable, a test LoadBalancer Service gets + announces a `10.30.0.x` IP. Then graduate Path A → Path B for HA. |
 
 ### Config / storage
 
@@ -190,12 +219,13 @@ the repo config behind it is unchanged from baseline (0 commits touched `_lib/`)
 
 In order, cut at natural stopping points:
 
-1. **PB-5 prereqs + PB-1/PB-2 apply** — create 1P admin item, fill+SOPS tfvars/backend, `terraform apply terraform/proxmox-base` (Phase 1). Verify users + SDN applied. Natural cut.
-2. **PB-7 commit** — branch + SSH-signed commit of the foundation work (proxmox-base, bridge param, CFG-1, loki bump, best-practices note).
-3. **PB-4 decision (ADR)** — VXLAN/EVPN vs endpoint redesign for hosting the HA cluster on a VNet. Gates any real Talos-on-VNet move.
-4. **PB-3 token cutover** — flip both provider blocks to the automation token.
-5. **CLUSTER-0 redeploy** — re-bootstrap `memphis` (Talos + Flux). Confirm CFG-1 dataset paths against live TrueNAS first. On the way back up, R5/Sprint-6/I-1 Terraform housekeeping naturally fall in.
-6. **Post-redeploy** — re-verify the paused observability/security punch list (O-15/O-17/O-18, Hyg-2) against the live cluster; regenerate the live snapshot.
+1. ~~**PB-5 prereqs + PB-1/PB-2 apply**~~ ✅ **Done 2026-06-08** — proxmox-base applied (admin user, RBAC, SDN), token authenticates (PB-1/2/3 proxmox-base side). Natural cut.
+2. **PB-7 commit** — branch + SSH-signed commit of the foundation work (proxmox-base + the `users.tf` doubled-token fix, bridge param, CFG-1, loki bump, best-practices note). Do this **first** so the applied state matches `dev`.
+3. **TP-1 / PB-4 decision (ADR)** — zone strategy for hosting Talos on the VNet: **(A)** Simple/single-host (fast, no HA) → **(B)** VXLAN/EVPN (recommended, stretched L2, design ports over) or **(C)** routed endpoint + Cilium BGP. Gates the whole migration. Write it in `_docs/decisions/`.
+4. **TP-2/TP-3 re-IP + endpoint** — move the module onto `vtalos` / `10.30.0.0/24` (bridge, gateway, node IPs, VIP, Cilium LB pool) per the chosen path; smoke-test a throwaway VM on `vtalos` first (PB-2 tail).
+5. **TP-4 networking/DNS** — UniFi route to `10.30.0.0/24` (or expose via Tunnel/Tailscale) + CoreDNS/ExternalDNS updates for the new IPs.
+6. **CLUSTER-0 redeploy (TP-5)** — re-bootstrap `memphis` (Talos + Flux) on the new subnet. Confirm CFG-1 dataset paths against live TrueNAS first; also flip `terraform/dev/providers.tf` to the token (PB-3 dev side). R5/Sprint-6/I-1 Terraform housekeeping fall in here.
+7. **Post-redeploy** — re-verify the paused observability/security punch list (O-15/O-17/O-18, Hyg-2) against the live cluster; regenerate the live snapshot.
 
 ---
 
