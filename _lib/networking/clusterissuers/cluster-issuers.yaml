@@ -7,19 +7,19 @@ metadata:
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: homelab@fr3d.dev
+    email: homelab@th0th.dev
     privateKeySecretRef:
       name: letsencrypt-staging
     solvers:
       - dns01:
           cloudflare:
-            email: cloudflare@fr3d.dev
+            email: cloudflare@th0th.dev
             apiTokenSecretRef:
               name: "cf-token"
               key: cloudflare-token
         selector:
           dnsZones:
-            - "home-0ps.com"
+            - "th0th.dev"
             - "cilium.io"
 ---
 apiVersion: cert-manager.io/v1
@@ -30,17 +30,17 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: homelab@fr3d.dev
+    email: homelab@th0th.dev
     privateKeySecretRef:
       name: letsencrypt-production
     solvers:
       - dns01:
           cloudflare:
-            email: cloudflare@fr3d.dev
+            email: cloudflare@th0th.dev
             apiTokenSecretRef:
               name: "cf-token"
               key: cloudflare-token
         selector:
           dnsZones:
-            - "home-0ps.com"
+            - "th0th.dev"
             - "cilium.io"

@@ -20,6 +20,7 @@ variable "pve" {
     iso_datastore = optional(string, "local")
     gateway       = string
     password      = string
+    bridge        = optional(string, "vmbr0")
   })
   sensitive = true
 }

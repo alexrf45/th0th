@@ -27,6 +27,14 @@ stack.
   kubeconfig is fetched from 1Password on demand, not stored on disk. Raw
   `kubectl`/`flux`/`helm` target nothing. (`talosctl` is the only exception.) See
   [the cluster-access wrapper](../kubectl-wrapper.md).
+- **Proxmox RBAC: manage permissions with the dedicated `proxmox_acl` resource,
+  not an inline `acl {}` block.** Heads-up that the `bpg/proxmox` provider still
+  carries a deprecated computed `acl` block on `proxmox_virtual_environment_user`,
+  so `terraform validate/plan` prints an *"Argument is deprecated"* warning for
+  **every** user resource — even ones that never set `acl`. It's provider-level
+  and benign, not removable from your HCL (slated to drop in bpg `v1.0`). Pair
+  each user with a separate `proxmox_virtual_environment_role` + `proxmox_acl` and
+  ignore the warning.
 
 ## 2. Security & hardening {#2-security--hardening}
 

@@ -72,7 +72,7 @@ resource "proxmox_virtual_environment_vm" "controlplane" {
     }
   }
   network_device {
-    bridge = "vmbr0"
+    bridge = var.pve.bridge
   }
 
   boot_order = ["virtio0"]
@@ -165,7 +165,7 @@ resource "proxmox_virtual_environment_vm" "worker" {
     }
   }
   network_device {
-    bridge = "vmbr0"
+    bridge = var.pve.bridge
   }
 
   boot_order = ["virtio0"]

@@ -13,8 +13,8 @@ data:
   TRUENAS_PORT: "443"
   TRUENAS_USERNAME: "truenas_admin"
   TRUENAS_ISCSI_PORTAL: "192.168.20.106:3260"
-  DATASET_PARENT: "home-share/iscsi/k8s/dev/volumes"
-  DATASET_SNAPSHOTS: "home-share/iscsi/k8s/dev/snapshots"
+  DATASET_PARENT: "home-share/k8s/dev"
+  DATASET_SNAPSHOTS: "home-share/k8s/dev/snapshots"
   STORAGE_CLASS_NAME: "iscsi"
   # Retain so PVs survive a PVC delete — TrueNAS owns the data lifecycle.
   # Static PVs in the lab (dev-*-db-pv, dev-freshrss-pv) are already
