@@ -1,4 +1,0 @@
-# Docs site (MkDocs Material). Pinned; bump as upstream releases.
-# Diagrams are pre-rendered SVGs committed under _docs/diagrams/, so the site
-# build does NOT need d2 — only this to turn Markdown into HTML.
-mkdocs-material==9.7.6

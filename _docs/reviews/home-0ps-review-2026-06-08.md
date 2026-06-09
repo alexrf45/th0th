@@ -54,8 +54,8 @@ over unchanged), or **(C) drop the L2 dep** (routed endpoint + Cilium BGP). Writ
 | Area | 2026-05-29 state | 2026-06-08 state |
 | ---- | ---------------- | ---------------- |
 | **Cluster lifecycle** | Live: 6 nodes Ready, 17 Kustomizations/HRs Ready | 🗑️ **Spun down.** `Uninstall Flux` (`163b8e3`) removed `flux-system/`; `memphis-kubeconfig` 1P item gone. `cluster.yaml` DAG + `_lib/` retained. |
-| **Proxmox base (NEW)** | — (all access as root@pam, no RBAC, no SDN) | 🟡 **Authored, not applied.** `terraform/proxmox-base/`: admin user, automation user/role/token, SDN Simple zone. `validate` green. PB-1..PB-6. |
-| **Proxmox SDN (NEW)** | None | 🟡 Simple zone `talos`/`vtalos`/`10.30.0.0/24` SNAT coded. **Constraint:** no cross-node L2 → can't host HA cluster as-is (PB-4). |
+| **Proxmox base (NEW)** | — (all access as root@pam, no RBAC, no SDN) | ✅ **Applied 2026-06-08.** `terraform/proxmox-base/`: admin user, automation user/role/token (token authenticates — fixed a doubled-token bug). PB-1/2/3 done. Still **uncommitted** (PB-7). |
+| **Proxmox SDN (NEW)** | None | ✅ Simple zone `talos`/`vtalos`/`10.30.0.0/24` SNAT applied. **Constraint stands:** no cross-node L2 → can't host HA cluster as-is — gates the TP-tier VNet migration (TP-1/PB-4). |
 | **TrueNAS storage** | `home-share/iscsi/k8s/dev/volumes` datasets | 🟡 Reorg to `home-share/k8s/dev` (cluster-configs.yaml, **uncommitted**) — pairs with manual PVE TrueNAS-plugin + iSCSI setup. CFG-1. |
 | **Talos module** | bridge hardcoded `vmbr0` | ✅ `var.pve.bridge` (default `vmbr0`); no behavior change. PB-6. |
 | **Public docs site** | (in-cluster MkDocs retired 2026-05-26) | ✅ NEW external bootstrap-guide: MkDocs Material gruvbox + D2, CF Pages (`#52`). |
@@ -198,7 +198,7 @@ crosses hosts. The zone strategy decides whether the existing design ports over 
 | Item | Status | Note |
 | ---- | ------ | ---- |
 | TrueNAS PVE plugin + shared iSCSI | ✅ Done (manual, this session) | Pairs with CFG-1 dataset reorg. |
-| Proxmox admin user + SDN | 🟡 In progress | See PB-tier. |
+| Proxmox admin user + SDN | ✅ Applied 2026-06-08 | Token verified working. See PB-tier; next is the TP-tier VNet migration. |
 | Beelink S13 BIOS power-loss = "Power On" | ❓ Unverified | Re-confirm on each node during rebuild. |
 | system-upgrade-controller for Talos | ⏸️ Hack-only | `_hack/scripts/upgrade.sh`. |
 | SSO public exposure (Phase 4) | ⏸️ Blocked on redeploy | Cloudflare Tunnel infra persists (own state). |
@@ -209,7 +209,7 @@ crosses hosts. The zone strategy decides whether the existing design ports over 
 
 - **Thoth** — ✅ Descoped (ADR-0005). No change.
 - **Cloudflare Tunnel** — ✅ Persists (own TF state, survives teardown). Will front services again post-redeploy.
-- **Proxmox base / SDN** — 🟡 NEW workstream (PB-tier). See [[project_proxmox_base_tf_root]].
+- **Proxmox base / SDN** — ✅ Applied 2026-06-08 (PB-tier); 🟡 next is the **TP-tier** Talos-pve→SDN migration. See [[project_proxmox_base_tf_root]] + [[project_talos_pve_sdn_migration]].
 - **GPU sharing** — pre-decision (ADR-0004) unchanged.
 - **All in-cluster apps** (Authentik, FreshRSS, Homer, Gatus, kromgo, Falco) — ⏸️ offline (cluster down); manifests intact, return on CLUSTER-0.
 
