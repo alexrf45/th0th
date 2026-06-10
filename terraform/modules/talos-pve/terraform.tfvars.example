@@ -3,8 +3,8 @@ bootstrap_cluster = true
 
 talos = {
   name     = "abydos"
-  endpoint = "192.168.20.120"
-  vip_ip   = "192.168.20.119"
+  endpoint = "10.30.0.120" # CP node 1 IP on the vtalos subnet (bootstrap + kubeconfig endpoint)
+  vip_ip   = "10.30.0.119" # floating control-plane VIP (must be inside cilium_config.node_network)
   version  = "v1.12.8"
   platform = "nocloud"
   control_plane_extensions = [
@@ -26,23 +26,27 @@ talos = {
   ]
 }
 
+# pve.endpoint stays on the management LAN — Terraform talks to the PVE API there.
+# bridge/gateway move onto the EVPN SDN vnet (terraform/proxmox-base): VMs attach to
+# `vtalos` and use the anycast gateway 10.30.0.1. Node names must match proxmox-base pve.hosts.
 pve = {
-  hosts    = ["home-0", "home-1", "home-2", "home-3", "home-4", "home-5"]
-  endpoint = "192.168.20.2"
-  gateway  = "192.168.20.1"
+  hosts    = ["pve01", "pve02", "pve03", "pve04", "pve05", "pve06"]
+  endpoint = "192.168.20.6"
+  bridge   = "vtalos"
+  gateway  = "10.30.0.1"
   password = "" # Set via TF_VAR_pve or .env
 }
 
 nameservers = {
   primary   = "1.1.1.1"
   secondary = "8.8.8.8"
-  internal  = "192.168.20.1" # resolver for *.th0th.dev (split-horizon); must serve internal records
+  internal  = "192.168.20.1" # resolver for *.th0th.dev (split-horizon); reached via exit-node SNAT
 }
 
 controlplane_nodes = {
   "1" = {
-    node             = "home-0"
-    ip               = "192.168.20.120"
+    node             = "pve01"
+    ip               = "10.30.0.120"
     allow_scheduling = false
     storage_id       = "data"
     cores            = 2
@@ -51,8 +55,8 @@ controlplane_nodes = {
     storage_size     = 50
   }
   "2" = {
-    node             = "home-1"
-    ip               = "192.168.20.121"
+    node             = "pve02"
+    ip               = "10.30.0.121"
     allow_scheduling = false
     storage_id       = "data"
     cores            = 2
@@ -61,8 +65,8 @@ controlplane_nodes = {
     storage_size     = 100
   }
   "3" = {
-    node             = "home-2"
-    ip               = "192.168.20.122"
+    node             = "pve03"
+    ip               = "10.30.0.122"
     allow_scheduling = false
     storage_id       = "data"
     cores            = 2
@@ -74,8 +78,8 @@ controlplane_nodes = {
 
 worker_nodes = {
   "4" = {
-    node         = "home-3"
-    ip           = "192.168.20.123"
+    node         = "pve04"
+    ip           = "10.30.0.123"
     storage_id   = "data"
     cores        = 2
     memory       = 8192
@@ -83,8 +87,8 @@ worker_nodes = {
     storage_size = 100
   }
   "5" = {
-    node         = "home-4"
-    ip           = "192.168.20.124"
+    node         = "pve05"
+    ip           = "10.30.0.124"
     storage_id   = "data"
     cores        = 2
     memory       = 8192
@@ -92,8 +96,8 @@ worker_nodes = {
     storage_size = 100
   }
   "6" = {
-    node         = "home-5"
-    ip           = "192.168.20.125"
+    node         = "pve06"
+    ip           = "10.30.0.125"
     storage_id   = "data"
     cores        = 2
     memory       = 8192
@@ -103,7 +107,7 @@ worker_nodes = {
 }
 
 cilium_config = {
-  node_network               = "192.168.20.0/24"
+  node_network               = "10.30.0.0/24"
   kube_version               = "1.35.0"
   cilium_version             = "1.19.4"
   hubble_enabled             = false
@@ -114,7 +118,7 @@ cilium_config = {
   ingress_default_controller = true
   gateway_api_enabled        = true
   load_balancer_mode         = "shared"
-  load_balancer_ip           = "192.168.20.200"
+  load_balancer_ip           = "10.30.0.200"
   load_balancer_start        = 200
   load_balancer_stop         = 215
 }

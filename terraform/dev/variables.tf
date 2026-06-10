@@ -24,7 +24,7 @@ variable "pve" {
     iso_datastore = optional(string, "local")
     gateway       = string
     password      = string
-
+    bridge        = optional(string, "vmbr0") # SDN vnet to attach VMs to; "vtalos" for the EVPN zone
   })
   sensitive = true
 }

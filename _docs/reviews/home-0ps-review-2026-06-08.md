@@ -39,13 +39,13 @@ Uncommitted working tree — **the active workstream**:
 and the `terraform@pve` automation token authenticates and re-applies clean (PB-1/2/3, after fixing a
 doubled-token bug in `users.tf`; see [[project_bpg_user_token_value_is_full_token]]).
 
-**Recommended next sprint — the Talos-pve → SDN migration (TP-tier):** the foundation is up, so the
-next macro-task is moving the Talos module off the flat LAN onto vnet `vtalos` / `10.30.0.0/24`. This
-is gated by **TP-1 (= PB-4): the zone-type decision** — Simple zone is per-node isolated L2, which
-can't host the Talos VIP + Cilium L2 LB across hosts. Pick **(A) Simple/single-host** (fast, no HA,
-proves the plumbing), **(B) VXLAN/EVPN** (recommended — restores stretched L2, existing design ports
-over unchanged), or **(C) drop the L2 dep** (routed endpoint + Cilium BGP). Write the ADR, then re-IP
-(TP-2) and re-bootstrap. Commit the uncommitted foundation work (PB-7) first.
+**Talos-pve → SDN migration (TP-tier) — ✅ TP-1..TP-4 done 2026-06-08, TP-5 applying:** ~~next macro-task,
+gated by the TP-1/PB-4 zone-type decision.~~ → **ADR-0008** chose **Option B (EVPN on an OpenFabric routed
+underlay)**: the UCG-Ultra @ 5.1.15 has no persistent BGP so Option C was rejected; PVE 9.2.3 gives the
+SDN fabric. SDN applied; dev re-IP'd onto `10.30.0.0/24` (bridge `vtalos`, gateway `10.30.0.1`, VIP
+`.199`, CP `.200-.202`, workers `.203-.205`, LB `.225`); UniFi static route + TrueNAS iSCSI ACLs squared
+away. **TP-5: applying the dev cluster now.** Still pending: SSH-signed commit of the foundation + this
+work (PB-7).
 
 ---
 
@@ -55,7 +55,7 @@ over unchanged), or **(C) drop the L2 dep** (routed endpoint + Cilium BGP). Writ
 | ---- | ---------------- | ---------------- |
 | **Cluster lifecycle** | Live: 6 nodes Ready, 17 Kustomizations/HRs Ready | 🗑️ **Spun down.** `Uninstall Flux` (`163b8e3`) removed `flux-system/`; `memphis-kubeconfig` 1P item gone. `cluster.yaml` DAG + `_lib/` retained. |
 | **Proxmox base (NEW)** | — (all access as root@pam, no RBAC, no SDN) | ✅ **Applied 2026-06-08.** `terraform/proxmox-base/`: admin user, automation user/role/token (token authenticates — fixed a doubled-token bug). PB-1/2/3 done. Still **uncommitted** (PB-7). |
-| **Proxmox SDN (NEW)** | None | ✅ Simple zone `talos`/`vtalos`/`10.30.0.0/24` SNAT applied. **Constraint stands:** no cross-node L2 → can't host HA cluster as-is — gates the TP-tier VNet migration (TP-1/PB-4). |
+| **Proxmox SDN (NEW)** | None | ✅ **EVPN-on-OpenFabric zone** `talos`/`vtalos`/`10.30.0.0/24` applied 2026-06-08 (ADR-0008, Option B). ~~Simple zone — no cross-node L2~~ → EVPN restores stretched L2, so the Talos VIP + Cilium L2 design ports over unchanged; dev re-IP'd. TP-1..TP-4 done, TP-5 applying. |
 | **TrueNAS storage** | `home-share/iscsi/k8s/dev/volumes` datasets | 🟡 Reorg to `home-share/k8s/dev` (cluster-configs.yaml, **uncommitted**) — pairs with manual PVE TrueNAS-plugin + iSCSI setup. CFG-1. |
 | **Talos module** | bridge hardcoded `vmbr0` | ✅ `var.pve.bridge` (default `vmbr0`); no behavior change. PB-6. |
 | **Public docs site** | (in-cluster MkDocs retired 2026-05-26) | ✅ NEW external bootstrap-guide: MkDocs Material gruvbox + D2, CF Pages (`#52`). |
@@ -100,15 +100,21 @@ the repo config behind it is unchanged from baseline (0 commits touched `_lib/`)
 | **PB-2** | SDN Simple zone + vnet + subnet + applier | ✅ **Applied 2026-06-08** | `terraform/proxmox-base/sdn.tf` | Zone/vnet/subnet/applier applied. Still TODO: smoke-test a throwaway VM on bridge `vtalos` (SNAT egress) before the cluster moves there. |
 | **PB-3** | Provider auth cutover → token (Phase 2) | 🟡 **proxmox-base done; dev root pending** | `terraform/proxmox-base/providers.tf` + `terraform/dev/providers.tf` | proxmox-base Phase-2 **VERIFIED 2026-06-08** — `terraform@pve!tf` token re-applies clean (after fixing a doubled-token bug in `users.tf`, see [[project_bpg_user_token_value_is_full_token]]). Remaining: wire the same `pve_api_token` conditional into `terraform/dev/providers.tf` (still root@pam). |
 | **PB-5** | Manual prereqs: 1P admin item + tfvars + backend, SOPS-encrypt | ❌ Open (user) | `terraform/proxmox-base/{terraform.tfvars,remote.tfbackend}` | Pre-create 1P `proxmox-admin` (password field); fill tfvars (endpoint `192.168.20.6`, hosts `pve01..pve06`); `key=state/proxmox-base/v1.tfstate`; **SOPS-encrypt before commit**. |
-| **PB-6** | Talos module bridge param | ✅ Done (coded) | `terraform/modules/talos-pve-v3.1.0/{pve.tf,variables.tf}` | `var.pve.bridge` default `vmbr0`. Future VNet move = set `bridge="vtalos"` + new subnet/IPs. |
+| **PB-6** | Talos module bridge param | ✅ Done (coded) | `terraform/modules/talos-pve/{pve.tf,variables.tf}` | `var.pve.bridge` default `vmbr0`. Future VNet move = set `bridge="vtalos"` + new subnet/IPs. |
 | **PB-7** | Commit the uncommitted foundation work | ❌ Open | working tree | `terraform/proxmox-base/`, module bridge, cluster-configs reorg, loki bump, best-practices note all uncommitted — branch + commit (SSH-signed by user). |
 
-### Talos-pve → SDN migration (TP-tier — NEXT workstream)
+### Talos-pve → SDN migration (TP-tier — ✅ TP-1..TP-4 DONE 2026-06-08, TP-5 applying)
+
+> **STATUS 2026-06-08:** TP-1..TP-4 complete. **ADR-0008** chose **Option B (EVPN on an OpenFabric
+> routed underlay)** — the gateway is a UCG-Ultra @ UniFi OS 5.1.15 (no persistent BGP), so Option C
+> was rejected; PVE 9.2.3 provides the SDN fabric. SDN applied (`proxmox-base/sdn.tf`, finalizer
+> pattern), dev re-IP'd onto `10.30.0.0/24` (bridge `vtalos`, gateway `10.30.0.1`), UniFi static route
+> `10.30.0.0/24 → 192.168.20.6` + TrueNAS iSCSI ACLs squared away. **TP-5: applying the dev cluster now.**
 
 **The task:** with the Proxmox foundation applied and the automation token working (PB-1/2/3),
-move `terraform/modules/talos-pve-v3.1.0/` (consumed by `terraform/dev/`) off the flat LAN
+move `terraform/modules/talos-pve/` (consumed by `terraform/dev/`) off the flat LAN
 `192.168.20.0/24` and onto the SDN vnet `vtalos` / subnet `10.30.0.0/24`. **TP-1 (the zone-type
-decision, = PB-4) gates the rest.** See [[project_talos_pve_sdn_migration]].
+decision, = PB-4) gated the rest.** See [[project_talos_pve_sdn_migration]] + ADR-0008.
 
 **Why it's not just a re-IP:** today node IPs + the Talos control-plane VIP (`talos.vip_ip`) + the
 Cilium L2 LB pool (`cilium_config.load_balancer_ip`, `node_network 192.168.20.0/24`) all live on
@@ -118,11 +124,11 @@ crosses hosts. The zone strategy decides whether the existing design ports over 
 
 | ID | Item | Status | Location | Next action |
 | -- | ---- | ------ | -------- | ----------- |
-| **TP-1** | **Zone-type decision (= PB-4)** | ❌ **Open — gates TP-2..TP-5** | `terraform/proxmox-base/sdn.tf` + new ADR | Pick one, write ADR in `_docs/decisions/`: **(A) Simple zone, single-host** — pin all nodes to one PVE host (shared local L2); proves SDN+token+storage+bridge end-to-end, **no HA**. **(B) VXLAN/EVPN zone** *(recommended for HA)* — swap `proxmox_sdn_zone_simple`→vxlan/evpn (+ EVPN controller/peers); stretched L2 returns, existing VIP + Cilium L2 design ports over **unchanged, just re-IP'd**. **(C) Drop L2 dep** — routed CP endpoint (kube-vip BGP / haproxy / DNS-RR) + Cilium L2→BGP peer with the SDN gateway; biggest lift, most "real". |
-| **TP-2** | Re-IP the module onto `10.30.0.0/24` | ❌ Open (after TP-1) | `terraform/dev/` tfvars + `modules/talos-pve-v3.1.0/variables.tf` | Set `var.pve.bridge="vtalos"` (PB-6 param), `var.pve.gateway="10.30.0.1"`; move `cilium_config.node_network`→`10.30.0.0/24`, all `controlplane_nodes/worker_nodes[*].ip`, `talos.vip_ip`, `cilium_config.load_balancer_ip*`→`10.30.0.x`. CIDR validations in `variables.tf` re-check automatically. |
-| **TP-3** | Control-plane endpoint + Cilium LB per chosen path | ❌ Open (after TP-1) | `modules/talos-pve-v3.1.0/{talos.tf,cilium_config.tf,locals.tf}` | Path B: no logic change, just the re-IP. Path A: pin CP `for_each` nodes to one host. Path C: replace the `eth0.vip` block + switch Cilium L2 announcement → BGP. |
-| **TP-4** | Off-TF networking & DNS | ❌ Open (user) | UniFi + `_lib/coredns/` + ExternalDNS | LAN clients can't reach `10.30.0.0/24` (SNAT egress only). Add UniFi route `10.30.0.0/24 → a pve host`, **or** expose services only via the existing Cloudflare Tunnel / Tailscale. Update the CoreDNS split-horizon forward + ExternalDNS records for the new IPs ([[project_coredns_split_horizon_forward]]). |
-| **TP-5** | Validate the move | ❌ Open (after TP-2/3) | `terraform/dev/` | `terraform apply` dev with `bootstrap_cluster=true` on the new subnet; confirm nodes Ready, API VIP reachable, a test LoadBalancer Service gets + announces a `10.30.0.x` IP. Then graduate Path A → Path B for HA. |
+| **TP-1** | ~~Zone-type decision (= PB-4)~~ | ✅ **Done 2026-06-08 — Option B (EVPN-on-OpenFabric), ADR-0008** | `terraform/proxmox-base/sdn.tf` + ADR-0008 | Pick one, write ADR in `_docs/decisions/`: **(A) Simple zone, single-host** — pin all nodes to one PVE host (shared local L2); proves SDN+token+storage+bridge end-to-end, **no HA**. **(B) VXLAN/EVPN zone** *(recommended for HA)* — swap `proxmox_sdn_zone_simple`→vxlan/evpn (+ EVPN controller/peers); stretched L2 returns, existing VIP + Cilium L2 design ports over **unchanged, just re-IP'd**. **(C) Drop L2 dep** — routed CP endpoint (kube-vip BGP / haproxy / DNS-RR) + Cilium L2→BGP peer with the SDN gateway; biggest lift, most "real". |
+| **TP-2** | ~~Re-IP the module onto `10.30.0.0/24`~~ | ✅ **Done 2026-06-08** | `terraform/dev/` tfvars + `modules/talos-pve/variables.tf` | Set `var.pve.bridge="vtalos"` (PB-6 param), `var.pve.gateway="10.30.0.1"`; move `cilium_config.node_network`→`10.30.0.0/24`, all `controlplane_nodes/worker_nodes[*].ip`, `talos.vip_ip`, `cilium_config.load_balancer_ip*`→`10.30.0.x`. CIDR validations in `variables.tf` re-check automatically. |
+| **TP-3** | ~~Control-plane endpoint + Cilium LB per chosen path~~ | ✅ **Done 2026-06-08 — N/A for Path B** | `modules/talos-pve/{talos.tf,cilium_config.tf,locals.tf}` | Path B: no logic change, just the re-IP. Path A: pin CP `for_each` nodes to one host. Path C: replace the `eth0.vip` block + switch Cilium L2 announcement → BGP. |
+| **TP-4** | ~~Off-TF networking & DNS~~ | ✅ **Done 2026-06-08 — UniFi route + TrueNAS ACLs squared away** | UniFi + `_lib/coredns/` + ExternalDNS | LAN clients can't reach `10.30.0.0/24` (SNAT egress only). Add UniFi route `10.30.0.0/24 → a pve host`, **or** expose services only via the existing Cloudflare Tunnel / Tailscale. Update the CoreDNS split-horizon forward + ExternalDNS records for the new IPs ([[project_coredns_split_horizon_forward]]). |
+| **TP-5** | Validate the move | 🟡 **Applying now 2026-06-08** | `terraform/dev/` | `terraform apply` dev with `bootstrap_cluster=true` on the new subnet; confirm nodes Ready, API VIP reachable, a test LoadBalancer Service gets + announces a `10.30.0.x` IP. Then graduate Path A → Path B for HA. |
 
 ### Config / storage
 
@@ -198,7 +204,7 @@ crosses hosts. The zone strategy decides whether the existing design ports over 
 | Item | Status | Note |
 | ---- | ------ | ---- |
 | TrueNAS PVE plugin + shared iSCSI | ✅ Done (manual, this session) | Pairs with CFG-1 dataset reorg. |
-| Proxmox admin user + SDN | ✅ Applied 2026-06-08 | Token verified working. See PB-tier; next is the TP-tier VNet migration. |
+| Proxmox admin user + SDN | ✅ Applied 2026-06-08 | Token verified working. TP-tier done (ADR-0008, EVPN-on-OpenFabric); dev re-IP'd + applying. |
 | Beelink S13 BIOS power-loss = "Power On" | ❓ Unverified | Re-confirm on each node during rebuild. |
 | system-upgrade-controller for Talos | ⏸️ Hack-only | `_hack/scripts/upgrade.sh`. |
 | SSO public exposure (Phase 4) | ⏸️ Blocked on redeploy | Cloudflare Tunnel infra persists (own state). |
@@ -209,7 +215,7 @@ crosses hosts. The zone strategy decides whether the existing design ports over 
 
 - **Thoth** — ✅ Descoped (ADR-0005). No change.
 - **Cloudflare Tunnel** — ✅ Persists (own TF state, survives teardown). Will front services again post-redeploy.
-- **Proxmox base / SDN** — ✅ Applied 2026-06-08 (PB-tier); 🟡 next is the **TP-tier** Talos-pve→SDN migration. See [[project_proxmox_base_tf_root]] + [[project_talos_pve_sdn_migration]].
+- **Proxmox base / SDN** — ✅ Applied 2026-06-08 (PB-tier); **TP-tier** Talos-pve→SDN migration ✅ TP-1..TP-4 done (ADR-0008, EVPN-on-OpenFabric), 🟡 TP-5 applying the dev cluster. See [[project_proxmox_base_tf_root]] + [[project_talos_pve_sdn_migration]] + ADR-0008.
 - **GPU sharing** — pre-decision (ADR-0004) unchanged.
 - **All in-cluster apps** (Authentik, FreshRSS, Homer, Gatus, kromgo, Falco) — ⏸️ offline (cluster down); manifests intact, return on CLUSTER-0.
 
@@ -221,10 +227,10 @@ In order, cut at natural stopping points:
 
 1. ~~**PB-5 prereqs + PB-1/PB-2 apply**~~ ✅ **Done 2026-06-08** — proxmox-base applied (admin user, RBAC, SDN), token authenticates (PB-1/2/3 proxmox-base side). Natural cut.
 2. **PB-7 commit** — branch + SSH-signed commit of the foundation work (proxmox-base + the `users.tf` doubled-token fix, bridge param, CFG-1, loki bump, best-practices note). Do this **first** so the applied state matches `dev`.
-3. **TP-1 / PB-4 decision (ADR)** — zone strategy for hosting Talos on the VNet: **(A)** Simple/single-host (fast, no HA) → **(B)** VXLAN/EVPN (recommended, stretched L2, design ports over) or **(C)** routed endpoint + Cilium BGP. Gates the whole migration. Write it in `_docs/decisions/`.
-4. **TP-2/TP-3 re-IP + endpoint** — move the module onto `vtalos` / `10.30.0.0/24` (bridge, gateway, node IPs, VIP, Cilium LB pool) per the chosen path; smoke-test a throwaway VM on `vtalos` first (PB-2 tail).
-5. **TP-4 networking/DNS** — UniFi route to `10.30.0.0/24` (or expose via Tunnel/Tailscale) + CoreDNS/ExternalDNS updates for the new IPs.
-6. **CLUSTER-0 redeploy (TP-5)** — re-bootstrap `memphis` (Talos + Flux) on the new subnet. Confirm CFG-1 dataset paths against live TrueNAS first; also flip `terraform/dev/providers.tf` to the token (PB-3 dev side). R5/Sprint-6/I-1 Terraform housekeeping fall in here.
+3. ~~**TP-1 / PB-4 decision (ADR)**~~ ✅ **Done 2026-06-08** — **ADR-0008**: Option B (EVPN on an OpenFabric underlay); C rejected (UCG-Ultra @ 5.1.15 has no persistent BGP).
+4. ~~**TP-2/TP-3 re-IP + endpoint**~~ ✅ **Done 2026-06-08** — `dev/terraform.tfvars` + dev consumer code re-IP'd onto `vtalos`/`10.30.0.0/24`; Path B needs no module logic change.
+5. ~~**TP-4 networking/DNS**~~ ✅ **Done 2026-06-08** — UniFi static route `10.30.0.0/24 → 192.168.20.6` + TrueNAS iSCSI ACLs squared away; ExternalDNS auto-reconciles the new LB IPs.
+6. **CLUSTER-0 redeploy (TP-5)** — 🟡 **applying now (2026-06-08)**: `terraform apply` dev with `bootstrap_cluster=true` on `10.30.0.0/24`; confirm nodes Ready, VIP `10.30.0.199` reachable, a test LoadBalancer Service announces a `10.30.0.x` IP. Also flip `terraform/dev/providers.tf` to the token (PB-3 dev side); R5/Sprint-6/I-1 housekeeping here.
 7. **Post-redeploy** — re-verify the paused observability/security punch list (O-15/O-17/O-18, Hyg-2) against the live cluster; regenerate the live snapshot.
 
 ---
@@ -237,7 +243,7 @@ In order, cut at natural stopping points:
 | `terraform/proxmox-base/sdn.tf` | NEW — Simple zone/vnet/subnet/applier. **Constraint:** no cross-node L2 (PB-4). |
 | `terraform/proxmox-base/providers.tf` | NEW — two-phase auth (root@pam → token via `pve_api_token`). |
 | `terraform/proxmox-base/terraform.tfvars.example` | NEW — fill template; real values endpoint `192.168.20.6`, hosts `pve01..pve06`. |
-| `terraform/modules/talos-pve-v3.1.0/{pve.tf,variables.tf}` | `var.pve.bridge` param (PB-6) — one-variable VNet move later. |
+| `terraform/modules/talos-pve/{pve.tf,variables.tf}` | `var.pve.bridge` param (PB-6) — one-variable VNet move later. |
 | `_clusters/dev/config/cluster-configs.yaml` | TrueNAS dataset reorg (CFG-1, uncommitted). |
 | `_clusters/dev/cluster.yaml` | 16-layer DAG intact; the re-bootstrap spine (CLUSTER-0). |
 | `_clusters/dev/flux-system/` | **Removed** by `163b8e3`; must be re-created for redeploy. |

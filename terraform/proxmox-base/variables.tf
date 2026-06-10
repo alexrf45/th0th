@@ -57,20 +57,43 @@ variable "automation" {
 
 variable "sdn" {
   description = <<-EOT
-    Simple (isolated + SNAT) SDN zone for running workloads on a VNet. Simple
-    zones are per-node isolated L2 with L3 routing between hosts — they do NOT
-    stretch L2 across nodes, so they cannot host the multi-host HA Talos cluster
-    with its L2 VIP / Cilium L2 LB as-is (see _docs follow-up). Use a NEW subnet
-    that does not overlap the LAN (192.168.20.0/24).
+    EVPN SDN zone (ADR-0008 Option B) for the HA Talos cluster. A VXLAN overlay
+    stretches L2 across all PVE hosts — restoring the Talos control-plane VIP and
+    the Cilium L2 LoadBalancer design — with an anycast gateway + exit-node SNAT
+    for egress. The underlay is a PVE 9 OpenFabric (IS-IS) routed fabric: each
+    node gets a loopback router-id from evpn.fabric.ip_prefix and EVPN VXLAN
+    tunnels run loopback-to-loopback (no flat-L2 BGP peer list). Use a subnet
+    that does NOT overlap the LAN (192.168.20.0/24).
   EOT
   type = object({
     zone_id     = optional(string, "talos")  # PVE SDN id, max 8 chars
     vnet_id     = optional(string, "vtalos") # PVE SDN id, max 8 chars
     subnet_cidr = string                     # e.g. "10.30.0.0/24"
-    gateway     = string                     # e.g. "10.30.0.1"
+    gateway     = string                     # anycast gateway, e.g. "10.30.0.1"
     snat        = optional(bool, true)
-    nodes       = optional(list(string)) # defaults to var.pve.hosts
-    mtu         = optional(number)
+    nodes       = optional(list(string))   # zone node set; defaults to var.pve.hosts
+    mtu         = optional(number, 1450)   # VXLAN overlay: 1500 underlay - 50B encap
+
+    evpn = object({
+      controller_id     = optional(string, "evpn")
+      asn               = number                  # EVPN/underlay ASN (private 64512-65534)
+      vrf_vxlan         = optional(number, 4000)  # VRF VNI — MUST differ from vnet_tag
+      vnet_tag          = optional(number, 10300) # per-vnet VXLAN VNI
+      exit_nodes        = list(string)            # PVE host(s) providing L3 egress + SNAT
+      primary_exit_node = optional(string)        # active exit node; others standby
+      advertise_subnets = optional(bool, true)
+
+      # Routed underlay (PVE 9 SDN fabric). OpenFabric/IS-IS distributes per-node
+      # loopbacks; EVPN rides on top instead of a flat-L2 BGP peer mesh.
+      fabric = object({
+        id        = optional(string, "talosfab")       # <= 8 chars
+        ip_prefix = optional(string, "10.30.255.0/24") # underlay loopbacks; NOT the VM subnet or LAN
+        nodes = map(object({          # key = PVE node name (must be in var.pve.hosts)
+          ip         = string         # node loopback from ip_prefix, e.g. "10.30.255.6"
+          interfaces = list(string)   # IGP interface(s) facing peers, e.g. ["vmbr0"]
+        }))
+      })
+    })
   })
   validation {
     condition     = can(cidrnetmask(var.sdn.subnet_cidr))
@@ -82,6 +105,22 @@ variable "sdn" {
   }
   validation {
     condition     = cidrhost(var.sdn.subnet_cidr, 0) != "192.168.20.0"
-    error_message = "sdn.subnet_cidr must not reuse the LAN 192.168.20.0/24 — a Simple zone needs its own isolated subnet."
+    error_message = "sdn.subnet_cidr must not reuse the LAN 192.168.20.0/24 — the overlay needs its own isolated subnet."
+  }
+  validation {
+    condition     = var.sdn.evpn.vrf_vxlan != var.sdn.evpn.vnet_tag
+    error_message = "sdn.evpn.vrf_vxlan (VRF VNI) must differ from sdn.evpn.vnet_tag (vnet VNI) — Proxmox rejects equal VNIs."
+  }
+  validation {
+    condition     = length(var.sdn.evpn.exit_nodes) > 0
+    error_message = "sdn.evpn.exit_nodes must list at least one PVE host for egress/SNAT."
+  }
+  validation {
+    condition     = can(cidrnetmask(var.sdn.evpn.fabric.ip_prefix)) && cidrhost(var.sdn.evpn.fabric.ip_prefix, 0) != cidrhost(var.sdn.subnet_cidr, 0)
+    error_message = "sdn.evpn.fabric.ip_prefix must be a valid CIDR that does not overlap sdn.subnet_cidr."
+  }
+  validation {
+    condition     = alltrue([for n in var.sdn.evpn.fabric.nodes : cidrhost("${n.ip}/${split("/", var.sdn.evpn.fabric.ip_prefix)[1]}", 0) == cidrhost(var.sdn.evpn.fabric.ip_prefix, 0)])
+    error_message = "Every sdn.evpn.fabric.nodes[*].ip must fall inside sdn.evpn.fabric.ip_prefix."
   }
 }

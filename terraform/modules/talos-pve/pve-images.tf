@@ -8,7 +8,7 @@ resource "proxmox_download_file" "talos_control_plane_image" {
   url                     = data.talos_image_factory_urls.controlplane.urls.disk_image
   decompression_algorithm = "zst"
   file_name               = "${var.env}-control-plane-talos.img"
-  overwrite               = false
+  overwrite               = true
   upload_timeout          = 1800
 }
 
@@ -20,6 +20,6 @@ resource "proxmox_download_file" "talos_worker_image" {
   url                     = data.talos_image_factory_urls.worker.urls.disk_image
   decompression_algorithm = "zst"
   file_name               = "${var.env}-worker-talos.img"
-  overwrite               = false
+  overwrite               = true
   upload_timeout          = 1800
 }
