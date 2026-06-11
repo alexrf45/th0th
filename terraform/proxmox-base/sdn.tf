@@ -1,44 +1,35 @@
-# EVPN SDN — ADR-0008 Option B. Replaces the former Simple zone.
+# EVPN SDN — ADR-0008 Option B. Flat-L2 BGP-EVPN mesh (replaces the OpenFabric
+# routed underlay, which can't mesh a shared LAN — see below).
 #
 # Stretched-L2 VXLAN overlay across all PVE hosts so the multi-host HA Talos
-# cluster keeps its control-plane VIP + Cilium L2 LoadBalancer design. The
-# underlay is a PVE 9 OpenFabric (IS-IS) routed fabric: each node advertises a
-# loopback router-id and EVPN VXLAN tunnels run loopback-to-loopback.
+# cluster keeps its control-plane VIP + Cilium L2 LoadBalancer design. Every PVE
+# host peers BGP-EVPN directly over its management IP (var.sdn.evpn.peers) and
+# uses that same IP as its VXLAN VTEP. No IGP / loopback underlay.
+#
+# Why not the OpenFabric routed underlay: FRR `fabricd` (OpenFabric) is
+# point-to-point ONLY — every circuit is `Type: p2p`, capped at one neighbor, with
+# no broadcast/DIS election. On the six-node shared `vmbr0` switch it can't form a
+# full mesh (each node holds one flapping adjacency, loopbacks don't propagate, the
+# EVPN BGP sessions never come up). The management LAN already gives every node
+# direct L2/L3 reachability to every other (corosync rides it), so a direct BGP
+# peer mesh is the correct, simplest control plane here.
 #
 # Apply ordering uses the bpg leading-finalizer pattern:
 #   1. proxmox_sdn_applier.finalizer  — commits/flushes any PRE-EXISTING pending
 #      SDN state before we stage anything (a partial prior apply leaves pending
-#      fabric/controller objects that otherwise collide on create -> HTTP 500).
+#      controller/zone objects that otherwise collide on create -> HTTP 500).
 #   2. all SDN objects stage as "pending" (rooted after the finalizer).
 #   3. proxmox_sdn_applier.this       — terminal commit of the staged objects.
 
 # Leading applier: empty + no depends_on so it runs first and clears pending.
 resource "proxmox_sdn_applier" "finalizer" {}
 
-# ── Underlay: OpenFabric routed fabric ──────────────────────────────────────
-# IS-IS adjacencies form over evpn.fabric.nodes[*].interfaces (vmbr0 here, the
-# flat management L2). Each node gets a /32 loopback from fabric.ip_prefix.
-resource "proxmox_sdn_fabric_openfabric" "this" {
-  id        = var.sdn.evpn.fabric.id
-  ip_prefix = var.sdn.evpn.fabric.ip_prefix
-
-  depends_on = [proxmox_sdn_applier.finalizer]
-}
-
-resource "proxmox_sdn_fabric_node_openfabric" "this" {
-  for_each        = var.sdn.evpn.fabric.nodes
-  fabric_id       = proxmox_sdn_fabric_openfabric.this.id
-  node_id         = each.key              # PVE node name, e.g. "pve01"
-  ip              = each.value.ip         # loopback router-id
-  interface_names = each.value.interfaces # IGP interface(s) on this node
-}
-
-# ── Control plane: EVPN (BGP) over the fabric loopbacks ─────────────────────
-# Peers are auto-discovered via the fabric, so no explicit peer list is needed.
+# ── Control plane: EVPN (BGP) peered directly over the management LAN ────────
+# peers = every PVE host's mgmt IP. No fabric/loopback underlay.
 resource "proxmox_sdn_controller_evpn" "this" {
-  id     = var.sdn.evpn.controller_id
-  asn    = var.sdn.evpn.asn
-  fabric = proxmox_sdn_fabric_openfabric.this.id
+  id    = var.sdn.evpn.controller_id
+  asn   = var.sdn.evpn.asn
+  peers = var.sdn.evpn.peers
 
   depends_on = [proxmox_sdn_applier.finalizer]
 }
@@ -83,8 +74,6 @@ resource "proxmox_sdn_subnet" "this" {
 resource "proxmox_sdn_applier" "this" {
   depends_on = [
     proxmox_sdn_applier.finalizer,
-    proxmox_sdn_fabric_openfabric.this,
-    proxmox_sdn_fabric_node_openfabric.this,
     proxmox_sdn_controller_evpn.this,
     proxmox_sdn_zone_evpn.this,
     proxmox_sdn_vnet.this,
@@ -93,7 +82,6 @@ resource "proxmox_sdn_applier" "this" {
 
   lifecycle {
     replace_triggered_by = [
-      proxmox_sdn_fabric_openfabric.this,
       proxmox_sdn_controller_evpn.this,
       proxmox_sdn_zone_evpn.this,
       proxmox_sdn_vnet.this,

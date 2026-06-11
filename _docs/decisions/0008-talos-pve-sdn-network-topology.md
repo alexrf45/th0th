@@ -236,6 +236,50 @@ form rather than a flat-L2 BGP `peers` mesh:
 - **Future enhancement (unchanged):** once EVPN is healthy, optionally peer Cilium BGP with the
   Proxmox EVPN FRR to retire the in-overlay Cilium L2 announce.
 
+## Implementation update — OpenFabric underlay removed; flat-L2 BGP-EVPN peers (2026-06-10)
+
+The OpenFabric routed underlay from the 2026-06-08 note **does not work on this hardware** and was
+removed. Root cause, confirmed on the live hosts during the first bootstrap attempt:
+
+- FRR `fabricd` (OpenFabric) is **point-to-point only by design** — every circuit comes up as
+  `Type: p2p` (`show openfabric interface detail`), hard-capped at `Active neighbors: 1`, with no
+  broadcast/multi-access mode and no DIS election. OpenFabric targets spine-leaf Clos fabrics of
+  p2p links.
+- The fabric runs over the **shared `vmbr0` management L2** (six nodes on one switch). A p2p IGP
+  cannot mesh a broadcast segment: each node held exactly one **flapping** adjacency (every neighbor
+  showed the p2p placeholder SNPA `20:20:20:20:20:20`), so loopbacks `10.30.255.{7,9,10}` never
+  propagated and **4 of 5 BGP-EVPN sessions stayed down** (`Connect`/`never`). Result: no overlay
+  egress (Talos consoles stuck on `lookup … i/o timeout`) and no inbound path
+  (`terraform … dial 10.30.0.20x:50000: i/o timeout`).
+- Confirmed *not* the cause along the way: TrueNAS iSCSI, exit-node SNAT (`ip vrf exec vrf_talos
+  ping 1.1.1.1` worked from the exit node), `vmbr0` MACs (unique), management L2 (corosync healthy).
+
+**Fix (chosen):** drop the fabric entirely and use a **flat-L2 BGP-EVPN mesh** —
+`proxmox_sdn_controller_evpn` with `peers = [<six mgmt IPs>]`, VTEP = each node's management IP, no
+IGP/loopbacks. The management LAN already gives every node direct reachability to every other (the
+same path corosync uses), so direct BGP peering is the correct and simplest control plane here. This
+is the model Option B described *first*, before the 2026-06-08 note pivoted to the fabric form.
+
+- **Repo changes (2026-06-10):** `terraform/proxmox-base/sdn.tf` — removed
+  `proxmox_sdn_fabric_openfabric` + `proxmox_sdn_fabric_node_openfabric`; `proxmox_sdn_controller_evpn`
+  now takes `peers` instead of `fabric`; applier deps trimmed. `variables.tf` — `var.sdn.evpn.fabric`
+  (id/ip_prefix/nodes) replaced by `var.sdn.evpn.peers` (list of mgmt IPs) + matching validations. The
+  SOPS-encrypted `terraform.tfvars` still needs the user edit (swap the `fabric { nodes {…} }` block
+  for `peers = ["192.168.20.6", …, "192.168.20.11"]`).
+- **Migration (zone/controller already live + broken):** changing the controller from `fabric` to
+  `peers` and deleting the fabric resources is not fully in-place. Tear the SDN down once (subnet →
+  vnet → zone → controller → **delete the OpenFabric fabric**, then **SDN → Apply**), `terraform
+  state rm` any stale fabric/controller addresses, then a clean `apply`. The leading-finalizer in
+  `sdn.tf` absorbs leftover pending state. Verify `vtysh -c 'show bgp l2vpn evpn summary'` shows all
+  six peers `Established` **before** re-running the dev cluster apply.
+- **If OSPF is ever wanted instead** (keep the loopback routed-underlay): the provider also ships
+  `proxmox_sdn_fabric_ospf` / `_node_ospf`, and OSPF *does* support broadcast LANs (DR election).
+  Rejected here as needless IGP complexity on a flat LAN, but it's the drop-in if a routed underlay
+  becomes desirable.
+- **Runbook:** the full teardown → apply → BGP-verify → UniFi-route → dev-apply → bootstrap procedure
+  (with the anycast-source test caveat and the failure index) lives at
+  [`_docs/runbooks/sdn-talos-rebuild.md`](../runbooks/sdn-talos-rebuild.md).
+
 ## Consequences
 
 - **Phase 1 (A):** an apply-able single-host dev cluster on `vtalos`; proves the SDN/token/storage

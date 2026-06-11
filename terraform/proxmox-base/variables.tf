@@ -60,10 +60,11 @@ variable "sdn" {
     EVPN SDN zone (ADR-0008 Option B) for the HA Talos cluster. A VXLAN overlay
     stretches L2 across all PVE hosts — restoring the Talos control-plane VIP and
     the Cilium L2 LoadBalancer design — with an anycast gateway + exit-node SNAT
-    for egress. The underlay is a PVE 9 OpenFabric (IS-IS) routed fabric: each
-    node gets a loopback router-id from evpn.fabric.ip_prefix and EVPN VXLAN
-    tunnels run loopback-to-loopback (no flat-L2 BGP peer list). Use a subnet
-    that does NOT overlap the LAN (192.168.20.0/24).
+    for egress. The control plane is a flat-L2 BGP-EVPN mesh: every PVE host peers
+    directly over its management IP (evpn.peers) and uses that same IP as its VXLAN
+    VTEP — no IGP/loopback underlay. (OpenFabric is point-to-point only and cannot
+    mesh a shared LAN; see ADR-0008.) Use a subnet that does NOT overlap the LAN
+    (192.168.20.0/24).
   EOT
   type = object({
     zone_id     = optional(string, "talos")  # PVE SDN id, max 8 chars
@@ -83,16 +84,10 @@ variable "sdn" {
       primary_exit_node = optional(string)        # active exit node; others standby
       advertise_subnets = optional(bool, true)
 
-      # Routed underlay (PVE 9 SDN fabric). OpenFabric/IS-IS distributes per-node
-      # loopbacks; EVPN rides on top instead of a flat-L2 BGP peer mesh.
-      fabric = object({
-        id        = optional(string, "talosfab")       # <= 8 chars
-        ip_prefix = optional(string, "10.30.255.0/24") # underlay loopbacks; NOT the VM subnet or LAN
-        nodes = map(object({          # key = PVE node name (must be in var.pve.hosts)
-          ip         = string         # node loopback from ip_prefix, e.g. "10.30.255.6"
-          interfaces = list(string)   # IGP interface(s) facing peers, e.g. ["vmbr0"]
-        }))
-      })
+      # Flat-L2 BGP-EVPN: list every PVE host's management IP. Each node peers BGP
+      # directly over the LAN and uses that IP as its VXLAN VTEP — no IGP/loopback
+      # fabric (OpenFabric is point-to-point only and can't mesh a shared switch).
+      peers = list(string) # PVE host mgmt IPs, e.g. ["192.168.20.6", ..., "192.168.20.11"]
     })
   })
   validation {
@@ -116,11 +111,11 @@ variable "sdn" {
     error_message = "sdn.evpn.exit_nodes must list at least one PVE host for egress/SNAT."
   }
   validation {
-    condition     = can(cidrnetmask(var.sdn.evpn.fabric.ip_prefix)) && cidrhost(var.sdn.evpn.fabric.ip_prefix, 0) != cidrhost(var.sdn.subnet_cidr, 0)
-    error_message = "sdn.evpn.fabric.ip_prefix must be a valid CIDR that does not overlap sdn.subnet_cidr."
+    condition     = length(var.sdn.evpn.peers) > 0
+    error_message = "sdn.evpn.peers must list at least one PVE host management IP for BGP-EVPN peering."
   }
   validation {
-    condition     = alltrue([for n in var.sdn.evpn.fabric.nodes : cidrhost("${n.ip}/${split("/", var.sdn.evpn.fabric.ip_prefix)[1]}", 0) == cidrhost(var.sdn.evpn.fabric.ip_prefix, 0)])
-    error_message = "Every sdn.evpn.fabric.nodes[*].ip must fall inside sdn.evpn.fabric.ip_prefix."
+    condition     = alltrue([for p in var.sdn.evpn.peers : can(cidrhost("${p}/32", 0))])
+    error_message = "Every sdn.evpn.peers entry must be a valid IPv4 address."
   }
 }
