@@ -1,6 +1,6 @@
 {
   "enabledPlugins": {
-    "antigravity-awesome-skills@antigravity-awesome-skills": true
+    "antigravity-awesome-skills@antigravity-awesome-skills": false
   },
   "hooks": {
     "PostToolUse": [

@@ -1,0 +1,38 @@
+# Copy to terraform.tfvars, fill in, SOPS-encrypt before committing.
+# Secrets (pve token, passwords) prefer `op run`.
+
+pve_endpoint = "192.168.20.6"
+# pve_api_token injected via: op run -- terraform apply  (TF_VAR_pve_api_token)
+
+template_node = "pve01"
+templates = {
+  win2022 = 9000 # vmid of tpl-win2022
+  win10   = 9001 # vmid of tpl-win10
+  win11   = 9002 # vmid of tpl-win11
+  kali    = 9003 # vmid of tpl-kali
+}
+
+placement = {
+  dc   = "pve01"
+  ws10 = "pve02"
+  ws11 = "pve03"
+  kali = "pve01"
+}
+
+det_vnet                     = "vdet00"   # detonation vnet (range-network output)
+ops_vnet                     = "vlabops"  # ops vnet (Kali's internet side)
+det_isolation_security_group = "det_isolation"
+
+ad = {
+  domain_fqdn = "lab.local"
+  dc_ip       = "10.50.0.10"
+  ws10_ip     = "10.50.0.20"
+  ws11_ip     = "10.50.0.21"
+  kali_det_ip = "10.50.0.50"
+}
+
+# Lab credentials. local_admin_password should match the Packer winadmin_password
+# (else cloudbase-init resets Administrator to this value — harmless, just know it).
+local_admin_password  = "CHANGE-ME-Lab!"
+domain_admin_password = "CHANGE-ME-DSRM!" # Safe Mode / DSRM password
+# seed_user_password defaults to "Summer2026!" (intentionally weak/crackable)

@@ -1,0 +1,7 @@
+# Copy to remote.tfbackend, fill in, then SOPS-encrypt before committing.
+# init with: terraform init -backend-config=remote.tfbackend
+bucket       = "prod-khepri-state-2a992eb5-fbde-05bb-6048-789f0b88b736"
+region       = "us-west-2"
+use_lockfile = true
+encrypt      = true
+key          = "state/prod/security-lab/range-network.tfstate"

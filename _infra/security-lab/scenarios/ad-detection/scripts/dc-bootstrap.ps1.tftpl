@@ -1,0 +1,89 @@
+#ps1_sysnative
+# AD detection lab — DC first-boot bootstrap, run once by cloudbase-init.
+# Stage 1 promotes the forest (reboots); a scheduled task runs stage 2 afterwards
+# to seed the intentionally-attackable objects. Sysmon is already baked into the
+# template (the detonation net is air-gapped, so nothing downloads here).
+$ErrorActionPreference = 'Stop'
+$labDir = 'C:\ProgramData\lab'
+New-Item -ItemType Directory -Force -Path $labDir | Out-Null
+Start-Transcript -Path (Join-Path $labDir 'dc-bootstrap.log') -Append
+
+$stageFile = Join-Path $labDir 'stage.txt'
+$stage = if (Test-Path $stageFile) { Get-Content $stageFile } else { '1' }
+
+if ($stage -eq '1') {
+  Set-Content -Path $stageFile -Value '2'
+
+  if ($env:COMPUTERNAME -ne '${computer_name}') {
+    Rename-Computer -NewName '${computer_name}' -Force
+  }
+
+  Install-WindowsFeature AD-Domain-Services -IncludeManagementTools
+
+  # Stage 2 runs after the promotion reboot, via a one-shot scheduled task.
+  $stage2 = @'
+$ErrorActionPreference = 'Continue'
+Start-Transcript -Path 'C:\ProgramData\lab\dc-stage2.log' -Append
+Import-Module ActiveDirectory
+
+# Wait for AD DS to be up.
+$ready = $false
+for ($i = 0; $i -lt 60; $i++) {
+  try { Get-ADDomain -ErrorAction Stop | Out-Null; $ready = $true; break }
+  catch { Start-Sleep -Seconds 10 }
+}
+if (-not $ready) { Write-Warning 'AD not ready'; Stop-Transcript; return }
+
+$pw  = ConvertTo-SecureString '${seed_user_password}' -AsPlainText -Force
+$dn  = (Get-ADDomain).DistinguishedName
+New-ADOrganizationalUnit -Name 'Lab' -ErrorAction SilentlyContinue
+
+foreach ($u in @('jdoe','asmith','bwilson')) {
+  if (-not (Get-ADUser -Filter "SamAccountName -eq '$u'")) {
+    New-ADUser -Name $u -SamAccountName $u -AccountPassword $pw -Enabled $true -PasswordNeverExpires $true -Path "OU=Lab,$dn"
+  }
+}
+
+# MISCONFIG 1 — Kerberoastable service account (SPN + weak password).
+if (-not (Get-ADUser -Filter "SamAccountName -eq 'svc_sql'")) {
+  New-ADUser -Name 'svc_sql' -SamAccountName 'svc_sql' -AccountPassword $pw -Enabled $true -PasswordNeverExpires $true -Description 'SQL service (lab)'
+}
+& setspn.exe -S "MSSQLSvc/sql01.${domain_fqdn}:1433" svc_sql
+
+# MISCONFIG 2 — AS-REP roastable user (Kerberos pre-auth disabled).
+if (-not (Get-ADUser -Filter "SamAccountName -eq 'asrep_user'")) {
+  New-ADUser -Name 'asrep_user' -SamAccountName 'asrep_user' -AccountPassword $pw -Enabled $true -PasswordNeverExpires $true
+}
+Set-ADAccountControl -Identity 'asrep_user' -DoesNotRequirePreAuth $true
+
+# MISCONFIG 3 — dangerous ACL: jdoe gets GenericAll over svc_sql.
+try {
+  $svc  = Get-ADUser svc_sql
+  $acct = New-Object System.Security.Principal.NTAccount('${domain_netbios}','jdoe')
+  $sid  = $acct.Translate([System.Security.Principal.SecurityIdentifier])
+  $path = 'AD:\' + $svc.DistinguishedName
+  $acl  = Get-Acl -Path $path
+  $rule = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($sid, 'GenericAll', 'Allow')
+  $acl.AddAccessRule($rule)
+  Set-Acl -Path $path -AclObject $acl
+} catch { Write-Warning "ACL seed failed: $_" }
+
+Unregister-ScheduledTask -TaskName 'lab-dc-stage2' -Confirm:$false -ErrorAction SilentlyContinue
+Set-Content -Path 'C:\ProgramData\lab\stage.txt' -Value 'done'
+Stop-Transcript
+'@
+
+  Set-Content -Path (Join-Path $labDir 'dc-stage2.ps1') -Value $stage2 -Encoding UTF8
+  $action    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -File C:\ProgramData\lab\dc-stage2.ps1'
+  $trigger   = New-ScheduledTaskTrigger -AtStartup
+  $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+  Register-ScheduledTask -TaskName 'lab-dc-stage2' -Action $action -Trigger $trigger -Principal $principal -Force
+
+  $dsrm = ConvertTo-SecureString '${dsrm_password}' -AsPlainText -Force
+  Import-Module ADDSDeployment
+  Install-ADDSForest -DomainName '${domain_fqdn}' -DomainNetbiosName '${domain_netbios}' `
+    -SafeModeAdministratorPassword $dsrm -InstallDns -Force
+  # Install-ADDSForest reboots; stage 2 fires from the scheduled task.
+}
+
+Stop-Transcript

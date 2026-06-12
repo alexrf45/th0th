@@ -1,0 +1,7 @@
+# Local secrets + build artifacts — never commit
+build.pkrvars.hcl
+*.auto.pkrvars.hcl
+packer_cache/
+*.log
+crash.log
+manifest.json
