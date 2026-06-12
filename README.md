@@ -1,38 +1,34 @@
 <div align="center">
 
-<img src="https://github.com/user-attachments/assets/66fcda90-452a-4ebe-996f-4ac9aff82281" alt="th0th" width="820" />
+<img width="1584" height="396" alt="Copy of Th0thv5" src="https://github.com/user-attachments/assets/4869f42b-36d3-4cc1-9cee-ba245ec05d28" />
 
-# th0th
 
-<samp>offense&nbsp;·&nbsp;defense&nbsp;·&nbsp;everything between&nbsp;—&nbsp;fully isolated</samp>
 
-<br/>
 
-<a href="https://th0th.dev"><img src="https://img.shields.io/badge/th0th.dev-1A1A1A?style=flat-square&logo=cloudflare&logoColor=white" alt="th0th.dev" /></a>
 
 </div>
 
----
+<br>
 
-`th0th` is a self-hosted **cyber range** built as Infrastructure as Code on a 6-node
-Proxmox cluster. It exists to practice offensive **and** defensive techniques, develop
-bespoke tooling and detections for Linux and Windows, and to study CVEs & malware safely.
 
-## Capabilities
 
-| Domain | In the range |
+`Th0th` is a self-hosted **cyber range** built using infrastructure as code (IaC). It exists to practice offensive **and** defensive techniques, develop
+custom tooling and detections for Linux and Windows, and to study CVEs & malware safely. 
+Scenarios are automated as much as possible for repeatable, consistent learning.
+
+<div align="center">
+  
+## Example Use Cases
+
+| Domain | Tooling |
 | ------ | ------------ |
-| 🔴 **Offensive** | A Kali attacker box, payload & tool development, and C2 — delivered into isolated networks. |
-| 🔵 **Defensive** | Detection engineering: Sysmon + auditd shipped one-way (threat/payload → collector) into a SIEM. |
-| 🐛 **CVE testing** | Ephemeral victims with clean-baseline snapshots — repeatable and rollback-friendly. |
+| 🔴 **Offensive** | A Kali attacker box, payload & tool development, and C2 — within isolated networks. |
+| 🔵 **Defensive** | Detection engineering: Sysmon + auditd shipped (alert/artifact → collector) into a SIEM. |
+| 🐛 **CVE testing** | Ephemeral environments with clean-baseline snapshots — repeatable and rollback-friendly. |
+
+
+</div>
 
 ## ⚠️ Disclaimer
 
-> **th0th is a private, isolated environment for _authorized_ security research and
-> education.** The offensive tooling, payloads, vulnerable hosts, and malware it
-> detonates are built to run **only** inside segmented lab networks with no route to
-> production, the public internet, or any system the operator does not own.
->
-> Nothing here is intended for use against systems you are not explicitly authorized to
-> test. Running these techniques, tools, or configurations outside a lawful, isolated lab
-> is solely your responsibility.
+*This repository contains infrastructure as code (IaC) and configurations for an isolated malware analysis and penetration testing lab. These files are intended for educational and research purposes only.*
