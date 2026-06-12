@@ -4,7 +4,7 @@ Clones a Packer golden template into an isolated scenario VM: node-local disk,
 attached to a detonation/ops vnet, first-boot config via cloud-init (Linux) /
 cloudbase-init (Windows), and — for victims — the `det_isolation` firewall group.
 
-Consumed by `terraform/security-lab/scenarios/<name>/` roots (local state).
+Consumed by `_infra/terraform/security-lab/scenarios/<name>/` roots (local state).
 
 ## Safety properties enforced
 

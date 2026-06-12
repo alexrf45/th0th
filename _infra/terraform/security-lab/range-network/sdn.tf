@@ -14,7 +14,7 @@
 # Apply ordering reuses the proxmox-base leading-finalizer pattern: flush any
 # pre-existing pending SDN state, stage objects, then commit once at the end.
 # This root owns its own appliers; SDN apply is cluster-global but idempotent and
-# only commits already-staged objects, so it does not fight terraform/proxmox-base.
+# only commits already-staged objects, so it does not fight _infra/terraform/modules/proxmox-base.
 
 resource "proxmox_sdn_applier" "finalizer" {}
 

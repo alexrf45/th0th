@@ -1,10 +1,10 @@
 # Runbook — security lab image builds (Phase 1, Packer)
 
 Build the node-local golden templates the range clones from. Operational detail
-beyond `packer/README.md`. Internal runbook.
+beyond `_infra/packer/README.md`. Internal runbook.
 
 > **Companion:** [bring-up runbook](security-lab-bring-up.md) (ordered Phases 0-2),
-> `packer/README.md` (per-template reference), `.claude/rules/lab-isolation.md`
+> `_infra/packer/README.md` (per-template reference), `.claude/rules/lab-isolation.md`
 > (safety invariant 3 — templates are node-local, never TrueNAS).
 
 ## Templates
@@ -19,7 +19,7 @@ beyond `packer/README.md`. Internal runbook.
 
 ## Prerequisites
 
-1. `terraform/proxmox-base` applied → the `terraform@pve` API token (needs `VM.*`,
+1. `_infra/terraform/modules/proxmox-base` applied → the `terraform@pve` API token (needs `VM.*`,
    `Datastore.AllocateSpace`/`AllocateTemplate`, `Sys.Modify`, `SDN.Use`).
 2. **Build network with egress** (`build_bridge`, default `vmbr0`): the build VM
    needs DHCP + internet. **Never build on a detonation VLAN** (no gateway → the
@@ -32,7 +32,7 @@ beyond `packer/README.md`. Internal runbook.
 ## Build
 
 ```bash
-cd packer
+cd _infra/packer
 packer init .
 cp build.pkrvars.hcl.example build.pkrvars.hcl     # fill; SOPS-encrypt if committed
 # Linux first (fast, no manual ISO):
@@ -71,4 +71,4 @@ sets its hostname/IP/domain config and runs first-boot PowerShell.
   templates on the **node-local** store of `proxmox_node`.
 - Test-clone one of each: boots, qemu-ga reports an IP. Windows: Sysmon service
   running (`Get-Service Sysmon64`), cloudbase-init present.
-- Record the **vmids** → `terraform/security-lab/scenarios/ad-detection/terraform.tfvars`.
+- Record the **vmids** → `_infra/terraform/security-lab/scenarios/ad-detection/terraform.tfvars`.

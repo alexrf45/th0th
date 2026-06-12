@@ -21,7 +21,7 @@ island. This root never reintroduces EVPN.
 3. UniFi: create the **ops** VLAN (40) network with a firewalled gateway — WAN
    allow-list only, **no** route to `192.168.20.0/24`. Create each **detonation**
    VLAN (50, …) as an L2-only network with **no gateway/SVI**.
-4. `terraform/proxmox-base` already applied (provides the `terraform@pve` token).
+4. `_infra/terraform/modules/proxmox-base` already applied (provides the `terraform@pve` token).
 
 ## Usage
 

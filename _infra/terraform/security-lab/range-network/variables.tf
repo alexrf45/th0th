@@ -11,7 +11,7 @@ variable "pve" {
 variable "pve_api_token" {
   description = <<-EOT
     Phase-2 cutover token `user@realm!tokenname=secret` (terraform@pve, created by
-    terraform/proxmox-base). Leave empty to bootstrap as root@pam. Inject via
+    _infra/terraform/modules/proxmox-base). Leave empty to bootstrap as root@pam. Inject via
     TF_VAR_pve_api_token / `op run`.
   EOT
   type        = string
