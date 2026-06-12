@@ -16,8 +16,8 @@ applied/built** on the cluster. Nothing below has been deployed.
 
 | Phase | Deliverable | In repo | Applied? |
 |---|---|---|---|
-| 0 | VLAN segmentation (`terraform/security-lab/range-network/`) | ✅ validated | ❌ |
-| 1 | Packer templates (`packer/`) | ✅ validated | ❌ (not built) |
+| 0 | VLAN segmentation (`_infra/terraform/security-lab/range-network/`) | ✅ validated | ❌ |
+| 1 | Packer templates (`_infra/packer/`) | ✅ validated | ❌ (not built) |
 | 2 | `scenario-vm` module + `ad-detection` lab | ✅ validated | ❌ |
 | 3 | Wazuh defensive stack | — | **next** |
 | 4 | Offensive tooling + C2 | — | pending |
@@ -26,7 +26,7 @@ applied/built** on the cluster. Nothing below has been deployed.
 **Pick up at Phase 3 (Wazuh)** once Phases 0-2 are deployed and the AD lab is live
 (detections need a real domain to fire against).
 
-> ⚠️ **Do not `terraform apply` `terraform/proxmox-base`.** It still defines the
+> ⚠️ **Do not `terraform apply` `_infra/terraform/modules/proxmox-base`.** It still defines the
 > deleted EVPN zone (state drift) and its tfvars is a SOPS secret. The lab lives in
 > its own root to avoid this. Resolving the EVPN excision is a separate decision
 > (ADR-0009, "Consequences").
@@ -51,7 +51,7 @@ Summary + gate:
    **no gateway/DHCP/SVI**.
 3. **Enable `snippets`** content type on the node-local `local` store (needed in
    Phase 2 for cloud-init user-data).
-4. `cd terraform/security-lab/range-network` → fill + SOPS-encrypt `terraform.tfvars`
+4. `cd _infra/terraform/security-lab/range-network` → fill + SOPS-encrypt `terraform.tfvars`
    + `remote.tfbackend` → `terraform init -backend-config=remote.tfbackend` →
    `op run -- terraform apply`. Keep `enable_cluster_firewall = false`.
 
@@ -65,7 +65,7 @@ Full detail in the [image-builds runbook](security-lab-image-builds.md). Summary
 
 1. Stage ISOs on `local`: Windows Server 2022 eval, Win10, Win11, **virtio-win**
    (Linux ISOs are auto-downloaded by Packer — set the checksums).
-2. `cd packer` → `packer init .` → fill `build.pkrvars.hcl` → build each template:
+2. `cd _infra/packer` → `packer init .` → fill `build.pkrvars.hcl` → build each template:
    `op run -- packer build -only='proxmox-iso.<name>' .` (ubuntu-base, kali-attacker,
    windows-server-2022, windows10, windows11).
 3. **GATE:** each `tpl-*` exists on the node-local store, `qemu_agent` reports an IP
@@ -74,9 +74,9 @@ Full detail in the [image-builds runbook](security-lab-image-builds.md). Summary
 
 ## Phase 2 — AD detection lab
 
-Full detail in `terraform/security-lab/scenarios/ad-detection/README.md`. Summary:
+Full detail in `_infra/terraform/security-lab/scenarios/ad-detection/README.md`. Summary:
 
-1. `cd terraform/security-lab/scenarios/ad-detection` → fill `terraform.tfvars`
+1. `cd _infra/terraform/security-lab/scenarios/ad-detection` → fill `terraform.tfvars`
    (template vmids, placement, passwords) → `terraform init` (local backend) →
    `op run -- terraform apply`.
 2. First boot (~15-20 min) promotes the forest, seeds the misconfigs

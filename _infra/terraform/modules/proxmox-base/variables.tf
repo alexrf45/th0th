@@ -72,8 +72,8 @@ variable "sdn" {
     subnet_cidr = string                     # e.g. "10.30.0.0/24"
     gateway     = string                     # anycast gateway, e.g. "10.30.0.1"
     snat        = optional(bool, true)
-    nodes       = optional(list(string))   # zone node set; defaults to var.pve.hosts
-    mtu         = optional(number, 1450)   # VXLAN overlay: 1500 underlay - 50B encap
+    nodes       = optional(list(string)) # zone node set; defaults to var.pve.hosts
+    mtu         = optional(number, 1450) # VXLAN overlay: 1500 underlay - 50B encap
 
     evpn = object({
       controller_id     = optional(string, "evpn")

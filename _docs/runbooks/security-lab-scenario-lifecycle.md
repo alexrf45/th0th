@@ -29,7 +29,7 @@ not the public guide.
 - `terraform.tfvars` + `remote.tfbackend` are **SOPS-encrypted**: decrypt → edit →
   re-encrypt before committing. `pve.password` + tokens live there.
 - Phase-2 token: `TF_VAR_pve_api_token = terraform@pve!tf=<secret>` (from
-  `terraform/proxmox-base`, in 1Password).
+  `_infra/terraform/modules/proxmox-base`, in 1Password).
 
 ---
 
@@ -59,7 +59,7 @@ cat /sys/class/net/vmbr0/bridge/vlan_filtering   # 1 = VLAN-aware
 ### 3. Apply the range network (Terraform)
 
 ```
-cd terraform/security-lab/range-network
+cd _infra/terraform/security-lab/range-network
 cp terraform.tfvars.example terraform.tfvars        # fill, SOPS-encrypt
 cp remote.tfbackend.example  remote.tfbackend       # fill, SOPS-encrypt
 terraform init -backend-config=remote.tfbackend
@@ -101,7 +101,7 @@ Only after step 4 passes and you accept the corosync risk:
 
 ## Scenario lifecycle (Phase 2+)
 
-Each scenario is a **local-state** root under `terraform/security-lab/scenarios/<name>/`
+Each scenario is a **local-state** root under `_infra/terraform/security-lab/scenarios/<name>/`
 that consumes the `scenario-vm` module and the `range-network` outputs.
 
 | Step | Action |

@@ -58,19 +58,19 @@ variable "hosts" {
     it two networks — one ops, one detonation.
   EOT
   type = map(object({
-    node           = string                    # target PVE node
-    role           = string                    # dc | workstation | attacker | victim | collector
-    os_type        = string                    # windows | linux
-    template_id    = number                    # Packer template vmid to clone
-    cores   = optional(number, 2)
-    memory  = optional(number, 4096)
-    isolate = optional(bool, true)             # attach det_isolation + NIC firewall. Set false for dual-homed ops boxes (attacker/collector).
+    node        = string # target PVE node
+    role        = string # dc | workstation | attacker | victim | collector
+    os_type     = string # windows | linux
+    template_id = number # Packer template vmid to clone
+    cores       = optional(number, 2)
+    memory      = optional(number, 4096)
+    isolate     = optional(bool, true) # attach det_isolation + NIC firewall. Set false for dual-homed ops boxes (attacker/collector).
     networks = list(object({
-      bridge  = string                         # SDN vnet bridge (carries the VLAN tag itself)
-      address = string                         # "10.50.0.10/24" or "dhcp"
-      gateway = optional(string)               # set only on the ops NIC; detonation NICs have NONE
+      bridge  = string           # SDN vnet bridge (carries the VLAN tag itself)
+      address = string           # "10.50.0.10/24" or "dhcp"
+      gateway = optional(string) # set only on the ops NIC; detonation NICs have NONE
     }))
-    user_data = optional(string)               # raw cloud-init (Linux) / cloudbase-init #ps1 (Windows)
+    user_data = optional(string) # raw cloud-init (Linux) / cloudbase-init #ps1 (Windows)
   }))
 
   validation {

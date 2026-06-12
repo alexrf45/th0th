@@ -1,6 +1,6 @@
 # ADR-0009: Security research lab — network segmentation & range topology
 
-- **Status:** **Accepted** 2026-06-11. The lab is pivoting to a security research range (offensive + defensive practice, bespoke Linux/Windows tooling & detections, CVE testing). Segmentation is enforced with **Proxmox SDN VLAN zones backed by the UniFi switch**; the EVPN overlay is abandoned (deleted from the live cluster 2026-06-10). Implemented in `terraform/security-lab/range-network/`.
+- **Status:** **Accepted** 2026-06-11. The lab is pivoting to a security research range (offensive + defensive practice, bespoke Linux/Windows tooling & detections, CVE testing). Segmentation is enforced with **Proxmox SDN VLAN zones backed by the UniFi switch**; the EVPN overlay is abandoned (deleted from the live cluster 2026-06-10). Implemented in `_infra/terraform/security-lab/range-network/`.
 - **Date:** 2026-06-11
 - **Deciders:** fr3d (with Claude review)
 - **Related:** [ADR-0008](0008-talos-pve-sdn-network-topology.md) (EVPN/Simple-zone L2 behavior — the air-gap primitive reused here), [ADR-0004](0004-gpu-vfio-passthrough.md) (anubis GPU node). Supersedes the EVPN approach **for the range** (the prod-cluster networking question is tracked separately).
@@ -39,20 +39,20 @@ A VLAN zone provides **no gateway**. A detonation VLAN is given **no UCG SVI** a
 - **Node-local (`local-lvm`/`local-zfs`)** for **all scenario VM disks and Packer templates** — vulnerability data never lands on the NAS; blast radius stays on the node.
 
 ### State split (per `.claude/rules/terraform-buisness-rules.md`)
-- Shared range plumbing (VLAN zones, datacenter firewall) → **S3** (`terraform/security-lab/range-network/`). Kept in its own root, **not** `terraform/proxmox-base/`, to avoid entangling with the deleted-EVPN drift in that state and its SOPS-secret tfvars.
-- Each disposable scenario → **local** state (`terraform/security-lab/scenarios/<name>/`).
+- Shared range plumbing (VLAN zones, datacenter firewall) → **S3** (`_infra/terraform/security-lab/range-network/`). Kept in its own root, **not** `_infra/terraform/modules/proxmox-base/`, to avoid entangling with the deleted-EVPN drift in that state and its SOPS-secret tfvars.
+- Each disposable scenario → **local** state (`_infra/terraform/security-lab/scenarios/<name>/`).
 
 ## Alternatives considered
 
 - **Simple zone, one node per scenario** — no switch config, but per-node isolated L2 means no cross-node L2 and a scenario is capped to one Beelink's RAM. Rejected: AD scenarios want cross-node L2 and headroom.
 - **VXLAN/EVPN overlay** — stretched L2 across nodes, but overlays have failed three times on this hardware; the UCG can't anchor them durably. Rejected on durability.
-- **Lab SDN inside `terraform/proxmox-base`** (as first sketched) — rejected: that state still defines the dead EVPN zone (drift) and its tfvars is a SOPS secret we must not edit; a separate root is cleaner and independently deployable.
+- **Lab SDN inside `_infra/terraform/modules/proxmox-base`** (as first sketched) — rejected: that state still defines the dead EVPN zone (drift) and its tfvars is a SOPS secret we must not edit; a separate root is cleaner and independently deployable.
 
 ## Consequences
 
 - **Positive:** robust, persistent segmentation on hardware-supported primitives; structural air-gap that survives a full victim compromise; reproducible; decoupled from the (down) prod k8s cluster; clean S3-vs-local state split.
 - **Negative / follow-ups:**
   - Detonation cross-node L2 depends on correct UniFi trunk + no-SVI config — a click-ops step (documented in the runbook; optionally codified later with `paultyng/unifi`).
-  - `terraform/proxmox-base` still contains the dead EVPN `sdn.tf` (state drift). Excising it touches the prod-cluster networking contract and its SOPS tfvars — tracked as a separate decision, **out of scope here**. Do not `apply` proxmox-base until that is resolved.
+  - `_infra/terraform/modules/proxmox-base` still contains the dead EVPN `sdn.tf` (state drift). Excising it touches the prod-cluster networking contract and its SOPS tfvars — tracked as a separate decision, **out of scope here**. Do not `apply` proxmox-base until that is resolved.
   - `vmbr0` must be VLAN-aware on every node (prerequisite).
   - Enabling the cluster-wide firewall is a guarded manual step (corosync risk); default OFF.
