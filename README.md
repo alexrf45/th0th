@@ -1,47 +1,38 @@
 <div align="center">
 
-# Th0th
+<img src="https://github.com/user-attachments/assets/66fcda90-452a-4ebe-996f-4ac9aff82281" alt="th0th" width="820" />
 
-<img width="1600" height="896" alt="thothv1" src="https://github.com/user-attachments/assets/66fcda90-452a-4ebe-996f-4ac9aff82281" />
+# th0th
 
+<samp>offense&nbsp;·&nbsp;defense&nbsp;·&nbsp;everything between&nbsp;—&nbsp;fully isolated</samp>
 
-<a href="https://th0th.dev"><img src="https://img.shields.io/badge/th0th.dev-1A1A1A?style=plastic" alt="th0th.dev" height="100px" /></a>
+<br/>
 
-**_A reproducible security research lab: offense, defense, and everything between — fully isolated._**
+<a href="https://th0th.dev"><img src="https://img.shields.io/badge/th0th.dev-1A1A1A?style=flat-square&logo=cloudflare&logoColor=white" alt="th0th.dev" /></a>
 
 </div>
 
 ---
 
 `th0th` is a self-hosted **cyber range** built as Infrastructure as Code on a 6-node
-Proxmox cluster. It exists to practice offensive **and** defensive techniques,
-develop bespoke tooling and detections for Linux and Windows, and to study CVEs & malware safely.
-
-<div align="center">
-
-## Components
-
-| Phase | Scope | In repo | Deployed |
-| ----- | ----- | :-----: | :------: |
-| **0 · Segmentation** | VLAN-zone range; gateway-less, air-gapped detonation nets | ✅ | ⬜ |
-| **1 · Golden images** | Packer templates — Ubuntu, Kali, Windows Server / 10 / 11 | ✅ | ⬜ |
-| **2 · AD detection lab** | DC + workstations + Kali; planted Kerberoast / AS-REP / ACL misconfigs | ✅ | ⬜ |
-| **3 · Defensive (Wazuh)** | one-way detonation → collector telemetry, detection engineering | 🔜 | ⬜ |
-| **4 · Offensive + C2** | payload / tool development, delivery, callbacks | ⬜ | ⬜ |
-| **5 · Web / CVE workbench** | disposable vulnerable apps, snapshot / rollback | ⬜ | ⬜ |
+Proxmox cluster. It exists to practice offensive **and** defensive techniques, develop
+bespoke tooling and detections for Linux and Windows, and to study CVEs & malware safely.
 
 ## Capabilities
 
 | Domain | In the range |
 | ------ | ------------ |
 | 🔴 **Offensive** | A Kali attacker box, payload & tool development, and C2 — delivered into isolated networks. |
-| 🔵 **Defensive** | Detection engineering: Sysmon + auditd shipped one-way (threat/payload → collector) into Wazuh. |
-| 🐛 **CVE testing** | Ephemeral victims with `clean-baseline` snapshots, repeatable, rollback-friendly. |
+| 🔵 **Defensive** | Detection engineering: Sysmon + auditd shipped one-way (threat/payload → collector) into a SIEM. |
+| 🐛 **CVE testing** | Ephemeral victims with clean-baseline snapshots — repeatable and rollback-friendly. |
 
-</div>
+## ⚠️ Disclaimer
 
-## Getting started
-
-- **[Bring-up runbook](_docs/runbooks/security-lab-bring-up.md)** — the ordered Phase 0 → 2 build with verification gates.
-- **[ADR-0009](_docs/decisions/0009-security-lab-segmentation.md)** — the segmentation design and why VLAN zones (not EVPN).
-- **[`.claude/rules/lab-isolation.md`](.claude/rules/lab-isolation.md)** — the safety invariants to read before touching the range.
+> **th0th is a private, isolated environment for _authorized_ security research and
+> education.** The offensive tooling, payloads, vulnerable hosts, and malware it
+> detonates are built to run **only** inside segmented lab networks with no route to
+> production, the public internet, or any system the operator does not own.
+>
+> Nothing here is intended for use against systems you are not explicitly authorized to
+> test. Running these techniques, tools, or configurations outside a lawful, isolated lab
+> is solely your responsibility.
