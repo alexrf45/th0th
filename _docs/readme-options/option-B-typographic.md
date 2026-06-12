@@ -11,7 +11,7 @@
 
 # th0th
 
-<samp>offense&nbsp;·&nbsp;defense&nbsp;·&nbsp;everything between&nbsp;—&nbsp;fully isolated</samp>
+<samp>offense&nbsp;·&nbsp;defense&nbsp;·&nbsp;learning&nbsp;—&nbsp;fully isolated</samp>
 
 <br/>
 
@@ -19,32 +19,15 @@
 
 </div>
 
----
-
-`th0th` is a self-hosted **cyber range** built as Infrastructure as Code on a 6-node
-Proxmox cluster. It exists to practice offensive **and** defensive techniques, develop
-bespoke tooling and detections for Linux and Windows, and to study CVEs & malware —
-inside networks isolated at the hypervisor, so nothing detonated can reach the home or
-management network.
+`th0th` is a self-hosted **cyber range** built with Infrastructure as Code to practice & hone offensive **and** defensive cybersecurity techniques, techniques and procedures
 
 <div align="center">
-
-## Build status
-
-| Phase | Scope | In repo | Deployed |
-| ----- | ----- | :-----: | :------: |
-| **0 · Segmentation** | VLAN-zone range; gateway-less, air-gapped detonation nets | ✅ | ⬜ |
-| **1 · Golden images** | Packer templates — Ubuntu, Kali, Windows Server / 10 / 11 | ✅ | ⬜ |
-| **2 · AD detection lab** | DC + workstations + Kali; planted Kerberoast / AS-REP / ACL misconfigs | ✅ | ⬜ |
-| **3 · Defensive (Wazuh)** | one-way detonation → collector telemetry, detection engineering | 🔜 | ⬜ |
-| **4 · Offensive + C2** | payload / tool development, delivery, callbacks | ⬜ | ⬜ |
-| **5 · Web / CVE workbench** | disposable vulnerable apps, snapshot / rollback | ⬜ | ⬜ |
 
 ## Capabilities
 
 | Domain | In the range |
 | ------ | ------------ |
-| 🔴 **Offensive** | A Kali attacker box, payload & tool development, and C2 — delivered into isolated networks. |
+| 🔴 **Offensive** | A Kali attacker box, payload & tool development, and C2 |
 | 🔵 **Defensive** | Detection engineering: Sysmon + auditd shipped one-way (threat/payload → collector) into Wazuh. |
 | 🐛 **CVE testing** | Ephemeral victims with `clean-baseline` snapshots — repeatable, rollback-friendly. |
 
