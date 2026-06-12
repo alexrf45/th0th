@@ -1,82 +1,83 @@
 <div align="center">
 
-<img src="https://avatars.githubusercontent.com/u/61287648?s=200&v=4" width="144px" height="144px" alt="kubernetes"/>
+<!-- TODO: swap this k8s avatar for a range emblem (Thoth / ibis / sigil motif) -->
+<img src="https://avatars.githubusercontent.com/u/61287648?s=200&v=4" width="144px" height="144px" alt="th0th"/>
 
 <br/>
 <br/>
 
-<a href="https://dev-status.th0th.dev"><img src="https://img.shields.io/badge/home--0ps.com-blue?style=plastic" alt="th0th.dev" height="140px" width="140px" /></a>
+<a href="https://th0th.dev"><img src="https://img.shields.io/badge/th0th.dev-1A1A1A?style=plastic" alt="th0th.dev" height="28px" /></a>
 
-**_A living, breathing home lab that champions a love of learning and discovery_**
+**_A reproducible security research lab: offense, defense, and everything between — fully isolated._**
 
 </div>
+
+---
+
+`th0th` is a self-hosted **cyber range** built as Infrastructure as Code on a 6-node
+Proxmox cluster. It exists to practice offensive **and** defensive technique, to
+develop bespoke tooling and detections for Linux and Windows, and to study CVEs —
+inside network segments isolated at the hypervisor, so a detonated payload can never
+reach the home or management network.
 
 <div align="center">
 
-## Live status
+## Build status
 
-### Cluster
-
-![Talos](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Ftalos_version&style=plastic&logo=Talos&logoColor=%23FF7300)
-![Kubernetes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fkubernetes_version&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
-![Flux](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fflux_version&style=plastic&logo=flux&logoSize=auto)
-![Nodes](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_node_count&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
-![Pods](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_pod_count&style=plastic&logo=Kubernetes&logoColor=%23326CE5&logoSize=auto)
-![Age](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_age_days&style=plastic&logo=prometheus&logoColor=%23E6522C)
-![Uptime](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_uptime_days&style=plastic&logo=prometheus&logoColor=%23E6522C)
-![CPU](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_cpu_usage&style=plastic&logo=prometheus&logoColor=%23E6522C)
-![Memory](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_memory_usage&style=plastic&logo=prometheus&logoColor=%23E6522C)
-![Alerts](https://img.shields.io/endpoint?url=https%3A%2F%2Fdev-kromgo.th0th.dev%2Fcluster_alert_count&style=plastic&logo=prometheus&logoColor=%23E6522C)
-
-### Applications
-
-| Application                                                                                | Status                                                                                                                                                        | Uptime (7d)                                                                                             | Purpose                |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------- |
-| ![Authentik](https://img.shields.io/badge/Authentik-FD4B2D?logo=authentik&logoColor=white) | ![status](https://dev-status.th0th.dev/api/v1/endpoints/applications_authentik/health/badge.svg) | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/applications_authentik/uptimes/7d/badge.svg) | SSO / IdP              |
-| ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white)       | ![status](https://dev-status.th0th.dev/api/v1/endpoints/applications_grafana/health/badge.svg)   | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/applications_grafana/uptimes/7d/badge.svg)   | Observability UI       |
-| ![FreshRSS](https://img.shields.io/badge/FreshRSS-2D2D2D?logo=rss&logoColor=white)         | ![status](https://dev-status.th0th.dev/api/v1/endpoints/applications_freshrss/health/badge.svg)  | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/applications_freshrss/uptimes/7d/badge.svg)  | Self-hosted RSS reader |
-| ![Homer](https://img.shields.io/badge/Homer-2D2D2D?logo=homeassistant&logoColor=white)     | ![status](https://dev-status.th0th.dev/api/v1/endpoints/applications_homer/health/badge.svg)     | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/applications_homer/uptimes/7d/badge.svg)     | Service dashboard      |
-
-### Infrastructure
-
-| Target                                                                               | Status                                                                                                                                                        | Uptime (7d)                                                                                             | Purpose                     |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------- |
-| ![TrueNAS](https://img.shields.io/badge/TrueNAS-0095D5?logo=truenas&logoColor=white) | ![status](https://dev-status.th0th.dev/api/v1/endpoints/infrastructure_truenas/health/badge.svg) | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/infrastructure_truenas/uptimes/7d/badge.svg) | iSCSI / NFS storage backend |
-| ![UniFi](https://img.shields.io/badge/UniFi-0559C9?logo=ubiquiti&logoColor=white)    | ![status](https://dev-status.th0th.dev/api/v1/endpoints/infrastructure_unifi/health/badge.svg)   | ![uptime](https://dev-status.th0th.dev/api/v1/endpoints/infrastructure_unifi/uptimes/7d/badge.svg)   | Edge gateway / DNS resolver |
+| Phase | Scope | In repo | Deployed |
+| ----- | ----- | :-----: | :------: |
+| **0 · Segmentation** | VLAN-zone range; gateway-less, air-gapped detonation nets | ✅ | ⬜ |
+| **1 · Golden images** | Packer templates — Ubuntu, Kali, Windows Server / 10 / 11 | ✅ | ⬜ |
+| **2 · AD detection lab** | DC + workstations + Kali; planted Kerberoast / AS-REP / ACL misconfigs | ✅ | ⬜ |
+| **3 · Defensive (Wazuh)** | one-way detonation → collector telemetry, detection engineering | 🔜 | ⬜ |
+| **4 · Offensive + C2** | payload / tool development, delivery, callbacks | ⬜ | ⬜ |
+| **5 · Web / CVE workbench** | disposable vulnerable apps, snapshot / rollback | ⬜ | ⬜ |
 
 </div>
+
+## Capabilities
+
+| Domain | In the range |
+| ------ | ------------ |
+| 🔴 **Offensive** | A Kali attacker box, payload & tool development, and C2 — delivered into isolated detonation networks. |
+| 🔵 **Defensive** | Detection engineering: Sysmon + auditd shipped one-way (detonation → collector) into Wazuh. |
+| 🐛 **CVE testing** | Ephemeral victims with `clean-baseline` snapshots for repeatable, rollback-friendly detonation. |
 
 <div align="center">
 
 ## Architecture
 
 ![Terraform](https://img.shields.io/badge/Terraform-7B42BC?logo=terraform&logoColor=white)
+![Packer](https://img.shields.io/badge/Packer-02A8EF?logo=packer&logoColor=white)
 ![Proxmox](https://img.shields.io/badge/Proxmox-E57000?logo=proxmox&logoColor=white)
-![Flux](https://img.shields.io/badge/Flux-5468FF?logo=flux&logoColor=white)
-![Helm](https://img.shields.io/badge/Helm-0F1689?logo=helm&logoColor=white)
-![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=white)
-![Cilium](https://img.shields.io/badge/Cilium-F8C517?logo=cilium&logoColor=black)
-![CoreDNS](https://img.shields.io/badge/CoreDNS-1F7DD1?logo=coredns&logoColor=white)
-![ExternalDNS](https://img.shields.io/badge/External_DNS-326CE5?logo=kubernetes&logoColor=white)
-![Ubiquiti](https://img.shields.io/badge/Ubiquiti-0559C9?logo=ubiquiti&logoColor=white)
-![Storage](https://img.shields.io/badge/Local_Path-326CE5?logo=kubernetes&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
-![CloudNativePG](https://img.shields.io/badge/CloudNativePG-336791?logo=postgresql&logoColor=white)
-![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?logo=prometheus&logoColor=white)
-![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white)
-![Loki](https://img.shields.io/badge/Loki-F46800?logo=grafana&logoColor=white)
-![Alloy](https://img.shields.io/badge/Grafana_Alloy-F46800?logo=grafana&logoColor=white)
-![Gatus](https://img.shields.io/badge/Gatus-2D2D2D?logo=statuspage&logoColor=white)
-![Cert-Manager](https://img.shields.io/badge/cert--manager-326CE5?logo=kubernetes&logoColor=white)
-![External Secrets](https://img.shields.io/badge/External_Secrets-326CE5?logo=kubernetes&logoColor=white)
+![UniFi](https://img.shields.io/badge/UniFi-0559C9?logo=ubiquiti&logoColor=white)
+![TrueNAS](https://img.shields.io/badge/TrueNAS-0095D5?logo=truenas&logoColor=white)
 ![1Password](https://img.shields.io/badge/1Password-0094F5?logo=1password&logoColor=white)
 ![SOPS](https://img.shields.io/badge/SOPS-1A1A1A?logo=mozilla&logoColor=white)
-![Renovate](https://img.shields.io/badge/Renovate-1A1F6C?logo=renovatebot&logoColor=white)
-![Authentik](https://img.shields.io/badge/Authentik-FD4B2D?logo=authentik&logoColor=white)
-![Kyverno](https://img.shields.io/badge/Kyverno-3BCEAC?logo=kubernetes&logoColor=white)
-![Falco](https://img.shields.io/badge/Falco-00AEEF?logo=falco&logoColor=white)
-![Trivy](https://img.shields.io/badge/Trivy-1904DA?logo=aquasecurity&logoColor=white)
-![Tailscale](https://img.shields.io/badge/Tailscale-242424?logo=tailscale&logoColor=white)
-![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?logo=cloudflare&logoColor=white)
+![Kali Linux](https://img.shields.io/badge/Kali_Linux-557C94?logo=kalilinux&logoColor=white)
+![Windows AD](https://img.shields.io/badge/Windows_AD-0078D6?logo=windows&logoColor=white)
+![Sysmon](https://img.shields.io/badge/Sysmon-2D2D2D?logo=windows&logoColor=white)
+![Wazuh](https://img.shields.io/badge/Wazuh-3781C2?logo=wazuh&logoColor=white)
+![MITRE ATT&CK](https://img.shields.io/badge/MITRE_ATT%26CK-C9252A?logo=mitre&logoColor=white)
 
 </div>
+
+Segmentation is enforced with **Proxmox SDN VLAN zones** backed by the UniFi switch:
+detonation VLANs are **gateway-less L2 islands**, so a fully-compromised victim has
+no L3 next-hop off its segment. The only bridges in are deliberately dual-homed ops
+boxes (Kali, the collector). Provisioned with **Terraform** + **Packer** under
+[`_infra/`](_infra/); secrets via **1Password** + **SOPS**.
+
+## Safety & scope
+
+> Authorized, personal, and isolated. Detonation networks have **no gateway** — no
+> route to the home / management LAN, TrueNAS, the internet, or each other, even if a
+> victim is fully compromised. Scenario disks stay **node-local**; nothing vulnerable
+> ever touches the NAS. The non-negotiable invariants live in
+> [`.claude/rules/lab-isolation.md`](.claude/rules/lab-isolation.md).
+
+## Getting started
+
+- **[Bring-up runbook](_docs/runbooks/security-lab-bring-up.md)** — the ordered Phase 0 → 2 build with verification gates.
+- **[ADR-0009](_docs/decisions/0009-security-lab-segmentation.md)** — the segmentation design and why VLAN zones (not EVPN).
+- **[`.claude/rules/lab-isolation.md`](.claude/rules/lab-isolation.md)** — the safety invariants to read before touching the range.
