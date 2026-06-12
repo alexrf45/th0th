@@ -295,3 +295,11 @@ token
 values.yaml.example
 csi-values.yaml
 truenas-credentials-secret.yaml
+ob-archiver.plain.yaml
+
+# MkDocs build output + local docs venv
+/site/
+.venv-docs/
+
+# /sprint-orchestrate runtime state (per-task accept.sh under .claude/sprints/<id>/ is tracked)
+.claude/sprint-state.json

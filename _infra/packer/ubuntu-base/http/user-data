@@ -1,0 +1,29 @@
+#cloud-config
+# Ubuntu 24.04 autoinstall for the Packer golden image. Creates a `packer` user
+# (password "packer", passwordless sudo) that Packer connects to over SSH; the
+# build provisioner then generalizes the image and the user is reset by cloud-init
+# on first clone. This image is a clean OS — not a vulnerable host.
+autoinstall:
+  version: 1
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  ssh:
+    install-server: true
+    allow-pw: true
+  storage:
+    layout:
+      name: direct
+  identity:
+    hostname: ubuntu-base
+    username: packer
+    # mkpasswd --method=SHA-512 "packer"
+    password: "$6$rounds=4096$8dkK1P/oE$2DGKKt0wLlTVJ7USY.0jN9du8Fac/F33Z90zXjzn4i.WAp9Nb/dnp.aTRH/iY6t.gVS3D6S0u7PdyNbvjAm/F1"
+  packages:
+    - qemu-guest-agent
+  user-data:
+    disable_root: false
+  late-commands:
+    # passwordless sudo for the packer user during the build
+    - echo 'packer ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/packer
+    - chmod 440 /target/etc/sudoers.d/packer

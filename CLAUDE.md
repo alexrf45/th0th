@@ -1,144 +1,86 @@
 # CLAUDE.md
 
-You are a DevOps Engineer with 20 years of Linux and cloud experience.
-
-You are building a home lab to demonstrate various cloud native technologies, principles and best practices. GitOps is the prevalent philosophy driving operations and application deployment.
-
-## CI/CD
-
-When working with CI/CD pipelines, always run linting and tests locally before committing. Use the project's existing lint/test commands to verify changes pass before pushing
-
-## Git SSH Agent
-
-Git commits may require SSH signing via 1Password agent. If a commit fails with signing errors, inform the user rather than retrying — they need to authenticate manually.
-
-## Hardware
-
-Unfi Cloud Gateway
-Unfi 16 Port switch
-(6) Beelink mini PCs S13
-Zimaboard DIY NAS with 2TB of storage
-
-## Software
-
-Hypervisor:
-Proxmox Cluster (6 Nodes)
-
-### NAS
-
-TrueNAS Scale
-
-### Application infrastructure
-
-Kubernetes
-Talos Linux
-Terraform
-Helm
-Cilium
-External Secrets
-OnePassword Connect
-External DNS
-
-### Security Application Infrastructure
-
-Kyverno
-Trivy
-Falco
-
-### Observability & Monitoring
-
-Prometheus
-Grafana
-Loki
-FluentBit
-
-### Applications/Services
-
-Wallabag
-Adminer
-Silverbullet
-FreshRSS
-
-## Lab Goals & Requirements
-
-The aim is to preside over a lab environment that is as close to production ready as possible with robust monitoring, observability, resilience, disaster recovery, alerting, best practices for cloud native security and network architecture. Services are exposed externally either via Tailscale, Cloudflare Tunnels or Ngrok. Services are exposed internally with the home-0ps.com domain.
-
-Applications hosted in this environment should have a iOS mobile app equivalent to extend and get the most out of the services. Users spend frequent time writing poetry, taking notes, saving links/articles and curating knowledge & media.
-
-The only limitation to a truly cloud native set up is the requirement to self host persistent data on the TrueNAS instance to meet privacy & risk requirements for users.
-
 ## What this repo is
 
-A GitOps-managed Kubernetes home lab. Flux CD watches the `dev` branch of this repo and reconciles the cluster state. Talos Linux runs on Proxmox VMs provisioned by Terraform. Secrets are encrypted with SOPS (Age) and synced via 1Password Connect through the External Secrets Operator.
+A **security research lab** (cyber range) built as reproducible Infrastructure as
+Code on a 6-node Proxmox cluster. The lab is for practicing offensive **and**
+defensive techniques, developing bespoke tools/payloads/detections for Linux and
+Windows hosts, and testing CVEs — in network segments that are isolated at the
+hypervisor level so detonating malware/payloads can never reach the home or
+management network.
+
+Environments are provisioned with **Terraform** (Proxmox SDN, RBAC, VMs) and
+**Packer** (golden VM templates). Secrets are handled with the 1Password CLI and
+SOPS. The range is VM-based and self-contained.
+
+> History: this repo was previously a GitOps Kubernetes home lab (Flux/Talos). That
+> tree (`_clusters/`, `_lib/`, `global/`, `_templates/`), the Talos cluster root
+> (`dev`), and the `talos-pve` module have all been removed during the pivot.
+
+## Lab goals & requirements
+
+- Practice offensive + defensive cybersecurity; build detections for Linux/Windows.
+- Test and understand CVEs and other vulnerabilities, with snapshot/rollback.
+- Reproducible environments via Terraform + Packer (no click-ops for scenarios).
+- **Hypervisor-level network segmentation** — detonation networks are air-gapped.
+- **Storage split:** TrueNAS iSCSI holds **lab-administrative** data only (SIEM
+  index, kept artifacts). Scenario/vulnerability disks live on **node-local**
+  storage and never touch the NAS.
+
+## Start here
+
+The security range is built in phases. The entry point is the bring-up runbook:
+
+- **`_docs/runbooks/security-lab-bring-up.md`** — master Phase 0→2 checklist +
+  current build status.
+- **`_docs/decisions/0009-security-lab-segmentation.md`** — the design (ADR).
+- **`.claude/rules/lab-isolation.md`** — non-negotiable safety invariants. **Read
+  before any change to range networking, the `scenario-vm` module, or a scenario.**
+
+## Directory layout
+
+| Directory                     | Purpose                                                                                                                                                            |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_infra/terraform/`           | Terraform: `modules/` (`proxmox-base`, `scenario-vm`); `security-lab/` (`range-network` shared plumbing [S3 state] + `scenarios/<name>` disposable labs [local state]) |
+| `_infra/packer/`              | Packer golden-image builds → node-local templates (ubuntu, kali, windows-server/10/11)                                                                            |
+| `_docs/`                      | Deployment info + insights: `decisions/` (ADRs), `runbooks/`, `reviews/`, `prerequisites.md`                                                                       |
+| `_hack/`                      | One-off scripts, utilities, and example YAML (yours or ours)                                                                                                       |
+| `.claude/rules/`              | Business rules (see below)                                                                                                                                         |
+| `.claude/commands/`           | Runnable slash commands                                                                                                                                            |
+
+## How infrastructure is run
+
+- **Terraform and Packer are run by you, manually, wrapped in the 1Password CLI**:
+  `op run -- terraform apply`, `op run -- packer build …`. Claude does not run
+  `apply`/`build`. Bare `terraform`/`packer` under the `op` plugin fail with
+  `interactive IO not available` (that's expected — use `terraform validate` /
+  `packer validate` for offline checks).
+- **State:** shared/persistent range plumbing (SDN, firewall) uses the **S3**
+  backend; each disposable scenario uses **local** state. A wiped/compromised
+  scenario must never corrupt shared infrastructure state.
+- **Secrets:** `terraform.tfvars`, `remote.tfbackend`, and Packer var-files are
+  **SOPS-encrypted** before commit. Never modify SOPS/secret files without explicit
+  user confirmation.
+
+## Business rules & documentation
+
+Rules for specific actions or design choices live in **`.claude/rules/`**. Add new
+insights/requirements there as discovered. Key ones:
+
+- **`lab-isolation.md`** — the range's safety invariants (air-gap, node-local disks,
+  one-way telemetry). Highest priority for any range change.
+- **`terraform-buisness-rules.md`** — fetch live provider docs, S3-vs-local state,
+  `op`-wrapped applies, SOPS, prefer defaults.
+- **`secrets.md`** — secret handling; never pipe live credentials or re-encrypt SOPS
+  files without confirmation.
+- **`lab_architecture.md`** — hardware inventory (Proxmox nodes, UniFi, TrueNAS).
+- **`code.md`**, **`yaml-conventions.md`**, and the `*-review.md` rules — code/doc
+  quality and review criteria.
 
 ## Key commands
 
 Runnable slash commands live in `.claude/commands/`:
 
-| Command | Purpose |
-| --- | --- |
-| `/lint` | Run yamllint across the repo |
-| `/flux-reconcile [name]` | Reconcile a Flux kustomization (or list all) |
-| `/flux-status` | Show state of all Flux resources |
-| `/cluster-health` | Check pod and Talos node health |
-| `/terraform-plan` | Init + plan the dev cluster |
-| `/terraform-apply` | Init + plan + apply the dev cluster |
-
-**Secrets (SOPS):** Never modify or re-encrypt `.env` files, SOPS-encrypted files, or secrets without explicit user confirmation. The user manages secrets themselves. SOPS config is at `_clusters/dev/.sops.yaml` — files matching `*values.yaml` are fully encrypted; other YAML files encrypt only `data` and `stringData` fields.
-
-**Talos upgrades:** See `_hack/scripts/upgrade.sh` for the system-upgrade-controller approach.
-
-## Architecture
-
-### Directory layout
-
-| Directory        | Purpose                                                                    |
-| ---------------- | -------------------------------------------------------------------------- |
-| `_clusters/`     | Cluster entrypoints — Flux reads `_clusters/<env>` to start reconciliation |
-| `_lib/`          | Shared manifests, organized by deployment layer                            |
-| `_applications/` | Standalone app manifests not yet integrated into `_lib/applications`       |
-| `global/`        | CRDs applied across all clusters (Prometheus Operator, CNPG)               |
-| `terraform/`     | Cluster provisioning (Talos on Proxmox, wallabag S3 backup infra)          |
-| `_templates/`    | Boilerplate for HelmRelease, HelmRepository, Kustomization resources       |
-| `_hack/`         | One-off scripts and example YAML                                           |
-
-### Flux reconciliation layers (dependency order)
-
-Defined in `_clusters/dev/cluster.yaml`. Each layer depends on the one above it:
-
-1. **cluster-config** — ConfigMap with environment variables (`ENVIRONMENT`, `CLUSTER_NAME`, hostnames, etc.) used by `postBuild.substituteFrom` in downstream Kustomizations
-2. **crds** — Global CRDs from `global/crds/`
-3. **controllers** — All operators: cert-manager, CloudNativePG, external-secrets, Falco, Kyverno, mariadb-operator, redis-operator, Renovate
-4. **pki** — Internal CA keypair, trust-manager, trust bundle
-5. **external-secrets-operator** — ESO deployment (depends on controllers + pki for mTLS)
-6. **secrets** — 1Password Connect deployment + ClusterSecretStore
-7. **networking** — Cilium Gateway, Tailscale operator, ClusterIssuers (Let's Encrypt via Cloudflare DNS-01)
-8. **dns** — ExternalDNS (depends on secrets for Cloudflare API key)
-9. **storage** — freenas-iscsi CSI, local-path provisioner, Barman Cloud
-10. **security** — Cilium NetworkPolicies, Falco rules, Kyverno policies
-11. **applications** — App workloads (currently only wallabag, using `_lib/applications/wallabag/overlays/dev`)
-
-### Secrets flow
-
-1Password secrets → 1Password Connect → External Secrets Operator → Kubernetes secrets
-
-SOPS-encrypted secrets are decrypted by Flux using the `sops-age` secret in `flux-system`. The Age key comes from 1Password during bootstrap (see `terraform/dev/main.tf`).
-
-### Application pattern
-
-Apps in `_lib/applications/<app>/` follow kustomize base/overlay structure:
-
-- `base/` — Deployment, Service, HTTPRoute/Ingress, Namespace, ExternalSecret definitions
-- `overlays/<env>/` — Environment-specific patches (database config, object backup/recovery)
-
-### Cluster config substitution
-
-The `cluster-config` ConfigMap (at `_clusters/dev/config/cluster-configs.yaml`) provides variables like `${GATEWAY_NAME}`, `${WALLABAG_SUBDOMAIN}`, `${ENVIRONMENT}` that Flux substitutes into manifests at reconcile time via `postBuild.substituteFrom`.
-
-## YAML conventions
-
-- 2-space indentation
-- Max line length 300 (Kubernetes manifests with long annotations/URLs)
-- Multiple documents per file allowed (`---` separator)
-- `document-start: disable` (leading `---` optional)
-- `comments-indentation: disable` (Flux-generated files have inconsistent comment indentation)
+| Command | Purpose                                                                   |
+| ------- | ------------------------------------------------------------------------- |
+| `/lint` | `fmt`-check + `validate` Terraform & Packer (`_hack/scripts/iac-lint.sh`)  |
