@@ -1,12 +1,3 @@
-# Datacenter firewall baseline for the range.
-#
-# IPSets + the `det_isolation` security group are ALWAYS created. They are inert
-# until (a) a scenario VM references the group (_infra/terraform/modules/scenario-vm
-# attaches it via proxmox_virtual_environment_firewall_rules) AND (b) the cluster
-# firewall is enabled. Enabling the cluster-wide firewall touches every live PVE
-# node, so it is gated behind lab_firewall.enable_cluster_firewall (default OFF) —
-# flip it deliberately per _docs/runbooks/security-lab-scenario-lifecycle.md.
-
 resource "proxmox_virtual_environment_firewall_ipset" "mgmt" {
   name    = "lab-mgmt"
   comment = "Management LAN + TrueNAS — never reachable from a detonation net"

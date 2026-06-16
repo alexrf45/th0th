@@ -1,21 +1,3 @@
-# Security-range network segmentation — ADR-0009.
-#
-# A single Proxmox SDN VLAN zone backed by vmbr0. Each vnet maps to an 802.1Q
-# VLAN tag carried over the UniFi switch trunk, giving TRUE cross-node L2 (a DC on
-# pve01 and a workstation on pve04 share a broadcast domain). The zone provides no
-# gateway, so isolation is structural:
-#
-#   - ops VLAN  : its gateway/SVI lives on the UCG (firewalled, WAN allow-list).
-#   - detonation: NO SVI anywhere, NO Proxmox subnet -> a gateway-less L2 island.
-#                 A fully compromised victim has no L3 next-hop off its segment;
-#                 the only bridges in are deliberately dual-homed ops boxes
-#                 (Kali, Wazuh) that also carry a NIC on the detonation vnet.
-#
-# Apply ordering reuses the proxmox-base leading-finalizer pattern: flush any
-# pre-existing pending SDN state, stage objects, then commit once at the end.
-# This root owns its own appliers; SDN apply is cluster-global but idempotent and
-# only commits already-staged objects, so it does not fight _infra/terraform/modules/proxmox-base.
-
 resource "proxmox_sdn_applier" "finalizer" {}
 
 resource "proxmox_sdn_zone_vlan" "lab" {
