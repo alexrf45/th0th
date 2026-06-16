@@ -1,0 +1,18 @@
+{
+  "enabledPlugins": {
+    "antigravity-awesome-skills@antigravity-awesome-skills": false
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [[ $CLAUDE_FILE_PATH == *.yaml ]]; then yamllint $CLAUDE_FILE_PATH; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

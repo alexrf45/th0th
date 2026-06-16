@@ -1,0 +1,22 @@
+#ps1_sysnative
+# AD detection lab — workstation first-boot bootstrap, run once by cloudbase-init.
+# Renames + joins the domain in one step (single reboot). DNS already points at the
+# DC (cloud-init). Sysmon is baked into the template.
+$ErrorActionPreference = 'Stop'
+$labDir = 'C:\ProgramData\lab'
+New-Item -ItemType Directory -Force -Path $labDir | Out-Null
+Start-Transcript -Path (Join-Path $labDir 'ws-bootstrap.log') -Append
+
+$cs = Get-CimInstance Win32_ComputerSystem
+if ($cs.PartOfDomain) { Write-Host "Already joined to $($cs.Domain)"; Stop-Transcript; return }
+
+# Wait for the DC (resolved via the cloud-init DNS = DC IP).
+for ($i = 0; $i -lt 60; $i++) {
+  try { if (Test-Connection -ComputerName '${domain_fqdn}' -Count 1 -Quiet) { break } } catch {}
+  Start-Sleep -Seconds 10
+}
+
+$sec  = ConvertTo-SecureString '${join_password}' -AsPlainText -Force
+$cred = New-Object System.Management.Automation.PSCredential('${domain_netbios}\${join_user}', $sec)
+Add-Computer -DomainName '${domain_fqdn}' -NewName '${computer_name}' -Credential $cred -Force -Restart
+Stop-Transcript
