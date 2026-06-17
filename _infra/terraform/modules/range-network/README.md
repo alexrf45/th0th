@@ -6,20 +6,12 @@ datacenter **firewall baseline** (IPSets + `det_isolation` security group). S3
 remote state. See `_docs/decisions/0009-security-lab-segmentation.md` (ADR) and
 `_docs/runbooks/security-lab-scenario-lifecycle.md` (operations).
 
-## Why VLAN zones (not EVPN)
-
-EVPN/OpenFabric never worked on this hardware (UCG-Ultra has no persistent BGP;
-`fabricd` can't mesh a shared LAN — ADR-0008). VLAN zones are backed by the UniFi
-switch's 802.1Q trunk: boring, robust, true cross-node L2. The zone provides **no
-gateway**, so a detonation VLAN with no UCG SVI is a structurally air-gapped L2
-island. This root never reintroduces EVPN.
-
 ## Prerequisites (UniFi + Proxmox — manual, documented in the runbook)
 
 1. `vmbr0` is VLAN-aware on every PVE node.
 2. UniFi switch ports to the 6 PVE nodes are **trunks** carrying the lab VLANs (40, 50, …).
-3. UniFi: create the **ops** VLAN (40) network with a firewalled gateway — WAN
-   allow-list only, **no** route to `192.168.20.0/24`. Create each **detonation**
+3. UniFi: create the **ops** VLAN (40) network with a gateway — WAN
+   allow-list only, **no** route to `192.168.20.0/24`.
    VLAN (50, …) as an L2-only network with **no gateway/SVI**.
 4. `_infra/terraform/modules/proxmox-base` already applied (provides the `terraform@pve` token).
 
@@ -40,11 +32,11 @@ inert until a scenario VM references them.
 
 ## Outputs (consumed by scenario roots)
 
-| Output | Use |
-| ------ | --- |
-| `ops_vnet_bridge` | NIC bridge for ops-side interfaces (Kali/Wazuh primary). |
-| `detonation_vnet_bridges` | `{scenario => bridge}`; victim + dual-homed NICs. |
-| `det_isolation_security_group` | attached to every detonation VM by `scenario-vm`. |
+| Output                         | Use                                                      |
+| ------------------------------ | -------------------------------------------------------- |
+| `ops_vnet_bridge`              | NIC bridge for ops-side interfaces (Kali/Wazuh primary). |
+| `detonation_vnet_bridges`      | `{scenario => bridge}`; victim + dual-homed NICs.        |
+| `det_isolation_security_group` | attached to every VM by `scenario-vm`.                   |
 
 ## Verification (Phase 0 gate)
 

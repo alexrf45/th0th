@@ -1,0 +1,31 @@
+pve = {
+  endpoint = "192.168.20.6"                                  # any PVE node API endpoint
+  password = "set-via-op-run-or-TF_VAR_pve.password"         # bootstrap only; prefer pve_api_token
+  hosts    = ["pve01", "pve02", "pve03", "pve04", "pve05", "pve06"]
+}
+
+# pve_api_token injected at apply time: op run -- terraform apply
+# (TF_VAR_pve_api_token = "terraform@pve!tf=<secret>")
+
+lab_sdn = {
+  bridge  = "vmbr0"
+  zone_id = "labvlan"
+
+  ops = {
+    vnet_id = "vlabops"
+    vlan    = 40 # 10.40.0.0/24 — gateway = UCG SVI (firewalled, WAN allow-list)
+  }
+
+  detonation = {
+    # scenario short-name => gateway-less L2 island
+    det00 = { vnet_id = "vdet00", vlan = 50 } # 10.50.0.0/24 — AD detection lab
+    # det01 = { vnet_id = "vdet01", vlan = 51 } # 10.51.0.0/24 — future scenario
+  }
+}
+
+lab_firewall = {
+  enable_cluster_firewall = false # flip to true deliberately per the runbook
+  mgmt_cidr               = "192.168.20.0/24"
+  ops_cidr                = "10.40.0.0/24"
+  det_cidrs               = ["10.50.0.0/24"]
+}
