@@ -14,22 +14,17 @@ session can pick up cleanly. Real lab values; internal runbook.
 Phases 0-2 are **built in-repo and `terraform/packer validate` clean, but NOT yet
 applied/built** on the cluster. Nothing below has been deployed.
 
-| Phase | Deliverable | In repo | Applied? |
-|---|---|---|---|
-| 0 | VLAN segmentation (`_infra/terraform/security-lab/range-network/`) | ✅ validated | ❌ |
-| 1 | Packer templates (`_infra/packer/`) | ✅ validated | ❌ (not built) |
-| 2 | `scenario-vm` module + `ad-detection` lab | ✅ validated | ❌ |
-| 3 | Wazuh defensive stack | — | **next** |
-| 4 | Offensive tooling + C2 | — | pending |
-| 5 | Web/CVE workbench | — | pending |
+| Phase | Deliverable                                                        | In repo      | Applied?       |
+| ----- | ------------------------------------------------------------------ | ------------ | -------------- |
+| 0     | VLAN segmentation (`_infra/terraform/security-lab/range-network/`) | ✅ validated | ❌             |
+| 1     | Packer templates (`_infra/packer/`)                                | ✅ validated | ❌ (not built) |
+| 2     | `scenario-vm` module + `ad-detection` lab                          | ✅ validated | ❌             |
+| 3     | Wazuh defensive stack                                              | —            | **next**       |
+| 4     | Offensive tooling + C2                                             | —            | pending        |
+| 5     | Web/CVE workbench                                                  | —            | pending        |
 
 **Pick up at Phase 3 (Wazuh)** once Phases 0-2 are deployed and the AD lab is live
 (detections need a real domain to fire against).
-
-> ⚠️ **Do not `terraform apply` `_infra/terraform/modules/proxmox-base`.** It still defines the
-> deleted EVPN zone (state drift) and its tfvars is a SOPS secret. The lab lives in
-> its own root to avoid this. Resolving the EVPN excision is a separate decision
-> (ADR-0009, "Consequences").
 
 ## How Terraform/Packer run here
 
@@ -52,8 +47,8 @@ Summary + gate:
 3. **Enable `snippets`** content type on the node-local `local` store (needed in
    Phase 2 for cloud-init user-data).
 4. `cd _infra/terraform/security-lab/range-network` → fill + SOPS-encrypt `terraform.tfvars`
-   + `remote.tfbackend` → `terraform init -backend-config=remote.tfbackend` →
-   `op run -- terraform apply`. Keep `enable_cluster_firewall = false`.
+   - `remote.tfbackend` → `terraform init -backend-config=remote.tfbackend` →
+     `op run -- terraform apply`. Keep `enable_cluster_firewall = false`.
 
 **GATE — air-gap test (must pass before Phase 2):** two throwaway VMs on `vdet00`
 on **different** PVE nodes: they reach each other; neither reaches `192.168.20.1`,
@@ -83,9 +78,11 @@ Full detail in `_infra/terraform/security-lab/scenarios/ad-detection/README.md`.
    (Kerberoast/AS-REP/GenericAll), joins WS10/WS11. Check `C:\ProgramData\lab\*.log`.
 3. **Snapshot baselines** for CVE rollback (bpg has no snapshot resource — do it by
    hand on each owning node):
+
    ```bash
    qm snapshot <vmid> clean-baseline
    ```
+
 4. **GATE:** from Kali (`10.50.0.50`) enumerate the domain and run a Kerberoast;
    confirm Kali reaches the victims but NOT the mgmt LAN / TrueNAS / ops subnet.
 
